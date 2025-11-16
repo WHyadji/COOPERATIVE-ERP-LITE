@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // AnggotaService menangani logika bisnis anggota koperasi
@@ -92,39 +93,41 @@ func (s *AnggotaService) BuatAnggota(idKoperasi uuid.UUID, req *BuatAnggotaReque
 
 // GenerateNomorAnggota menghasilkan nomor anggota otomatis
 // Format: KOOP-YYYY-NNNN (contoh: KOOP-2025-0001)
+// Uses row-level locking to prevent race conditions in concurrent requests
 func (s *AnggotaService) GenerateNomorAnggota(idKoperasi uuid.UUID) (string, error) {
-	// Dapatkan tahun sekarang
 	tahun := time.Now().Year()
+	var nomorAnggota string
 
-	// Hitung jumlah anggota di tahun ini
-	var count int64
-	err := s.db.Model(&models.Anggota{}).
-		Where("id_koperasi = ? AND EXTRACT(YEAR FROM tanggal_bergabung) = ?", idKoperasi, tahun).
-		Count(&count).Error
+	// Use transaction with row-level locking to prevent race conditions
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		// Lock and get the last member number for this year
+		var lastAnggota models.Anggota
+		err := tx.Where("id_koperasi = ? AND EXTRACT(YEAR FROM tanggal_bergabung) = ?", idKoperasi, tahun).
+			Order("nomor_anggota DESC").
+			Limit(1).
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&lastAnggota).Error
+
+		nomorUrut := 1
+
+		// If there's a previous member, parse and increment
+		if err == nil && lastAnggota.NomorAnggota != "" {
+			// Extract number from KOOP-2025-0001
+			var parsedTahun, parsedUrut int
+			_, scanErr := fmt.Sscanf(lastAnggota.NomorAnggota, "KOOP-%d-%04d", &parsedTahun, &parsedUrut)
+			if scanErr == nil && parsedTahun == tahun {
+				nomorUrut = parsedUrut + 1
+			}
+		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		nomorAnggota = fmt.Sprintf("KOOP-%d-%04d", tahun, nomorUrut)
+		return nil
+	})
 
 	if err != nil {
 		return "", errors.New("gagal generate nomor anggota")
-	}
-
-	// Nomor urut berikutnya
-	nomorUrut := count + 1
-
-	// Format: KOOP-YYYY-NNNN
-	nomorAnggota := fmt.Sprintf("KOOP-%d-%04d", tahun, nomorUrut)
-
-	// Cek apakah nomor sudah ada (untuk memastikan unique)
-	var existingCount int64
-	s.db.Model(&models.Anggota{}).
-		Where("id_koperasi = ? AND nomor_anggota = ?", idKoperasi, nomorAnggota).
-		Count(&existingCount)
-
-	// Jika sudah ada, increment dan coba lagi
-	for existingCount > 0 {
-		nomorUrut++
-		nomorAnggota = fmt.Sprintf("KOOP-%d-%04d", tahun, nomorUrut)
-		s.db.Model(&models.Anggota{}).
-			Where("id_koperasi = ? AND nomor_anggota = ?", idKoperasi, nomorAnggota).
-			Count(&existingCount)
 	}
 
 	return nomorAnggota, nil
