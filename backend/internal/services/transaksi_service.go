@@ -4,11 +4,18 @@ import (
 	"cooperative-erp-lite/internal/models"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+)
+
+const (
+	// EpsilonTolerance adalah toleransi untuk perbandingan floating-point dalam rupiah
+	// 0.01 = 1 sen toleransi untuk menangani masalah floating-point precision
+	EpsilonTolerance = 0.01
 )
 
 // TransaksiService menangani logika bisnis transaksi akuntansi
@@ -152,8 +159,15 @@ func (s *TransaksiService) ValidasiTransaksi(barisTransaksi []BuatBarisTransaksi
 		return errors.New("transaksi harus memiliki minimal satu baris debit dan satu baris kredit")
 	}
 
-	// Validasi balanced (debit = kredit)
-	if totalDebit != totalKredit {
+	// Validasi total tidak boleh nol (menggunakan epsilon untuk floating-point)
+	if totalDebit < EpsilonTolerance {
+		return errors.New("total debit dan kredit tidak boleh 0")
+	}
+
+	// Validasi balanced (debit = kredit) dengan epsilon tolerance untuk floating-point precision
+	// Menggunakan math.Abs untuk menghitung selisih absolut dan membandingkan dengan epsilon
+	// Ini mengatasi masalah floating-point arithmetic seperti: 0.1 + 0.1 + 0.1 != 0.3
+	if math.Abs(totalDebit-totalKredit) > EpsilonTolerance {
 		return fmt.Errorf("total debit (%.2f) tidak sama dengan total kredit (%.2f)", totalDebit, totalKredit)
 	}
 

@@ -1,10 +1,17 @@
 package models
 
 import (
+	"math"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	// EpsilonTolerance adalah toleransi untuk perbandingan floating-point dalam rupiah
+	// 0.01 = 1 sen toleransi untuk menangani masalah floating-point precision
+	EpsilonTolerance = 0.01
 )
 
 // Transaksi merepresentasikan jurnal transaksi akuntansi (header)
@@ -55,8 +62,11 @@ func (t *Transaksi) BeforeSave(tx *gorm.DB) error {
 	t.TotalDebit = totalDebit
 	t.TotalKredit = totalKredit
 
-	// Cek apakah transaksi balanced (debit = kredit)
-	t.StatusBalanced = (totalDebit == totalKredit) && totalDebit > 0
+	// Cek apakah transaksi balanced (debit = kredit) dengan epsilon tolerance
+	// Menggunakan math.Abs untuk mengatasi floating-point precision issues
+	isBalanced := math.Abs(totalDebit-totalKredit) <= EpsilonTolerance
+	hasValue := totalDebit >= EpsilonTolerance
+	t.StatusBalanced = isBalanced && hasValue
 
 	return nil
 }
