@@ -4,6 +4,9 @@
 .env.*.local
 *.env
 
+# Claude Code configuration
+.claude/
+
 # IDE
 .vscode/
 .idea/
