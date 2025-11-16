@@ -172,12 +172,13 @@ type PerbaruiProdukRequest struct {
 }
 
 // PerbaruiProduk mengupdate data produk
-func (s *ProdukService) PerbaruiProduk(id uuid.UUID, req *PerbaruiProdukRequest) (*models.ProdukResponse, error) {
+func (s *ProdukService) PerbaruiProduk(idKoperasi, id uuid.UUID, req *PerbaruiProdukRequest) (*models.ProdukResponse, error) {
+	// Cek apakah produk ada DAN milik koperasi yang benar (multi-tenant validation)
 	var produk models.Produk
-	err := s.db.Where("id = ?", id).First(&produk).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&produk).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("produk tidak ditemukan")
+			return nil, errors.New("produk tidak ditemukan atau tidak memiliki akses")
 		}
 		return nil, err
 	}
@@ -224,7 +225,17 @@ func (s *ProdukService) PerbaruiProduk(id uuid.UUID, req *PerbaruiProdukRequest)
 }
 
 // HapusProduk menghapus produk (dengan validasi)
-func (s *ProdukService) HapusProduk(id uuid.UUID) error {
+func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
+	// Cek apakah produk ada DAN milik koperasi yang benar (multi-tenant validation)
+	var produk models.Produk
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&produk).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("produk tidak ditemukan atau tidak memiliki akses")
+		}
+		return err
+	}
+
 	// Cek apakah ada di item penjualan
 	var countPenjualan int64
 	s.db.Model(&models.ItemPenjualan{}).Where("id_produk = ?", id).Count(&countPenjualan)
@@ -234,7 +245,7 @@ func (s *ProdukService) HapusProduk(id uuid.UUID) error {
 	}
 
 	// Soft delete
-	err := s.db.Delete(&models.Produk{}, id).Error
+	err = s.db.Delete(&produk).Error
 	if err != nil {
 		return errors.New("gagal menghapus produk")
 	}
