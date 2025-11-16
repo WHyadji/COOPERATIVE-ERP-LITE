@@ -118,7 +118,7 @@ func (h *SimpananHandler) GetLaporanSaldo(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
-	laporanSaldo, err := h.simpananService.GetLaporanSaldoSemua Anggota(koperasiUUID)
+	laporanSaldo, err := h.simpananService.GetLaporanSaldoSemuaAnggota(koperasiUUID)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, err.Error(), nil)
 		return
