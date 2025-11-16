@@ -226,13 +226,13 @@ type PerbaruiAnggotaRequest struct {
 }
 
 // PerbaruiAnggota mengupdate data anggota
-func (s *AnggotaService) PerbaruiAnggota(id uuid.UUID, req *PerbaruiAnggotaRequest) (*models.AnggotaResponse, error) {
-	// Cek apakah anggota ada
+func (s *AnggotaService) PerbaruiAnggota(idKoperasi, id uuid.UUID, req *PerbaruiAnggotaRequest) (*models.AnggotaResponse, error) {
+	// Cek apakah anggota ada DAN milik koperasi yang benar (multi-tenant validation)
 	var anggota models.Anggota
-	err := s.db.Where("id = ?", id).First(&anggota).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggota).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("anggota tidak ditemukan")
+			return nil, errors.New("anggota tidak ditemukan atau tidak memiliki akses")
 		}
 		return nil, err
 	}
@@ -307,12 +307,13 @@ func (s *AnggotaService) PerbaruiAnggota(id uuid.UUID, req *PerbaruiAnggotaReque
 }
 
 // HapusAnggota menghapus anggota (soft delete)
-func (s *AnggotaService) HapusAnggota(id uuid.UUID) error {
+func (s *AnggotaService) HapusAnggota(idKoperasi, id uuid.UUID) error {
+	// Cek apakah anggota ada DAN milik koperasi yang benar (multi-tenant validation)
 	var anggota models.Anggota
-	err := s.db.Where("id = ?", id).First(&anggota).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggota).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("anggota tidak ditemukan")
+			return errors.New("anggota tidak ditemukan atau tidak memiliki akses")
 		}
 		return err
 	}
@@ -327,18 +328,18 @@ func (s *AnggotaService) HapusAnggota(id uuid.UUID) error {
 }
 
 // SetPINPortal mengatur PIN untuk login portal anggota
-func (s *AnggotaService) SetPINPortal(id uuid.UUID, pin string) error {
+func (s *AnggotaService) SetPINPortal(idKoperasi, id uuid.UUID, pin string) error {
 	// Validasi PIN (4-6 digit)
 	if len(pin) < 4 || len(pin) > 6 {
 		return errors.New("PIN harus 4-6 digit")
 	}
 
-	// Cek apakah anggota ada
+	// Cek apakah anggota ada DAN milik koperasi yang benar (multi-tenant validation)
 	var anggota models.Anggota
-	err := s.db.Where("id = ?", id).First(&anggota).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggota).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("anggota tidak ditemukan")
+			return errors.New("anggota tidak ditemukan atau tidak memiliki akses")
 		}
 		return err
 	}

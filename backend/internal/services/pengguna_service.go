@@ -126,13 +126,13 @@ type PerbaruiPenggunaRequest struct {
 }
 
 // PerbaruiPengguna mengupdate data pengguna
-func (s *PenggunaService) PerbaruiPengguna(id uuid.UUID, req *PerbaruiPenggunaRequest) (*models.PenggunaResponse, error) {
-	// Cek apakah pengguna ada
+func (s *PenggunaService) PerbaruiPengguna(idKoperasi, id uuid.UUID, req *PerbaruiPenggunaRequest) (*models.PenggunaResponse, error) {
+	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
 	var pengguna models.Pengguna
-	err := s.db.Where("id = ?", id).First(&pengguna).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("pengguna tidak ditemukan")
+			return nil, errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
 		}
 		return nil, err
 	}
@@ -162,13 +162,13 @@ func (s *PenggunaService) PerbaruiPengguna(id uuid.UUID, req *PerbaruiPenggunaRe
 }
 
 // HapusPengguna menghapus pengguna (soft delete)
-func (s *PenggunaService) HapusPengguna(id uuid.UUID) error {
-	// Cek apakah pengguna ada
+func (s *PenggunaService) HapusPengguna(idKoperasi, id uuid.UUID) error {
+	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
 	var pengguna models.Pengguna
-	err := s.db.Where("id = ?", id).First(&pengguna).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("pengguna tidak ditemukan")
+			return errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
 		}
 		return err
 	}
@@ -183,18 +183,18 @@ func (s *PenggunaService) HapusPengguna(id uuid.UUID) error {
 }
 
 // UbahKataSandiPengguna mengubah password pengguna (oleh admin)
-func (s *PenggunaService) UbahKataSandiPengguna(id uuid.UUID, kataSandiBaru string) error {
+func (s *PenggunaService) UbahKataSandiPengguna(idKoperasi, id uuid.UUID, kataSandiBaru string) error {
 	// Validasi password
 	if len(kataSandiBaru) < 6 {
 		return errors.New("kata sandi minimal 6 karakter")
 	}
 
-	// Cek apakah pengguna ada
+	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
 	var pengguna models.Pengguna
-	err := s.db.Where("id = ?", id).First(&pengguna).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("pengguna tidak ditemukan")
+			return errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
 		}
 		return err
 	}
@@ -215,13 +215,13 @@ func (s *PenggunaService) UbahKataSandiPengguna(id uuid.UUID, kataSandiBaru stri
 }
 
 // ResetKataSandi mereset password pengguna ke default (admin only)
-func (s *PenggunaService) ResetKataSandi(id uuid.UUID) (string, error) {
+func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, error) {
 	// Generate password default (menggunakan username)
 	var pengguna models.Pengguna
-	err := s.db.Where("id = ?", id).First(&pengguna).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", errors.New("pengguna tidak ditemukan")
+			return "", errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
 		}
 		return "", err
 	}

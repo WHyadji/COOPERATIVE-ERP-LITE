@@ -142,12 +142,13 @@ type PerbaruiAkunRequest struct {
 }
 
 // PerbaruiAkun mengupdate data akun
-func (s *AkunService) PerbaruiAkun(id uuid.UUID, req *PerbaruiAkunRequest) (*models.AkunResponse, error) {
+func (s *AkunService) PerbaruiAkun(idKoperasi, id uuid.UUID, req *PerbaruiAkunRequest) (*models.AkunResponse, error) {
+	// Cek apakah akun ada DAN milik koperasi yang benar (multi-tenant validation)
 	var akun models.Akun
-	err := s.db.Where("id = ?", id).First(&akun).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&akun).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("akun tidak ditemukan")
+			return nil, errors.New("akun tidak ditemukan atau tidak memiliki akses")
 		}
 		return nil, err
 	}
@@ -173,7 +174,17 @@ func (s *AkunService) PerbaruiAkun(id uuid.UUID, req *PerbaruiAkunRequest) (*mod
 }
 
 // HapusAkun menghapus akun (dengan validasi)
-func (s *AkunService) HapusAkun(id uuid.UUID) error {
+func (s *AkunService) HapusAkun(idKoperasi, id uuid.UUID) error {
+	// Cek apakah akun ada DAN milik koperasi yang benar (multi-tenant validation)
+	var akun models.Akun
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&akun).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("akun tidak ditemukan atau tidak memiliki akses")
+		}
+		return err
+	}
+
 	// Cek apakah ada transaksi terkait
 	var countTransaksi int64
 	s.db.Model(&models.BarisTransaksi{}).Where("id_akun = ?", id).Count(&countTransaksi)
@@ -191,7 +202,7 @@ func (s *AkunService) HapusAkun(id uuid.UUID) error {
 	}
 
 	// Soft delete
-	err := s.db.Delete(&models.Akun{}, id).Error
+	err = s.db.Delete(&akun).Error
 	if err != nil {
 		return errors.New("gagal menghapus akun")
 	}
