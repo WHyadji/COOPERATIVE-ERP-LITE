@@ -30,11 +30,11 @@ func NewTransaksiService(db *gorm.DB) *TransaksiService {
 
 // BuatTransaksiRequest adalah struktur request untuk membuat transaksi
 type BuatTransaksiRequest struct {
-	TanggalTransaksi time.Time                    `json:"tanggalTransaksi" binding:"required"`
-	Deskripsi        string                       `json:"deskripsi" binding:"required"`
-	NomorReferensi   string                       `json:"nomorReferensi"`
-	TipeTransaksi    string                       `json:"tipeTransaksi"`
-	BarisTransaksi   []BuatBarisTransaksiRequest  `json:"barisTransaksi" binding:"required,min=2"`
+	TanggalTransaksi time.Time                   `json:"tanggalTransaksi" binding:"required"`
+	Deskripsi        string                      `json:"deskripsi" binding:"required"`
+	NomorReferensi   string                      `json:"nomorReferensi"`
+	TipeTransaksi    string                      `json:"tipeTransaksi"`
+	BarisTransaksi   []BuatBarisTransaksiRequest `json:"barisTransaksi" binding:"required,min=2"`
 }
 
 // BuatBarisTransaksiRequest adalah struktur untuk baris transaksi
@@ -325,13 +325,13 @@ func (s *TransaksiService) DapatkanBukuBesar(idAkun uuid.UUID, tanggalMulai, tan
 		}
 
 		entry := map[string]interface{}{
-			"tanggal":       baris.Transaksi.TanggalTransaksi,
-			"nomorJurnal":   baris.Transaksi.NomorJurnal,
-			"deskripsi":     baris.Transaksi.Deskripsi,
-			"keterangan":    baris.Keterangan,
-			"debit":         baris.JumlahDebit,
-			"kredit":        baris.JumlahKredit,
-			"saldo":         saldo,
+			"tanggal":     baris.Transaksi.TanggalTransaksi,
+			"nomorJurnal": baris.Transaksi.NomorJurnal,
+			"deskripsi":   baris.Transaksi.Deskripsi,
+			"keterangan":  baris.Keterangan,
+			"debit":       baris.JumlahDebit,
+			"kredit":      baris.JumlahKredit,
+			"saldo":       saldo,
 		}
 		ledger = append(ledger, entry)
 	}

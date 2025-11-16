@@ -78,12 +78,12 @@ func (Transaksi) TableName() string {
 
 // BarisTransaksi merepresentasikan baris/detail jurnal transaksi
 type BarisTransaksi struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
-	IDTransaksi  uuid.UUID      `gorm:"type:uuid;not null;index" json:"idTransaksi" validate:"required"`
-	IDAkun       uuid.UUID      `gorm:"type:uuid;not null;index" json:"idAkun" validate:"required"`
-	JumlahDebit  float64        `gorm:"type:decimal(15,2);not null;default:0" json:"jumlahDebit" validate:"gte=0"`
-	JumlahKredit float64        `gorm:"type:decimal(15,2);not null;default:0" json:"jumlahKredit" validate:"gte=0"`
-	Keterangan   string         `gorm:"type:text" json:"keterangan"`
+	ID                uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
+	IDTransaksi       uuid.UUID      `gorm:"type:uuid;not null;index" json:"idTransaksi" validate:"required"`
+	IDAkun            uuid.UUID      `gorm:"type:uuid;not null;index" json:"idAkun" validate:"required"`
+	JumlahDebit       float64        `gorm:"type:decimal(15,2);not null;default:0" json:"jumlahDebit" validate:"gte=0"`
+	JumlahKredit      float64        `gorm:"type:decimal(15,2);not null;default:0" json:"jumlahKredit" validate:"gte=0"`
+	Keterangan        string         `gorm:"type:text" json:"keterangan"`
 	TanggalDibuat     time.Time      `gorm:"autoCreateTime" json:"tanggalDibuat"`
 	TanggalDiperbarui time.Time      `gorm:"autoUpdateTime" json:"tanggalDiperbarui"`
 	TanggalDihapus    gorm.DeletedAt `gorm:"index" json:"-"`
@@ -108,15 +108,15 @@ func (BarisTransaksi) TableName() string {
 
 // TransaksiResponse adalah response untuk API
 type TransaksiResponse struct {
-	ID               uuid.UUID              `json:"id"`
-	NomorJurnal      string                 `json:"nomorJurnal"`
-	TanggalTransaksi time.Time              `json:"tanggalTransaksi"`
-	Deskripsi        string                 `json:"deskripsi"`
-	NomorReferensi   string                 `json:"nomorReferensi"`
-	TipeTransaksi    string                 `json:"tipeTransaksi"`
-	TotalDebit       float64                `json:"totalDebit"`
-	TotalKredit      float64                `json:"totalKredit"`
-	StatusBalanced   bool                   `json:"statusBalanced"`
+	ID               uuid.UUID                `json:"id"`
+	NomorJurnal      string                   `json:"nomorJurnal"`
+	TanggalTransaksi time.Time                `json:"tanggalTransaksi"`
+	Deskripsi        string                   `json:"deskripsi"`
+	NomorReferensi   string                   `json:"nomorReferensi"`
+	TipeTransaksi    string                   `json:"tipeTransaksi"`
+	TotalDebit       float64                  `json:"totalDebit"`
+	TotalKredit      float64                  `json:"totalKredit"`
+	StatusBalanced   bool                     `json:"statusBalanced"`
 	BarisTransaksi   []BarisTransaksiResponse `json:"barisTransaksi,omitempty"`
 }
 

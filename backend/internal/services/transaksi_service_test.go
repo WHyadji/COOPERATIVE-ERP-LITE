@@ -42,7 +42,7 @@ func TestValidasiTransaksi_FloatingPointPrecision(t *testing.T) {
 	service := NewTransaksiService(db)
 
 	tests := []struct {
-		name          string
+		name           string
 		barisTransaksi []BuatBarisTransaksiRequest
 		shouldPass     bool
 		description    string
@@ -252,11 +252,11 @@ func TestBeforeSaveHook_FloatingPointPrecision(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		totalDebit     float64
-		totalKredit    float64
+		name            string
+		totalDebit      float64
+		totalKredit     float64
 		expectedBalance bool
-		description    string
+		description     string
 	}{
 		{
 			name:            "Exact match should be balanced",
