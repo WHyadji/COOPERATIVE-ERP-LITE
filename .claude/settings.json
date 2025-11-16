@@ -1,0 +1,170 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm install:*)",
+      "Bash(rg:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(curl:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(touch:*)",
+      "Bash(rmdir:*)",
+      "Bash(go mod:*)",
+      "Bash(go build:*)",
+      "Bash(go get:*)",
+      "Bash(sed:*)",
+      "Bash(go test:*)",
+      "Bash(go fmt:*)",
+      "Bash(golangci-lint run:*)",
+      "Bash(/opt/homebrew/bin/golangci-lint run)",
+      "Bash(golangci-lint help:*)",
+      "Bash(gofmt:*)",
+      "Bash(./scripts/build.sh:*)",
+      "Bash(./scripts/cleanup-reports.sh:*)",
+      "Bash(npm test)",
+      "Bash(rm:*)",
+      "Bash(./scripts/pre-push.sh:*)",
+      "Bash(go vet:*)",
+      "Bash(go list:*)",
+      "Bash(timeout 30s go build -o ./bin/accounting-ledger ./cmd/server)",
+      "Bash(go run:*)",
+      "Bash(go clean:*)",
+      "Bash(if [ -f \".claude/sessions/.current-session\" ])",
+      "Bash(then echo \"Active session found\")",
+      "Bash(cat:*)",
+      "Bash(else echo \"No active session found\")",
+      "Bash(fi)",
+      "Bash(go tool compile:*)",
+      "Bash(git log:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(echo \"Build Status: $?\")",
+      "Bash(echo:*)",
+      "Bash(git stash push:*)",
+      "Bash(git stash:*)",
+      "Bash(timeout 30s go test ./internal/security/ -run TestSecurityValidator_ValidateIPAddress -v)",
+      "Bash(npm audit:*)",
+      "Bash(npm run lint)",
+      "Bash(npx tsc:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go mod vendor:*)",
+      "Bash(go mod verify:*)",
+      "Bash(go mod why:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go mod vendor:*)",
+      "Bash(go mod verify:*)",
+      "Bash(go mod why:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git branch -D:*)",
+      "Bash(true)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(gh --version:*)",
+      "Bash(gh pr --help:*)",
+      "Bash(gh pr diff --help:*)",
+      "Bash(gh pr comment --help:*)",
+      "Bash(gh pr view --help:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(awk:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(git merge:*)",
+      "Bash(git diff:*)"
+    ],
+    "deny": []
+  },
+  "mcpServers": {
+    "context7": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/context7"
+      ]
+    },
+    "playwright": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/playwright"
+      ]
+    },
+    "github-official": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
+      }
+    },
+    "sequentialthinking": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/sequentialthinking"
+      ]
+    },
+    "fetch": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/fetch"
+      ]
+    },
+    "puppeteer": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "DOCKER_CONTAINER",
+        "mcp/puppeteer"
+      ],
+      "env": {
+        "DOCKER_CONTAINER": "true"
+      }
+    },
+    "dockerhub": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "HUB_PAT_TOKEN",
+        "mcp/dockerhub",
+        "--transport=stdio",
+        "--username={{dockerhub.username}}"
+      ],
+      "env": {
+        "HUB_PAT_TOKEN": "your_hub_pat_token"
+      }
+    }
+  }
+}
