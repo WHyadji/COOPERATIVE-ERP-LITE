@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: koperasi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: koperasi_erp
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=id_ID.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - koperasi-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: koperasi-backend
+    restart: unless-stopped
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: koperasi_erp
+      DB_SSLMODE: disable
+
+      # JWT
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRATION_HOURS: 24
+
+      # Server
+      SERVER_PORT: 8080
+      GIN_MODE: debug
+
+      # CORS
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - koperasi-network
+    volumes:
+      - ./backend:/app
+      - backend_modules:/go/pkg/mod
+    command: go run cmd/api/main.go
+
+  # Adminer - Database Management UI (Optional)
+  adminer:
+    image: adminer:latest
+    container_name: koperasi-adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    networks:
+      - koperasi-network
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: dracula
+
+networks:
+  koperasi-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_modules:
+    driver: local
