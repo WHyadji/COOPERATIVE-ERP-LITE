@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // SimpananService menangani logika bisnis simpanan anggota
@@ -89,33 +90,43 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 
 // GenerateNomorReferensi menghasilkan nomor referensi setoran
 // Format: SMP-YYYYMMDD-NNNN
+// Uses row-level locking to prevent race conditions in concurrent requests
 func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
 	tanggalStr := tanggal.Format("20060102")
+	tanggalDate := tanggal.Format("2006-01-02")
+	var nomorReferensi string
 
-	var count int64
-	err := s.db.Model(&models.Simpanan{}).
-		Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggal.Format("2006-01-02")).
-		Count(&count).Error
+	// Use transaction with row-level locking to prevent race conditions
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		// Lock and get the last deposit number for this date
+		var lastSimpanan models.Simpanan
+		err := tx.Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggalDate).
+			Order("nomor_referensi DESC").
+			Limit(1).
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&lastSimpanan).Error
+
+		nomorUrut := 1
+
+		// If there's a previous deposit, parse and increment
+		if err == nil && lastSimpanan.NomorReferensi != "" {
+			// Extract number from SMP-20250116-0001
+			var parsedTanggal string
+			var parsedUrut int
+			_, scanErr := fmt.Sscanf(lastSimpanan.NomorReferensi, "SMP-%s-%04d", &parsedTanggal, &parsedUrut)
+			if scanErr == nil && parsedTanggal == tanggalStr {
+				nomorUrut = parsedUrut + 1
+			}
+		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		nomorReferensi = fmt.Sprintf("SMP-%s-%04d", tanggalStr, nomorUrut)
+		return nil
+	})
 
 	if err != nil {
 		return "", errors.New("gagal generate nomor referensi")
-	}
-
-	nomorUrut := count + 1
-	nomorReferensi := fmt.Sprintf("SMP-%s-%04d", tanggalStr, nomorUrut)
-
-	// Cek uniqueness
-	var existingCount int64
-	s.db.Model(&models.Simpanan{}).
-		Where("id_koperasi = ? AND nomor_referensi = ?", idKoperasi, nomorReferensi).
-		Count(&existingCount)
-
-	for existingCount > 0 {
-		nomorUrut++
-		nomorReferensi = fmt.Sprintf("SMP-%s-%04d", tanggalStr, nomorUrut)
-		s.db.Model(&models.Simpanan{}).
-			Where("id_koperasi = ? AND nomor_referensi = ?", idKoperasi, nomorReferensi).
-			Count(&existingCount)
 	}
 
 	return nomorReferensi, nil

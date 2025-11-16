@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // TransaksiService menangani logika bisnis transaksi akuntansi
@@ -161,39 +162,43 @@ func (s *TransaksiService) ValidasiTransaksi(barisTransaksi []BuatBarisTransaksi
 
 // GenerateNomorJurnal menghasilkan nomor jurnal otomatis
 // Format: JRN-YYYYMMDD-NNNN (contoh: JRN-20250116-0001)
+// Uses row-level locking to prevent race conditions in concurrent requests
 func (s *TransaksiService) GenerateNomorJurnal(idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
-	// Format tanggal
 	tanggalStr := tanggal.Format("20060102")
+	tanggalDate := tanggal.Format("2006-01-02")
+	var nomorJurnal string
 
-	// Hitung jumlah transaksi hari ini
-	var count int64
-	err := s.db.Model(&models.Transaksi{}).
-		Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggal.Format("2006-01-02")).
-		Count(&count).Error
+	// Use transaction with row-level locking to prevent race conditions
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		// Lock and get the last journal number for this date
+		var lastTransaksi models.Transaksi
+		err := tx.Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggalDate).
+			Order("nomor_jurnal DESC").
+			Limit(1).
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&lastTransaksi).Error
+
+		nomorUrut := 1
+
+		// If there's a previous transaction, parse and increment
+		if err == nil && lastTransaksi.NomorJurnal != "" {
+			// Extract number from JRN-20250116-0001
+			var parsedTanggal string
+			var parsedUrut int
+			_, scanErr := fmt.Sscanf(lastTransaksi.NomorJurnal, "JRN-%s-%04d", &parsedTanggal, &parsedUrut)
+			if scanErr == nil && parsedTanggal == tanggalStr {
+				nomorUrut = parsedUrut + 1
+			}
+		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		nomorJurnal = fmt.Sprintf("JRN-%s-%04d", tanggalStr, nomorUrut)
+		return nil
+	})
 
 	if err != nil {
 		return "", errors.New("gagal generate nomor jurnal")
-	}
-
-	// Nomor urut berikutnya
-	nomorUrut := count + 1
-
-	// Format: JRN-YYYYMMDD-NNNN
-	nomorJurnal := fmt.Sprintf("JRN-%s-%04d", tanggalStr, nomorUrut)
-
-	// Cek uniqueness
-	var existingCount int64
-	s.db.Model(&models.Transaksi{}).
-		Where("id_koperasi = ? AND nomor_jurnal = ?", idKoperasi, nomorJurnal).
-		Count(&existingCount)
-
-	// Jika sudah ada, increment
-	for existingCount > 0 {
-		nomorUrut++
-		nomorJurnal = fmt.Sprintf("JRN-%s-%04d", tanggalStr, nomorUrut)
-		s.db.Model(&models.Transaksi{}).
-			Where("id_koperasi = ? AND nomor_jurnal = ?", idKoperasi, nomorJurnal).
-			Count(&existingCount)
 	}
 
 	return nomorJurnal, nil
