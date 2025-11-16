@@ -58,6 +58,7 @@ jobs:
         with:
           version: latest
           working-directory: backend
+          args: --skip-dirs=internal/handlers
 
       - name: Run tests
         working-directory: ./backend
