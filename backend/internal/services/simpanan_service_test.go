@@ -1,12 +1,12 @@
 package services
 
 import (
+	"context"
 	"cooperative-erp-lite/internal/models"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -22,13 +22,13 @@ func (qc *queryCounter) LogMode(level logger.LogLevel) logger.Interface {
 	return qc
 }
 
-func (qc *queryCounter) Info(ctx interface{}, msg string, data ...interface{}) {}
+func (qc *queryCounter) Info(ctx context.Context, msg string, data ...interface{}) {}
 
-func (qc *queryCounter) Warn(ctx interface{}, msg string, data ...interface{}) {}
+func (qc *queryCounter) Warn(ctx context.Context, msg string, data ...interface{}) {}
 
-func (qc *queryCounter) Error(ctx interface{}, msg string, data ...interface{}) {}
+func (qc *queryCounter) Error(ctx context.Context, msg string, data ...interface{}) {}
 
-func (qc *queryCounter) Trace(ctx interface{}, begin time.Time, fc func() (string, int64), err error) {
+func (qc *queryCounter) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	sql, _ := fc()
 	// Only count SELECT queries (ignore BEGIN, COMMIT, etc.)
 	if len(sql) > 6 && sql[:6] == "SELECT" {

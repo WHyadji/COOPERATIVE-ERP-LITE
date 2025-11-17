@@ -94,9 +94,9 @@ func seedTransactions(db *gorm.DB, idKoperasi uuid.UUID, accounts []models.Akun,
 	for i := 0; i < transactionCount; i++ {
 		transactions[i] = models.Transaksi{
 			IDKoperasi:       idKoperasi,
-			NomorTransaksi:   fmt.Sprintf("TRX-%04d", i+1),
+			NomorJurnal:      fmt.Sprintf("TRX-%04d", i+1),
 			TanggalTransaksi: time.Now().AddDate(0, 0, -(i % 30)), // Spread over 30 days
-			Keterangan:       fmt.Sprintf("Test Transaction %d", i+1),
+			Deskripsi:        fmt.Sprintf("Test Transaction %d", i+1),
 			TotalDebit:       100000,
 			TotalKredit:      100000,
 		}
@@ -109,18 +109,18 @@ func seedTransactions(db *gorm.DB, idKoperasi uuid.UUID, accounts []models.Akun,
 		// Debit entry
 		debitAccount := accounts[i%len(accounts)]
 		lineItems = append(lineItems, models.BarisTransaksi{
-			IDTransaksi: txn.ID,
-			IDAkun:      debitAccount.ID,
-			JumlahDebit: 100000,
+			IDTransaksi:  txn.ID,
+			IDAkun:       debitAccount.ID,
+			JumlahDebit:  100000,
 			JumlahKredit: 0,
 		})
 
 		// Credit entry
 		creditAccount := accounts[(i+1)%len(accounts)]
 		lineItems = append(lineItems, models.BarisTransaksi{
-			IDTransaksi: txn.ID,
-			IDAkun:      creditAccount.ID,
-			JumlahDebit: 0,
+			IDTransaksi:  txn.ID,
+			IDAkun:       creditAccount.ID,
+			JumlahDebit:  0,
 			JumlahKredit: 100000,
 		})
 	}

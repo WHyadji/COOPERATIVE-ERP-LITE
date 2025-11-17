@@ -44,9 +44,9 @@ func setupBenchmarkDB(b *testing.B) (*gorm.DB, uuid.UUID, uuid.UUID) {
 
 	// Create test user
 	pengguna := &models.Pengguna{
-		IDKoperasi: koperasi.ID,
+		IDKoperasi:  koperasi.ID,
 		NamaLengkap: "Benchmark User",
-		Email:      "benchmark@test.com",
+		Email:       "benchmark@test.com",
 	}
 	db.Create(pengguna)
 

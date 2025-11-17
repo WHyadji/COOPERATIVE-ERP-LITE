@@ -204,25 +204,25 @@ func (s *AnggotaService) DapatkanAnggotaByNomor(idKoperasi uuid.UUID, nomorAnggo
 
 // PerbaruiAnggotaRequest adalah struktur request untuk update anggota
 type PerbaruiAnggotaRequest struct {
-	NamaLengkap   string              `json:"namaLengkap"`
-	NIK           string              `json:"nik"`
-	TanggalLahir  *time.Time          `json:"tanggalLahir"`
-	TempatLahir   string              `json:"tempatLahir"`
-	JenisKelamin  string              `json:"jenisKelamin"`
-	Alamat        string              `json:"alamat"`
-	RT            string              `json:"rt"`
-	RW            string              `json:"rw"`
-	Kelurahan     string              `json:"kelurahan"`
-	Kecamatan     string              `json:"kecamatan"`
-	KotaKabupaten string              `json:"kotaKabupaten"`
-	Provinsi      string              `json:"provinsi"`
-	KodePos       string              `json:"kodePos"`
-	NoTelepon     string              `json:"noTelepon"`
-	Email         string              `json:"email"`
-	Pekerjaan     string              `json:"pekerjaan"`
+	NamaLengkap   string               `json:"namaLengkap"`
+	NIK           string               `json:"nik"`
+	TanggalLahir  *time.Time           `json:"tanggalLahir"`
+	TempatLahir   string               `json:"tempatLahir"`
+	JenisKelamin  string               `json:"jenisKelamin"`
+	Alamat        string               `json:"alamat"`
+	RT            string               `json:"rt"`
+	RW            string               `json:"rw"`
+	Kelurahan     string               `json:"kelurahan"`
+	Kecamatan     string               `json:"kecamatan"`
+	KotaKabupaten string               `json:"kotaKabupaten"`
+	Provinsi      string               `json:"provinsi"`
+	KodePos       string               `json:"kodePos"`
+	NoTelepon     string               `json:"noTelepon"`
+	Email         string               `json:"email"`
+	Pekerjaan     string               `json:"pekerjaan"`
 	Status        models.StatusAnggota `json:"status"`
-	FotoURL       string              `json:"fotoUrl"`
-	Catatan       string              `json:"catatan"`
+	FotoURL       string               `json:"fotoUrl"`
+	Catatan       string               `json:"catatan"`
 }
 
 // PerbaruiAnggota mengupdate data anggota
