@@ -20,17 +20,17 @@ func NewProdukService(db *gorm.DB) *ProdukService {
 
 // BuatProdukRequest adalah struktur request untuk membuat produk
 type BuatProdukRequest struct {
-	KodeProduk   string  `json:"kodeProduk" binding:"required"`
-	NamaProduk   string  `json:"namaProduk" binding:"required"`
-	Kategori     string  `json:"kategori"`
-	Deskripsi    string  `json:"deskripsi"`
-	Harga        float64 `json:"harga" binding:"required,gte=0"`
-	HargaBeli    float64 `json:"hargaBeli" binding:"gte=0"`
-	Stok         int     `json:"stok"`
-	StokMinimum  int     `json:"stokMinimum"`
-	Satuan       string  `json:"satuan"`
-	Barcode      string  `json:"barcode"`
-	GambarURL    string  `json:"gambarUrl"`
+	KodeProduk  string  `json:"kodeProduk" binding:"required"`
+	NamaProduk  string  `json:"namaProduk" binding:"required"`
+	Kategori    string  `json:"kategori"`
+	Deskripsi   string  `json:"deskripsi"`
+	Harga       float64 `json:"harga" binding:"required,gte=0"`
+	HargaBeli   float64 `json:"hargaBeli" binding:"gte=0"`
+	Stok        int     `json:"stok"`
+	StokMinimum int     `json:"stokMinimum"`
+	Satuan      string  `json:"satuan"`
+	Barcode     string  `json:"barcode"`
+	GambarURL   string  `json:"gambarUrl"`
 }
 
 // BuatProduk membuat produk baru

@@ -13,8 +13,8 @@ import (
 
 // SimpananService menangani logika bisnis simpanan anggota
 type SimpananService struct {
-	db                *gorm.DB
-	transaksiService  *TransaksiService
+	db               *gorm.DB
+	transaksiService *TransaksiService
 }
 
 // NewSimpananService membuat instance baru SimpananService
@@ -27,11 +27,11 @@ func NewSimpananService(db *gorm.DB, transaksiService *TransaksiService) *Simpan
 
 // CatatSetoranRequest adalah struktur request untuk catat setoran
 type CatatSetoranRequest struct {
-	IDAnggota        uuid.UUID          `json:"idAnggota" binding:"required"`
+	IDAnggota        uuid.UUID           `json:"idAnggota" binding:"required"`
 	TipeSimpanan     models.TipeSimpanan `json:"tipeSimpanan" binding:"required"`
-	TanggalTransaksi time.Time          `json:"tanggalTransaksi" binding:"required"`
-	JumlahSetoran    float64            `json:"jumlahSetoran" binding:"required,gt=0"`
-	Keterangan       string             `json:"keterangan"`
+	TanggalTransaksi time.Time           `json:"tanggalTransaksi" binding:"required"`
+	JumlahSetoran    float64             `json:"jumlahSetoran" binding:"required,gt=0"`
+	Keterangan       string              `json:"keterangan"`
 }
 
 // CatatSetoran mencatat setoran simpanan anggota
