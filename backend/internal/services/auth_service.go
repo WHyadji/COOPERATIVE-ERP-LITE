@@ -148,8 +148,8 @@ func (s *AuthService) UbahKataSandi(idPengguna, kataSandiLama, kataSandiBaru str
 	}
 
 	// Validasi password baru
-	if len(kataSandiBaru) < 6 {
-		return errors.New("kata sandi baru minimal 6 karakter")
+	if err := utils.ValidasiKataSandi(kataSandiBaru); err != nil {
+		return err
 	}
 
 	// Set password baru
