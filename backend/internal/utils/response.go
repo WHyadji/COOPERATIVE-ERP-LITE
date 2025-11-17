@@ -19,20 +19,12 @@ type ErrorDetail struct {
 	Details interface{} `json:"details,omitempty"`
 }
 
-// PaginationMeta adalah metadata untuk pagination
-type PaginationMeta struct {
-	Page       int   `json:"page"`
-	PageSize   int   `json:"pageSize"`
-	TotalPages int   `json:"totalPages"`
-	TotalItems int64 `json:"totalItems"`
-}
-
 // PaginatedResponse adalah response dengan pagination
 type PaginatedResponse struct {
-	Success    bool           `json:"success"`
-	Message    string         `json:"message"`
-	Data       interface{}    `json:"data"`
-	Pagination PaginationMeta `json:"pagination"`
+	Success    bool            `json:"success"`
+	Message    string          `json:"message"`
+	Data       interface{}     `json:"data"`
+	Pagination *PaginationMeta `json:"pagination"`
 }
 
 // SuccessResponse mengirim response sukses
@@ -58,13 +50,18 @@ func ErrorResponse(c *gin.Context, statusCode int, code string, message string, 
 }
 
 // PaginatedSuccessResponse mengirim response sukses dengan pagination
-func PaginatedSuccessResponse(c *gin.Context, statusCode int, message string, data interface{}, pagination PaginationMeta) {
+func PaginatedSuccessResponse(c *gin.Context, statusCode int, message string, data interface{}, pagination *PaginationMeta) {
 	c.JSON(statusCode, PaginatedResponse{
 		Success:    true,
 		Message:    message,
 		Data:       data,
 		Pagination: pagination,
 	})
+}
+
+// BadRequestResponse mengirim response untuk bad request
+func BadRequestResponse(c *gin.Context, message string) {
+	ErrorResponse(c, 400, "BAD_REQUEST", message, nil)
 }
 
 // ValidationErrorResponse mengirim response untuk validation error
@@ -95,19 +92,4 @@ func ConflictResponse(c *gin.Context, message string) {
 // InternalServerErrorResponse mengirim response untuk internal server error
 func InternalServerErrorResponse(c *gin.Context, message string, details interface{}) {
 	ErrorResponse(c, 500, "INTERNAL_SERVER_ERROR", message, details)
-}
-
-// CalculatePaginationMeta menghitung metadata pagination
-func CalculatePaginationMeta(page, pageSize int, totalItems int64) PaginationMeta {
-	totalPages := int(totalItems) / pageSize
-	if int(totalItems)%pageSize > 0 {
-		totalPages++
-	}
-
-	return PaginationMeta{
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: totalPages,
-		TotalItems: totalItems,
-	}
 }

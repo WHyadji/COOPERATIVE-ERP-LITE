@@ -43,10 +43,10 @@ func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest)
 	const method = "BuatProduk"
 
 	// Validasi kode produk unique
-	var count int64
+	var jumlah int64
 	err := s.db.Model(&models.Produk{}).
 		Where("id_koperasi = ? AND kode_produk = ?", idKoperasi, req.KodeProduk).
-		Count(&count).Error
+		Count(&jumlah).Error
 
 	if err != nil {
 		s.logger.Error(method, "Gagal mengecek kode produk", err, map[string]interface{}{
@@ -56,7 +56,7 @@ func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest)
 		return nil, utils.WrapDatabaseError(err, "Gagal mengecek kode produk")
 	}
 
-	if count > 0 {
+	if jumlah > 0 {
 		s.logger.Error(method, "Kode produk sudah digunakan", nil, map[string]interface{}{
 			"koperasi_id": idKoperasi.String(),
 			"kode_produk": req.KodeProduk,
@@ -98,16 +98,13 @@ func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest)
 		"nama_produk": produk.NamaProduk,
 	})
 
-	response := produk.ToResponse()
-	return &response, nil
+	respons := produk.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanSemuaProduk mengambil daftar produk dengan filter
 func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, search string, statusAktif *bool, page, pageSize int) ([]models.ProdukResponse, int64, error) {
 	const method = "DapatkanSemuaProduk"
-
-	// Validate and normalize pagination parameters to prevent DoS attacks
-	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
 
 	var produkList []models.Produk
 	var total int64
@@ -136,22 +133,17 @@ func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, sear
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal menghitung total produk")
 	}
 
-	// Pagination with validated parameters
-	offset := utils.CalculateOffset(validPage, validPageSize)
-
-	// Create context with timeout to prevent long-running queries
-	ctx, cancel := utils.CreateQueryContext()
-	defer cancel()
-
-	err = query.WithContext(ctx).Offset(offset).Limit(validPageSize).Order("nama_produk ASC").Find(&produkList).Error
+	// Pagination
+	offset := (page - 1) * pageSize
+	err = query.Offset(offset).Limit(pageSize).Order("nama_produk ASC").Find(&produkList).Error
 
 	if err != nil {
 		s.logger.Error(method, "Gagal mengambil daftar produk", err, map[string]interface{}{
 			"koperasi_id": idKoperasi.String(),
 			"kategori":    kategori,
 			"search":      search,
-			"page":        validPage,
-			"page_size":   validPageSize,
+			"page":        page,
+			"page_size":   pageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar produk")
 	}
@@ -160,16 +152,16 @@ func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, sear
 		"koperasi_id":   idKoperasi.String(),
 		"total":         total,
 		"jumlah_result": len(produkList),
-		"page":          validPage,
+		"page":          page,
 	})
 
 	// Convert to response
-	responses := make([]models.ProdukResponse, len(produkList))
+	responseDaftar := make([]models.ProdukResponse, len(produkList))
 	for i, produk := range produkList {
-		responses[i] = produk.ToResponse()
+		responseDaftar[i] = produk.ToResponse()
 	}
 
-	return responses, total, nil
+	return responseDaftar, total, nil
 }
 
 // DapatkanProduk mengambil produk berdasarkan ID dengan validasi multi-tenant
@@ -201,8 +193,8 @@ func (s *ProdukService) DapatkanProduk(idKoperasi, id uuid.UUID) (*models.Produk
 		"kode_produk": produk.KodeProduk,
 	})
 
-	response := produk.ToResponse()
-	return &response, nil
+	respons := produk.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanProdukByKode mengambil produk berdasarkan kode
@@ -234,8 +226,8 @@ func (s *ProdukService) DapatkanProdukByKode(idKoperasi uuid.UUID, kodeProduk st
 		"nama_produk": produk.NamaProduk,
 	})
 
-	response := produk.ToResponse()
-	return &response, nil
+	respons := produk.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanProdukByBarcode mengambil produk berdasarkan barcode
@@ -267,8 +259,8 @@ func (s *ProdukService) DapatkanProdukByBarcode(idKoperasi uuid.UUID, barcode st
 		"nama_produk": produk.NamaProduk,
 	})
 
-	response := produk.ToResponse()
-	return &response, nil
+	respons := produk.ToResponse()
+	return &respons, nil
 }
 
 // PerbaruiProdukRequest adalah struktur request untuk update produk
@@ -353,8 +345,8 @@ func (s *ProdukService) PerbaruiProduk(idKoperasi, id uuid.UUID, req *PerbaruiPr
 		"kode_produk": produk.KodeProduk,
 	})
 
-	response := produk.ToResponse()
-	return &response, nil
+	respons := produk.ToResponse()
+	return &respons, nil
 }
 
 // HapusProduk menghapus produk (dengan validasi multi-tenant)
@@ -380,8 +372,8 @@ func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
 	}
 
 	// Cek apakah ada di item penjualan
-	var countPenjualan int64
-	err = s.db.Model(&models.ItemPenjualan{}).Where("id_produk = ?", id).Count(&countPenjualan).Error
+	var jumlahPenjualan int64
+	err = s.db.Model(&models.ItemPenjualan{}).Where("id_produk = ?", id).Count(&jumlahPenjualan).Error
 	if err != nil {
 		s.logger.Error(method, "Gagal memeriksa item penjualan", err, map[string]interface{}{
 			"produk_id": id.String(),
@@ -389,11 +381,11 @@ func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
 		return utils.WrapDatabaseError(err, "Gagal memeriksa item penjualan")
 	}
 
-	if countPenjualan > 0 {
+	if jumlahPenjualan > 0 {
 		s.logger.Error(method, "Tidak dapat menghapus produk yang sudah pernah dijual", nil, map[string]interface{}{
 			"produk_id":       id.String(),
 			"nama_produk":     produk.NamaProduk,
-			"count_penjualan": countPenjualan,
+			"count_penjualan": jumlahPenjualan,
 		})
 		return utils.NewValidationError("Tidak dapat menghapus produk yang sudah pernah dijual")
 	}
@@ -665,10 +657,10 @@ func (s *ProdukService) DapatkanProdukStokRendah(idKoperasi uuid.UUID) ([]models
 	})
 
 	// Convert to response
-	responses := make([]models.ProdukResponse, len(produkList))
+	responseDaftar := make([]models.ProdukResponse, len(produkList))
 	for i, produk := range produkList {
-		responses[i] = produk.ToResponse()
+		responseDaftar[i] = produk.ToResponse()
 	}
 
-	return responses, nil
+	return responseDaftar, nil
 }

@@ -198,8 +198,8 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 		"kasir_id":        idKasir.String(),
 	})
 
-	response := penjualan.ToResponse()
-	return &response, nil
+	respons := penjualan.ToResponse()
+	return &respons, nil
 }
 
 // ValidasiItemPenjualan memvalidasi semua item (stok tersedia)
@@ -289,9 +289,6 @@ func (s *PenjualanService) GenerateNomorPenjualan(idKoperasi uuid.UUID, tanggal 
 func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir string, idKasir *uuid.UUID, page, pageSize int) ([]models.PenjualanResponse, int64, error) {
 	const method = "DapatkanSemuaPenjualan"
 
-	// Validate and normalize pagination parameters to prevent DoS attacks
-	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
-
 	var penjualanList []models.Penjualan
 	var total int64
 
@@ -311,14 +308,9 @@ func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalM
 	// Hitung total
 	query.Count(&total)
 
-	// Pagination with validated parameters
-	offset := utils.CalculateOffset(validPage, validPageSize)
-
-	// Create context with timeout to prevent long-running queries
-	ctx, cancel := utils.CreateQueryContext()
-	defer cancel()
-
-	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).
+	// Pagination
+	offset := (page - 1) * pageSize
+	err := query.Offset(offset).Limit(pageSize).
 		Order("tanggal_penjualan DESC").
 		Preload("ItemPenjualan.Produk").
 		Preload("Kasir").
@@ -330,26 +322,26 @@ func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalM
 			"koperasi_id":   idKoperasi.String(),
 			"tanggal_mulai": tanggalMulai,
 			"tanggal_akhir": tanggalAkhir,
-			"page":          validPage,
-			"page_size":     validPageSize,
+			"page":          page,
+			"page_size":     pageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar penjualan")
 	}
 
 	// Convert ke response
-	responses := make([]models.PenjualanResponse, len(penjualanList))
+	responseDaftar := make([]models.PenjualanResponse, len(penjualanList))
 	for i, penjualan := range penjualanList {
-		responses[i] = penjualan.ToResponse()
+		responseDaftar[i] = penjualan.ToResponse()
 	}
 
 	s.logger.Debug(method, "Berhasil mengambil daftar penjualan", map[string]interface{}{
 		"koperasi_id": idKoperasi.String(),
 		"total":       total,
-		"count":       len(responses),
-		"page":        validPage,
+		"count":       len(responseDaftar),
+		"page":        page,
 	})
 
-	return responses, total, nil
+	return responseDaftar, total, nil
 }
 
 // DapatkanPenjualan mengambil penjualan berdasarkan ID
@@ -384,8 +376,8 @@ func (s *PenjualanService) DapatkanPenjualan(idKoperasi, id uuid.UUID) (*models.
 		"nomor_penjualan": penjualan.NomorPenjualan,
 	})
 
-	response := penjualan.ToResponse()
-	return &response, nil
+	respons := penjualan.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanStruk mengambil data struk digital
@@ -402,7 +394,7 @@ func (s *PenjualanService) HitungTotalPenjualan(idKoperasi uuid.UUID, tanggalMul
 		JumlahTransaksi int64
 	}
 
-	var result SalesResult
+	var hasil SalesResult
 	query := s.db.Model(&models.Penjualan{}).
 		Select("COALESCE(SUM(total_belanja), 0) as total_penjualan, COUNT(*) as jumlah_transaksi").
 		Where("id_koperasi = ?", idKoperasi)
@@ -414,7 +406,7 @@ func (s *PenjualanService) HitungTotalPenjualan(idKoperasi uuid.UUID, tanggalMul
 		query = query.Where("tanggal_penjualan <= ?", tanggalAkhir)
 	}
 
-	err := query.Scan(&result).Error
+	err := query.Scan(&hasil).Error
 	if err != nil {
 		s.logger.Error(method, "Gagal menghitung total penjualan", err, map[string]interface{}{
 			"koperasi_id":   idKoperasi.String(),
@@ -425,19 +417,19 @@ func (s *PenjualanService) HitungTotalPenjualan(idKoperasi uuid.UUID, tanggalMul
 	}
 
 	summary := map[string]interface{}{
-		"totalPenjualan":  result.TotalPenjualan,
-		"jumlahTransaksi": result.JumlahTransaksi,
+		"totalPenjualan":  hasil.TotalPenjualan,
+		"jumlahTransaksi": hasil.JumlahTransaksi,
 		"rataRata":        float64(0),
 	}
 
-	if result.JumlahTransaksi > 0 {
-		summary["rataRata"] = result.TotalPenjualan / float64(result.JumlahTransaksi)
+	if hasil.JumlahTransaksi > 0 {
+		summary["rataRata"] = hasil.TotalPenjualan / float64(hasil.JumlahTransaksi)
 	}
 
 	s.logger.Debug(method, "Berhasil menghitung total penjualan", map[string]interface{}{
 		"koperasi_id":      idKoperasi.String(),
-		"total_penjualan":  result.TotalPenjualan,
-		"jumlah_transaksi": result.JumlahTransaksi,
+		"total_penjualan":  hasil.TotalPenjualan,
+		"jumlah_transaksi": hasil.JumlahTransaksi,
 	})
 
 	return summary, nil
@@ -445,8 +437,8 @@ func (s *PenjualanService) HitungTotalPenjualan(idKoperasi uuid.UUID, tanggalMul
 
 // DapatkanPenjualanHariIni mengambil penjualan hari ini
 func (s *PenjualanService) DapatkanPenjualanHariIni(idKoperasi uuid.UUID) (map[string]interface{}, error) {
-	today := time.Now().Format("2006-01-02")
-	return s.HitungTotalPenjualan(idKoperasi, today, today)
+	hariIni := time.Now().Format("2006-01-02")
+	return s.HitungTotalPenjualan(idKoperasi, hariIni, hariIni)
 }
 
 // DapatkanTopProduk mengambil produk terlaris
@@ -460,7 +452,7 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 		TotalNilai   float64
 	}
 
-	var results []TopProduk
+	var hasilDaftar []TopProduk
 	err := s.db.Model(&models.ItemPenjualan{}).
 		Select("item_penjualan.id_produk, item_penjualan.nama_produk, SUM(item_penjualan.kuantitas) as total_terjual, SUM(item_penjualan.subtotal) as total_nilai").
 		Joins("JOIN penjualan ON penjualan.id = item_penjualan.id_penjualan").
@@ -468,7 +460,7 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 		Group("item_penjualan.id_produk, item_penjualan.nama_produk").
 		Order("total_terjual DESC").
 		Limit(limit).
-		Scan(&results).Error
+		Scan(&hasilDaftar).Error
 
 	if err != nil {
 		s.logger.Error(method, "Gagal mengambil data top produk", err, map[string]interface{}{
@@ -479,13 +471,13 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 	}
 
 	// Convert ke map
-	topProduk := make([]map[string]interface{}, len(results))
-	for i, result := range results {
+	topProduk := make([]map[string]interface{}, len(hasilDaftar))
+	for i, hasil := range hasilDaftar {
 		topProduk[i] = map[string]interface{}{
-			"idProduk":     result.IDProduk,
-			"namaProduk":   result.NamaProduk,
-			"totalTerjual": result.TotalTerjual,
-			"totalNilai":   result.TotalNilai,
+			"idProduk":     hasil.IDProduk,
+			"namaProduk":   hasil.NamaProduk,
+			"totalTerjual": hasil.TotalTerjual,
+			"totalNilai":   hasil.TotalNilai,
 		}
 	}
 

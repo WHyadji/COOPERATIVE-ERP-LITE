@@ -31,12 +31,12 @@ type BuatPenggunaRequest struct {
 // BuatPengguna membuat pengguna baru
 func (s *PenggunaService) BuatPengguna(idKoperasi uuid.UUID, req *BuatPenggunaRequest) (*models.PenggunaResponse, error) {
 	// Cek apakah username sudah ada di koperasi yang sama
-	var count int64
+	var jumlah int64
 	s.db.Model(&models.Pengguna{}).
 		Where("id_koperasi = ? AND nama_pengguna = ?", idKoperasi, req.NamaPengguna).
-		Count(&count)
+		Count(&jumlah)
 
-	if count > 0 {
+	if jumlah > 0 {
 		return nil, errors.New("nama pengguna sudah digunakan")
 	}
 
@@ -62,8 +62,8 @@ func (s *PenggunaService) BuatPengguna(idKoperasi uuid.UUID, req *BuatPenggunaRe
 		return nil, errors.New("gagal membuat pengguna")
 	}
 
-	response := pengguna.ToResponse()
-	return &response, nil
+	respons := pengguna.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanSemuaPengguna mengambil daftar pengguna dengan filter
@@ -101,12 +101,12 @@ func (s *PenggunaService) DapatkanSemuaPengguna(idKoperasi uuid.UUID, peran stri
 	}
 
 	// Convert to response
-	responses := make([]models.PenggunaResponse, len(penggunaList))
+	responseDaftar := make([]models.PenggunaResponse, len(penggunaList))
 	for i, pengguna := range penggunaList {
-		responses[i] = pengguna.ToResponse()
+		responseDaftar[i] = pengguna.ToResponse()
 	}
 
-	return responses, total, nil
+	return responseDaftar, total, nil
 }
 
 // DapatkanPengguna mengambil data pengguna berdasarkan ID
@@ -121,8 +121,8 @@ func (s *PenggunaService) DapatkanPengguna(id uuid.UUID) (*models.PenggunaRespon
 		return nil, err
 	}
 
-	response := pengguna.ToResponse()
-	return &response, nil
+	respons := pengguna.ToResponse()
+	return &respons, nil
 }
 
 // PerbaruiPenggunaRequest adalah struktur request untuk update pengguna
@@ -165,8 +165,8 @@ func (s *PenggunaService) PerbaruiPengguna(idKoperasi, id uuid.UUID, req *Perbar
 		return nil, errors.New("gagal memperbarui pengguna")
 	}
 
-	response := pengguna.ToResponse()
-	return &response, nil
+	respons := pengguna.ToResponse()
+	return &respons, nil
 }
 
 // HapusPengguna menghapus pengguna (soft delete)
@@ -235,13 +235,13 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 	}
 
 	// Generate random password (12 characters, cryptographically secure)
-	passwordDefault, err := utils.GenerateRandomPassword(12)
+	kataSandiDefault, err := utils.GenerateRandomPassword(12)
 	if err != nil {
 		return "", errors.New("gagal membuat kata sandi acak")
 	}
 
 	// Set password
-	err = pengguna.SetKataSandi(passwordDefault)
+	err = pengguna.SetKataSandi(kataSandiDefault)
 	if err != nil {
 		return "", errors.New("gagal mengenkripsi kata sandi")
 	}
@@ -255,7 +255,7 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 		return "", errors.New("gagal mereset kata sandi")
 	}
 
-	return passwordDefault, nil
+	return kataSandiDefault, nil
 }
 
 // DapatkanPenggunaByUsername mengambil pengguna berdasarkan username
@@ -270,8 +270,8 @@ func (s *PenggunaService) DapatkanPenggunaByUsername(idKoperasi uuid.UUID, namaP
 		return nil, err
 	}
 
-	response := pengguna.ToResponse()
-	return &response, nil
+	respons := pengguna.ToResponse()
+	return &respons, nil
 }
 
 // GetSemuaPengguna is a wrapper for DapatkanSemuaPengguna with flexible peran parameter
