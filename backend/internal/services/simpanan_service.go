@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/internal/utils"
 	"errors"
 	"fmt"
 	"time"
@@ -13,8 +14,9 @@ import (
 
 // SimpananService menangani logika bisnis simpanan anggota
 type SimpananService struct {
-	db                *gorm.DB
-	transaksiService  *TransaksiService
+	db               *gorm.DB
+	transaksiService *TransaksiService
+	logger           *utils.Logger
 }
 
 // NewSimpananService membuat instance baru SimpananService
@@ -22,6 +24,7 @@ func NewSimpananService(db *gorm.DB, transaksiService *TransaksiService) *Simpan
 	return &SimpananService{
 		db:               db,
 		transaksiService: transaksiService,
+		logger:           utils.NewLogger("SimpananService"),
 	}
 }
 
@@ -36,17 +39,36 @@ type CatatSetoranRequest struct {
 
 // CatatSetoran mencatat setoran simpanan anggota
 func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *CatatSetoranRequest) (*models.SimpananResponse, error) {
+	const method = "CatatSetoran"
+
 	// Validasi anggota exists dan aktif
 	var anggota models.Anggota
 	err := s.db.Where("id = ? AND id_koperasi = ? AND status = ?", req.IDAnggota, idKoperasi, models.StatusAktif).
 		First(&anggota).Error
 	if err != nil {
-		return nil, errors.New("anggota tidak ditemukan atau tidak aktif")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Error(method, "Anggota not found or not active", err, map[string]interface{}{
+				"koperasi_id": idKoperasi.String(),
+				"anggota_id":  req.IDAnggota.String(),
+			})
+			return nil, utils.WrapValidationError(err, "Anggota tidak ditemukan atau tidak aktif")
+		}
+
+		s.logger.Error(method, "Failed to validate anggota", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"anggota_id":  req.IDAnggota.String(),
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal memvalidasi anggota")
 	}
 
 	// Validasi jumlah setoran
 	if req.JumlahSetoran <= 0 {
-		return nil, errors.New("jumlah setoran harus lebih dari 0")
+		s.logger.Error(method, "Invalid setoran amount", utils.ErrInvalidAmount, map[string]interface{}{
+			"koperasi_id":    idKoperasi.String(),
+			"anggota_id":     req.IDAnggota.String(),
+			"jumlah_setoran": req.JumlahSetoran,
+		})
+		return nil, utils.WrapValidationError(utils.ErrInvalidAmount, "Jumlah setoran harus lebih dari 0")
 	}
 
 	// Generate nomor referensi
@@ -70,7 +92,15 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 	// Simpan ke database
 	err = s.db.Create(simpanan).Error
 	if err != nil {
-		return nil, errors.New("gagal mencatat setoran simpanan")
+		s.logger.Error(method, "Failed to create simpanan record", err, map[string]interface{}{
+			"koperasi_id":      idKoperasi.String(),
+			"anggota_id":       req.IDAnggota.String(),
+			"tipe_simpanan":    req.TipeSimpanan,
+			"jumlah_setoran":   req.JumlahSetoran,
+			"nomor_referensi":  nomorReferensi,
+			"tanggal_transaksi": req.TanggalTransaksi.Format("2006-01-02"),
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mencatat setoran simpanan")
 	}
 
 	// Auto-posting ke jurnal akuntansi
@@ -78,11 +108,26 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 	if err != nil {
 		// Rollback simpanan jika posting gagal
 		s.db.Delete(simpanan)
+		s.logger.Error(method, "Failed to post to journal, rolled back", err, map[string]interface{}{
+			"koperasi_id":     idKoperasi.String(),
+			"simpanan_id":     simpanan.ID.String(),
+			"nomor_referensi": nomorReferensi,
+		})
 		return nil, fmt.Errorf("gagal posting ke jurnal: %w", err)
 	}
 
 	// Reload dengan relasi
 	s.db.Preload("Anggota").First(simpanan, simpanan.ID)
+
+	s.logger.Info(method, "Successfully created simpanan transaction", map[string]interface{}{
+		"simpanan_id":      simpanan.ID.String(),
+		"koperasi_id":      idKoperasi.String(),
+		"anggota_id":       req.IDAnggota.String(),
+		"tipe_simpanan":    req.TipeSimpanan,
+		"jumlah_setoran":   req.JumlahSetoran,
+		"nomor_referensi":  nomorReferensi,
+		"tanggal_transaksi": req.TanggalTransaksi.Format("2006-01-02"),
+	})
 
 	response := simpanan.ToResponse()
 	return &response, nil
@@ -92,6 +137,7 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 // Format: SMP-YYYYMMDD-NNNN
 // Uses row-level locking to prevent race conditions in concurrent requests
 func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
+	const method = "GenerateNomorReferensi"
 	tanggalStr := tanggal.Format("20060102")
 	tanggalDate := tanggal.Format("2006-01-02")
 	var nomorReferensi string
@@ -118,6 +164,10 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 				nomorUrut = parsedUrut + 1
 			}
 		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Error(method, "Failed to query last simpanan", err, map[string]interface{}{
+				"koperasi_id":      idKoperasi.String(),
+				"tanggal_transaksi": tanggalDate,
+			})
 			return err
 		}
 
@@ -126,14 +176,25 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 	})
 
 	if err != nil {
-		return "", errors.New("gagal generate nomor referensi")
+		s.logger.Error(method, "Transaction failed while generating nomor referensi", err, map[string]interface{}{
+			"koperasi_id":      idKoperasi.String(),
+			"tanggal_transaksi": tanggalDate,
+		})
+		return "", utils.WrapGenerationError(err, "Generate nomor referensi")
 	}
+
+	s.logger.Debug(method, "Generated nomor referensi", map[string]interface{}{
+		"nomor_referensi":  nomorReferensi,
+		"koperasi_id":      idKoperasi.String(),
+		"tanggal_transaksi": tanggalDate,
+	})
 
 	return nomorReferensi, nil
 }
 
 // DapatkanSemuaTransaksiSimpanan mengambil daftar transaksi simpanan
 func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, tipeSimpanan string, idAnggota *uuid.UUID, tanggalMulai, tanggalAkhir string, page, pageSize int) ([]models.SimpananResponse, int64, error) {
+	const method = "DapatkanSemuaTransaksiSimpanan"
 	var simpananList []models.Simpanan
 	var total int64
 
@@ -164,7 +225,16 @@ func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, t
 		Find(&simpananList).Error
 
 	if err != nil {
-		return nil, 0, errors.New("gagal mengambil daftar transaksi simpanan")
+		s.logger.Error(method, "Failed to fetch simpanan transaction list", err, map[string]interface{}{
+			"koperasi_id":    idKoperasi.String(),
+			"tipe_simpanan":  tipeSimpanan,
+			"anggota_id":     idAnggota,
+			"tanggal_mulai":  tanggalMulai,
+			"tanggal_akhir":  tanggalAkhir,
+			"page":           page,
+			"page_size":      pageSize,
+		})
+		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar transaksi simpanan")
 	}
 
 	// Convert to response
@@ -173,16 +243,21 @@ func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, t
 		responses[i] = simpanan.ToResponse()
 	}
 
+	s.logger.Debug(method, "Successfully fetched simpanan transaction list", map[string]interface{}{
+		"count": len(responses),
+		"total": total,
+	})
+
 	return responses, total, nil
 }
 
-// DapatkanSaldoAnggota mengambil saldo simpanan per anggota
-func (s *SimpananService) DapatkanSaldoAnggota(idAnggota uuid.UUID) (*models.SaldoSimpananAnggota, error) {
-	// Validasi anggota exists
+// DapatkanSaldoAnggota mengambil saldo simpanan per anggota dengan validasi multi-tenant
+func (s *SimpananService) DapatkanSaldoAnggota(idKoperasi, idAnggota uuid.UUID) (*models.SaldoSimpananAnggota, error) {
+	// Validasi anggota exists dan milik koperasi yang benar
 	var anggota models.Anggota
-	err := s.db.Where("id = ?", idAnggota).First(&anggota).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", idAnggota, idKoperasi).First(&anggota).Error
 	if err != nil {
-		return nil, errors.New("anggota tidak ditemukan")
+		return nil, errors.New("anggota tidak ditemukan atau tidak memiliki akses")
 	}
 
 	// Hitung saldo per tipe simpanan
@@ -287,7 +362,7 @@ func (s *SimpananService) DapatkanLaporanSaldoAnggota(idKoperasi uuid.UUID) ([]m
 	var laporan []models.SaldoSimpananAnggota
 
 	for _, anggota := range anggotaList {
-		saldo, err := s.DapatkanSaldoAnggota(anggota.ID)
+		saldo, err := s.DapatkanSaldoAnggota(idKoperasi, anggota.ID)
 		if err != nil {
 			continue // Skip jika error
 		}

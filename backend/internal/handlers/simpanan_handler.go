@@ -66,7 +66,7 @@ func (h *SimpananHandler) List(c *gin.Context) {
 		}
 	}
 
-	simpananList, total, err := h.simpananService.GetTransaksiSimpanan(
+	simpananList, total, err := h.simpananService.DapatkanSemuaTransaksiSimpanan(
 		koperasiUUID, tipeSimpanan, idAnggotaPtr, tanggalMulai, tanggalAkhir, page, pageSize,
 	)
 	if err != nil {
@@ -80,8 +80,10 @@ func (h *SimpananHandler) List(c *gin.Context) {
 
 // GetSaldoAnggota handles GET /api/v1/simpanan/anggota/:id
 func (h *SimpananHandler) GetSaldoAnggota(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
 	idStr := c.Param("id")
 	idAnggota, err := uuid.Parse(idStr)
@@ -90,7 +92,7 @@ func (h *SimpananHandler) GetSaldoAnggota(c *gin.Context) {
 		return
 	}
 
-	saldo, err := h.simpananService.GetSaldoSimpanan(koperasiUUID, idAnggota)
+	saldo, err := h.simpananService.DapatkanSaldoAnggota(koperasiUUID, idAnggota)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, err.Error(), nil)
 		return
@@ -104,7 +106,7 @@ func (h *SimpananHandler) GetRingkasan(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
-	ringkasan, err := h.simpananService.GetRingkasanSimpanan(koperasiUUID)
+	ringkasan, err := h.simpananService.DapatkanRingkasanSimpanan(koperasiUUID)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, err.Error(), nil)
 		return
@@ -118,7 +120,7 @@ func (h *SimpananHandler) GetLaporanSaldo(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
-	laporanSaldo, err := h.simpananService.GetLaporanSaldoSemuaAnggota(koperasiUUID)
+	laporanSaldo, err := h.simpananService.DapatkanLaporanSaldoAnggota(koperasiUUID)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, err.Error(), nil)
 		return

@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"cooperative-erp-lite/internal/constants"
 	"cooperative-erp-lite/internal/services"
 	"cooperative-erp-lite/internal/utils"
+	"errors"
 	"net/http"
-	"strconv"
+
+	apperrors "cooperative-erp-lite/internal/errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // TransaksiHandler menangani endpoint transaksi akuntansi
@@ -22,13 +24,27 @@ func NewTransaksiHandler(transaksiService *services.TransaksiService) *Transaksi
 	}
 }
 
-// Create handles POST /api/v1/transaksi
+// Create menangani pembuatan transaksi akuntansi baru.
+// Memvalidasi akses multi-tenant untuk memastikan transaksi dibuat dalam koperasi yang benar.
+// Memvalidasi double-entry accounting (total debit harus sama dengan total kredit).
+//
+// Route: POST /api/v1/transaksi
+// Request Body: BuatTransaksiRequest
+// Response: TransaksiResponse dengan status 201 Created
+//
+// Error Responses:
+//   - 400 Bad Request: Jika validasi debit-kredit gagal
+//   - 500 Internal Server Error: Jika terjadi kesalahan server
 func (h *TransaksiHandler) Create(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
-	idPengguna, _ := c.Get("idPengguna")
-	penggunaUUID := idPengguna.(uuid.UUID)
+	penggunaUUID, ok := AmbilIDPenggunaDariContext(c)
+	if !ok {
+		return
+	}
 
 	var req services.BuatTransaksiRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,8 +55,8 @@ func (h *TransaksiHandler) Create(c *gin.Context) {
 	transaksi, err := h.transaksiService.BuatTransaksi(koperasiUUID, penggunaUUID, &req)
 	if err != nil {
 		// Check jika error validasi double-entry
-		if err.Error() == "total debit harus sama dengan total kredit" ||
-		   err.Error() == "satu baris tidak boleh memiliki debit dan kredit sekaligus" {
+		if errors.Is(err, apperrors.ErrDebitKreditTidakBalance) ||
+			errors.Is(err, apperrors.ErrDebitKreditKeduanya) {
 			utils.BadRequestResponse(c, err.Error())
 			return
 		}
@@ -48,62 +64,106 @@ func (h *TransaksiHandler) Create(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusCreated, "Transaksi berhasil dibuat", transaksi)
+	utils.SuccessResponse(c, http.StatusCreated, constants.PesanTransaksiBerhasilDibuat, transaksi)
 }
 
-// List handles GET /api/v1/transaksi
+// List menangani pengambilan daftar transaksi dengan paginasi dan filter.
+// Memvalidasi akses multi-tenant untuk memastikan hanya transaksi dalam koperasi yang benar yang diambil.
+// Mendukung filter berdasarkan tanggal mulai, tanggal akhir, dan tipe transaksi.
+//
+// Route: GET /api/v1/transaksi
+// Query Parameters:
+//   - page: Nomor halaman (default: 1)
+//   - pageSize: Jumlah item per halaman (default: 20, max: 100)
+//   - tanggalMulai: Filter tanggal mulai (opsional)
+//   - tanggalAkhir: Filter tanggal akhir (opsional)
+//   - tipeTransaksi: Filter tipe transaksi (opsional)
+// Response: Array TransaksiResponse dengan metadata paginasi dan status 200 OK
+//
+// Error Responses:
+//   - 500 Internal Server Error: Jika terjadi kesalahan server
 func (h *TransaksiHandler) List(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	paginasi := AmbilParameterPaginasi(c)
 	tanggalMulai := c.Query("tanggalMulai")
 	tanggalAkhir := c.Query("tanggalAkhir")
 	tipeTransaksi := c.Query("tipeTransaksi")
 
-	transaksiList, total, err := h.transaksiService.GetSemuaTransaksi(
-		koperasiUUID, tanggalMulai, tanggalAkhir, tipeTransaksi, page, pageSize,
+	transaksiList, total, err := h.transaksiService.DapatkanSemuaTransaksi(
+		koperasiUUID, tanggalMulai, tanggalAkhir, tipeTransaksi, paginasi.Halaman, paginasi.UkuranHalaman,
 	)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, err.Error(), nil)
 		return
 	}
 
-	pagination := utils.CalculatePaginationMeta(page, pageSize, total)
-	utils.PaginatedSuccessResponse(c, http.StatusOK, "Data transaksi berhasil diambil", transaksiList, pagination)
+	metaPaginasi := utils.CalculatePaginationMeta(paginasi.Halaman, paginasi.UkuranHalaman, total)
+	utils.PaginatedSuccessResponse(c, http.StatusOK, constants.PesanTransaksiBerhasilDiambil, transaksiList, metaPaginasi)
 }
 
-// GetByID handles GET /api/v1/transaksi/:id
+// GetByID menangani pengambilan detail transaksi berdasarkan ID.
+// Memvalidasi akses multi-tenant untuk memastikan transaksi yang diambil milik koperasi yang benar.
+//
+// Route: GET /api/v1/transaksi/:id
+// URL Parameters:
+//   - id: UUID transaksi
+// Response: TransaksiResponse dengan status 200 OK
+//
+// Error Responses:
+//   - 400 Bad Request: Jika ID tidak valid
+//   - 404 Not Found: Jika transaksi tidak ditemukan atau tidak milik koperasi pengguna
+//   - 500 Internal Server Error: Jika terjadi kesalahan server
 func (h *TransaksiHandler) GetByID(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
-
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "ID transaksi tidak valid")
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
 		return
 	}
 
-	transaksi, err := h.transaksiService.GetTransaksiByID(koperasiUUID, id)
-	if err != nil {
-		utils.NotFoundResponse(c, "Transaksi tidak ditemukan")
+	id, ok := ParseUUIDDariParameter(c, "id")
+	if !ok {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Data transaksi berhasil diambil", transaksi)
+	transaksi, err := h.transaksiService.DapatkanTransaksi(koperasiUUID, id)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrTransaksiTidakDitemukan) {
+			utils.NotFoundResponse(c, constants.PesanTransaksiTidakDitemukan)
+		} else {
+			utils.InternalServerErrorResponse(c, err.Error(), nil)
+		}
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, constants.PesanTransaksiBerhasilDiambil, transaksi)
 }
 
-// Update handles PUT /api/v1/transaksi/:id
+// Update menangani pembaruan transaksi akuntansi.
+// Memvalidasi akses multi-tenant untuk memastikan transaksi yang diupdate milik koperasi yang benar.
+// Memvalidasi double-entry accounting (total debit harus sama dengan total kredit).
+// Transaksi yang sudah di-post tidak dapat diupdate.
+//
+// Route: PUT /api/v1/transaksi/:id
+// URL Parameters:
+//   - id: UUID transaksi
+// Request Body: BuatTransaksiRequest
+// Response: TransaksiResponse dengan status 200 OK
+//
+// Error Responses:
+//   - 400 Bad Request: Jika ID tidak valid, validasi debit-kredit gagal, atau transaksi sudah di-post
+//   - 404 Not Found: Jika transaksi tidak ditemukan atau tidak milik koperasi pengguna
+//   - 500 Internal Server Error: Jika terjadi kesalahan server
 func (h *TransaksiHandler) Update(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "ID transaksi tidak valid")
+	id, ok := ParseUUIDDariParameter(c, "id")
+	if !ok {
 		return
 	}
 
@@ -115,7 +175,19 @@ func (h *TransaksiHandler) Update(c *gin.Context) {
 
 	transaksi, err := h.transaksiService.PerbaruiTransaksi(koperasiUUID, id, &req)
 	if err != nil {
-		if err.Error() == "transaksi sudah di-post, tidak dapat diubah" {
+		// Check if error is validation error from double-entry
+		if errors.Is(err, apperrors.ErrDebitKreditTidakBalance) ||
+			errors.Is(err, apperrors.ErrDebitKreditKeduanya) {
+			utils.BadRequestResponse(c, err.Error())
+			return
+		}
+		// Check if transaction not found (could be because it doesn't exist or doesn't belong to cooperative)
+		if errors.Is(err, apperrors.ErrTransaksiTidakDitemukan) {
+			utils.NotFoundResponse(c, constants.PesanTransaksiTidakDitemukan)
+			return
+		}
+		// Check for "posted" status error when the field is added
+		if errors.Is(err, apperrors.ErrTransaksiSudahDiPost) {
 			utils.BadRequestResponse(c, err.Error())
 			return
 		}
@@ -123,23 +195,35 @@ func (h *TransaksiHandler) Update(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Transaksi berhasil diupdate", transaksi)
+	utils.SuccessResponse(c, http.StatusOK, constants.PesanTransaksiBerhasilDiupdate, transaksi)
 }
 
-// Delete handles DELETE /api/v1/transaksi/:id
+// Delete menangani penghapusan transaksi akuntansi.
+// Memvalidasi akses multi-tenant untuk memastikan transaksi yang dihapus milik koperasi yang benar.
+// Transaksi yang sudah di-post tidak dapat dihapus (harus di-reverse).
+//
+// Route: DELETE /api/v1/transaksi/:id
+// URL Parameters:
+//   - id: UUID transaksi
+// Response: Pesan sukses dengan status 200 OK
+//
+// Error Responses:
+//   - 400 Bad Request: Jika ID tidak valid atau transaksi sudah di-post
+//   - 404 Not Found: Jika transaksi tidak ditemukan atau tidak milik koperasi pengguna
+//   - 500 Internal Server Error: Jika terjadi kesalahan server
 func (h *TransaksiHandler) Delete(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "ID transaksi tidak valid")
+	id, ok := ParseUUIDDariParameter(c, "id")
+	if !ok {
 		return
 	}
 
 	if err := h.transaksiService.HapusTransaksi(koperasiUUID, id); err != nil {
-		if err.Error() == "transaksi sudah di-post, tidak dapat dihapus" {
+		if errors.Is(err, apperrors.ErrTransaksiSudahDiPostTidakBisaHapus) {
 			utils.BadRequestResponse(c, err.Error())
 			return
 		}
@@ -147,21 +231,37 @@ func (h *TransaksiHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Transaksi berhasil dihapus", nil)
+	utils.SuccessResponse(c, http.StatusOK, constants.PesanTransaksiBerhasilDihapus, nil)
 }
 
-// Reverse handles POST /api/v1/transaksi/:id/reverse
+// Reverse menangani pembuatan jurnal pembalik (reversing entry) untuk transaksi.
+// Memvalidasi akses multi-tenant untuk memastikan transaksi yang di-reverse milik koperasi yang benar.
+// Membuat transaksi baru dengan debit dan kredit yang dibalik dari transaksi asli.
+//
+// Route: POST /api/v1/transaksi/:id/reverse
+// URL Parameters:
+//   - id: UUID transaksi yang akan di-reverse
+// Request Body:
+//   - keterangan: Alasan/keterangan reversal (required)
+// Response: TransaksiResponse (transaksi reversal yang baru) dengan status 200 OK
+//
+// Error Responses:
+//   - 400 Bad Request: Jika ID tidak valid, keterangan kosong, atau transaksi tidak memiliki baris
+//   - 404 Not Found: Jika transaksi tidak ditemukan atau tidak milik koperasi pengguna
+//   - 500 Internal Server Error: Jika terjadi kesalahan server
 func (h *TransaksiHandler) Reverse(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
-	idPengguna, _ := c.Get("idPengguna")
-	penggunaUUID := idPengguna.(uuid.UUID)
+	penggunaUUID, ok := AmbilIDPenggunaDariContext(c)
+	if !ok {
+		return
+	}
 
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "ID transaksi tidak valid")
+	id, ok := ParseUUIDDariParameter(c, "id")
+	if !ok {
 		return
 	}
 
@@ -176,9 +276,19 @@ func (h *TransaksiHandler) Reverse(c *gin.Context) {
 
 	reversedTransaksi, err := h.transaksiService.ReverseTransaksi(koperasiUUID, penggunaUUID, id, req.Keterangan)
 	if err != nil {
+		// Check if transaction not found (could be because it doesn't exist or doesn't belong to cooperative)
+		if errors.Is(err, apperrors.ErrTransaksiTidakDitemukan) {
+			utils.NotFoundResponse(c, constants.PesanTransaksiTidakDitemukan)
+			return
+		}
+		// Check if transaction has no lines to reverse
+		if errors.Is(err, apperrors.ErrTidakAdaBarisTransaksi) {
+			utils.BadRequestResponse(c, err.Error())
+			return
+		}
 		utils.InternalServerErrorResponse(c, err.Error(), nil)
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Transaksi berhasil di-reverse", reversedTransaksi)
+	utils.SuccessResponse(c, http.StatusOK, constants.PesanTransaksiBerhasilDireverse, reversedTransaksi)
 }
