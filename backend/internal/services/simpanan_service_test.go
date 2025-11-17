@@ -345,3 +345,199 @@ func TestDapatkanLaporanSaldoAnggota_MultiTenant(t *testing.T) {
 	db.Delete(koperasi1)
 	db.Delete(koperasi2)
 }
+
+// TestCatatSetoran_SimpananPokokUniqueness verifies that Simpanan Pokok can only be paid once
+func TestCatatSetoran_SimpananPokokUniqueness(t *testing.T) {
+	db, _ := setupTestDBWithQueryCounter(t)
+	if db == nil {
+		return
+	}
+
+	// Auto migrate additional tables needed for this test
+	err := db.AutoMigrate(
+		&models.Pengguna{},
+		&models.Akun{},
+		&models.Transaksi{},
+		&models.BarisTransaksi{},
+	)
+	if err != nil {
+		t.Fatalf("Failed to migrate additional tables: %v", err)
+	}
+
+	// Create test cooperative
+	koperasi := &models.Koperasi{
+		NamaKoperasi: "Test Simpanan Pokok Koperasi",
+		Alamat:       "Test Address",
+	}
+	db.Create(koperasi)
+
+	// Create test member
+	member := &models.Anggota{
+		IDKoperasi:   koperasi.ID,
+		NomorAnggota: "A0001",
+		NamaLengkap:  "Test Member",
+		Status:       models.StatusAktif,
+	}
+	db.Create(member)
+
+	// Create test user for transaction
+	user := &models.Pengguna{
+		IDKoperasi:   koperasi.ID,
+		Email:        "test@example.com",
+		NamaLengkap:  "Test User",
+		NamaPengguna: "testuser",
+		Peran:        models.PeranAdmin,
+	}
+	user.SetKataSandi("password123")
+	db.Create(user)
+
+	// Create TransaksiService (required for SimpananService)
+	transaksiService := NewTransaksiService(db)
+	service := NewSimpananService(db, transaksiService)
+
+	// First deposit - should succeed
+	req1 := &CatatSetoranRequest{
+		IDAnggota:        member.ID,
+		TipeSimpanan:     models.SimpananPokok,
+		TanggalTransaksi: time.Now(),
+		JumlahSetoran:    100000,
+		Keterangan:       "Simpanan pokok pertama",
+	}
+
+	result1, err := service.CatatSetoran(koperasi.ID, user.ID, req1)
+	assert.NoError(t, err)
+	assert.NotNil(t, result1)
+	assert.Equal(t, models.SimpananPokok, result1.TipeSimpanan)
+	assert.Equal(t, float64(100000), result1.JumlahSetoran)
+
+	// Second deposit of Simpanan Pokok - should fail with specific error
+	req2 := &CatatSetoranRequest{
+		IDAnggota:        member.ID,
+		TipeSimpanan:     models.SimpananPokok,
+		TanggalTransaksi: time.Now(),
+		JumlahSetoran:    50000,
+		Keterangan:       "Simpanan pokok kedua (tidak boleh)",
+	}
+
+	result2, err := service.CatatSetoran(koperasi.ID, user.ID, req2)
+	assert.Error(t, err)
+	assert.Nil(t, result2)
+	assert.Equal(t, "anggota sudah membayar simpanan pokok", err.Error())
+
+	// Verify only one Simpanan Pokok record exists
+	var count int64
+	db.Model(&models.Simpanan{}).
+		Where("id_anggota = ? AND tipe_simpanan = ?", member.ID, models.SimpananPokok).
+		Count(&count)
+	assert.Equal(t, int64(1), count)
+
+	// Cleanup
+	db.Exec("DELETE FROM simpanan WHERE id_koperasi = ?", koperasi.ID)
+	db.Exec("DELETE FROM baris_transaksi WHERE id_transaksi IN (SELECT id FROM transaksi WHERE id_koperasi = ?)", koperasi.ID)
+	db.Exec("DELETE FROM transaksi WHERE id_koperasi = ?", koperasi.ID)
+	db.Exec("DELETE FROM anggota WHERE id_koperasi = ?", koperasi.ID)
+	db.Exec("DELETE FROM pengguna WHERE id_koperasi = ?", koperasi.ID)
+	db.Delete(koperasi)
+}
+
+// TestCatatSetoran_OtherSimpananTypes verifies that Simpanan Wajib and Sukarela can be paid multiple times
+func TestCatatSetoran_OtherSimpananTypes(t *testing.T) {
+	db, _ := setupTestDBWithQueryCounter(t)
+	if db == nil {
+		return
+	}
+
+	// Auto migrate additional tables
+	err := db.AutoMigrate(
+		&models.Pengguna{},
+		&models.Akun{},
+		&models.Transaksi{},
+		&models.BarisTransaksi{},
+	)
+	if err != nil {
+		t.Fatalf("Failed to migrate additional tables: %v", err)
+	}
+
+	// Create test cooperative
+	koperasi := &models.Koperasi{
+		NamaKoperasi: "Test Multiple Deposits Koperasi",
+		Alamat:       "Test Address",
+	}
+	db.Create(koperasi)
+
+	// Create test member
+	member := &models.Anggota{
+		IDKoperasi:   koperasi.ID,
+		NomorAnggota: "A0001",
+		NamaLengkap:  "Test Member",
+		Status:       models.StatusAktif,
+	}
+	db.Create(member)
+
+	// Create test user
+	user := &models.Pengguna{
+		IDKoperasi:   koperasi.ID,
+		Email:        "test@example.com",
+		NamaLengkap:  "Test User",
+		NamaPengguna: "testuser",
+		Peran:        models.PeranAdmin,
+	}
+	user.SetKataSandi("password123")
+	db.Create(user)
+
+	// Create services
+	transaksiService := NewTransaksiService(db)
+	service := NewSimpananService(db, transaksiService)
+
+	// Test multiple Simpanan Wajib deposits - should all succeed
+	for i := 1; i <= 3; i++ {
+		req := &CatatSetoranRequest{
+			IDAnggota:        member.ID,
+			TipeSimpanan:     models.SimpananWajib,
+			TanggalTransaksi: time.Now().AddDate(0, i-1, 0), // Different months
+			JumlahSetoran:    50000,
+			Keterangan:       fmt.Sprintf("Simpanan wajib bulan %d", i),
+		}
+
+		result, err := service.CatatSetoran(koperasi.ID, user.ID, req)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, models.SimpananWajib, result.TipeSimpanan)
+	}
+
+	// Test multiple Simpanan Sukarela deposits - should all succeed
+	for i := 1; i <= 2; i++ {
+		req := &CatatSetoranRequest{
+			IDAnggota:        member.ID,
+			TipeSimpanan:     models.SimpananSukarela,
+			TanggalTransaksi: time.Now(),
+			JumlahSetoran:    25000,
+			Keterangan:       fmt.Sprintf("Simpanan sukarela %d", i),
+		}
+
+		result, err := service.CatatSetoran(koperasi.ID, user.ID, req)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, models.SimpananSukarela, result.TipeSimpanan)
+	}
+
+	// Verify counts
+	var countWajib, countSukarela int64
+	db.Model(&models.Simpanan{}).
+		Where("id_anggota = ? AND tipe_simpanan = ?", member.ID, models.SimpananWajib).
+		Count(&countWajib)
+	db.Model(&models.Simpanan{}).
+		Where("id_anggota = ? AND tipe_simpanan = ?", member.ID, models.SimpananSukarela).
+		Count(&countSukarela)
+
+	assert.Equal(t, int64(3), countWajib, "Should allow multiple Simpanan Wajib deposits")
+	assert.Equal(t, int64(2), countSukarela, "Should allow multiple Simpanan Sukarela deposits")
+
+	// Cleanup
+	db.Exec("DELETE FROM simpanan WHERE id_koperasi = ?", koperasi.ID)
+	db.Exec("DELETE FROM baris_transaksi WHERE id_transaksi IN (SELECT id FROM transaksi WHERE id_koperasi = ?)", koperasi.ID)
+	db.Exec("DELETE FROM transaksi WHERE id_koperasi = ?", koperasi.ID)
+	db.Exec("DELETE FROM anggota WHERE id_koperasi = ?", koperasi.ID)
+	db.Exec("DELETE FROM pengguna WHERE id_koperasi = ?", koperasi.ID)
+	db.Delete(koperasi)
+}
