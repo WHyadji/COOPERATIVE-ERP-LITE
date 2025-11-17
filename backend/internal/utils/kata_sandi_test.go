@@ -8,8 +8,8 @@ import (
 // TestValidasiKataSandi_Valid tests that valid strong passwords pass validation
 func TestValidasiKataSandi_Valid(t *testing.T) {
 	testCases := []struct {
-		nama       string
-		kataSandi  string
+		nama      string
+		kataSandi string
 	}{
 		{"Password dengan semua persyaratan", "Koperasi@2025"},
 		{"Password panjang dengan simbol", "Bendahara#12345"},
@@ -34,8 +34,8 @@ func TestValidasiKataSandi_Valid(t *testing.T) {
 // TestValidasiKataSandi_TooShort tests that passwords shorter than 10 chars are rejected
 func TestValidasiKataSandi_TooShort(t *testing.T) {
 	testCases := []struct {
-		nama       string
-		kataSandi  string
+		nama      string
+		kataSandi string
 	}{
 		{"6 karakter", "Abc@12"},
 		{"8 karakter", "Abcd@123"},
@@ -158,8 +158,8 @@ func TestValidasiKataSandi_NoSpecialChar(t *testing.T) {
 // TestValidasiKataSandi_CommonPasswords tests that common weak passwords are rejected
 func TestValidasiKataSandi_CommonPasswords(t *testing.T) {
 	testCases := []struct {
-		nama       string
-		kataSandi  string
+		nama      string
+		kataSandi string
 	}{
 		{"password generic", "Password123!"},
 		{"password dengan angka", "Password1234!"},
@@ -180,6 +180,7 @@ func TestValidasiKataSandi_CommonPasswords(t *testing.T) {
 			err := ValidasiKataSandi(tc.kataSandi)
 			if err == nil {
 				t.Errorf("Password '%s' adalah password umum, seharusnya ditolak", tc.kataSandi)
+				return
 			}
 			if !strings.Contains(err.Error(), "terlalu umum") {
 				t.Errorf("Expected error tentang password 'terlalu umum', got: %v", err)
@@ -193,10 +194,10 @@ func TestValidasiKataSandi_CommonPasswords(t *testing.T) {
 // TestValidasiKataSandi_EdgeCases tests edge cases
 func TestValidasiKataSandi_EdgeCases(t *testing.T) {
 	testCases := []struct {
-		nama       string
-		kataSandi  string
+		nama            string
+		kataSandi       string
 		seharusnyaValid bool
-		pesanError string
+		pesanError      string
 	}{
 		{"Tepat 10 karakter valid", "Admin@2025", true, ""},
 		{"Sangat panjang valid", "ThisIsAVeryLongAndSecurePassword123!@#", true, ""},
@@ -277,10 +278,10 @@ func TestContohKataSandiKuat(t *testing.T) {
 // TestHitungKekuatanKataSandi tests password strength calculation
 func TestHitungKekuatanKataSandi(t *testing.T) {
 	testCases := []struct {
-		nama         string
-		kataSandi    string
+		nama            string
+		kataSandi       string
 		levelDiharapkan string
-		skorMinimal  int
+		skorMinimal     int
 	}{
 		{"Password lemah", "abc123", "lemah", 0},
 		{"Password lemah 2", "password", "lemah", 0},
@@ -319,8 +320,8 @@ func TestHitungKekuatanKataSandi(t *testing.T) {
 // TestHitungKekuatanKataSandi_Saran tests that suggestions are provided for weak passwords
 func TestHitungKekuatanKataSandi_Saran(t *testing.T) {
 	testCases := []struct {
-		nama       string
-		kataSandi  string
+		nama               string
+		kataSandi          string
 		seharusnyaAdaSaran bool
 	}{
 		{"Password sangat lemah", "abc", true},

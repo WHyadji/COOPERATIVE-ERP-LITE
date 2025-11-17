@@ -239,7 +239,7 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 		namaPenggunaCapitalized = string([]rune(pengguna.NamaPengguna)[0])
 		if len(pengguna.NamaPengguna) > 1 {
 			namaPenggunaCapitalized = fmt.Sprintf("%c%s",
-				[]rune(pengguna.NamaPengguna)[0] - 32, // Convert to uppercase
+				[]rune(pengguna.NamaPengguna)[0]-32, // Convert to uppercase
 				pengguna.NamaPengguna[1:])
 		}
 	}

@@ -21,9 +21,9 @@ func ValidasiKataSandi(kataSandi string) error {
 	}
 
 	var (
-		adaHurufBesar   = false
-		adaHurufKecil   = false
-		adaAngka        = false
+		adaHurufBesar      = false
+		adaHurufKecil      = false
+		adaAngka           = false
 		adaKarakterSpesial = false
 	)
 
@@ -114,10 +114,10 @@ func ContohKataSandiKuat() []string {
 // KekuatanKataSandi menghitung skor kekuatan kata sandi (0-5)
 // 0-2: Lemah, 3-4: Sedang, 5-6: Kuat
 type KekuatanKataSandi struct {
-	Skor        int      `json:"skor"`
-	Level       string   `json:"level"`
-	Keterangan  string   `json:"keterangan"`
-	Saran       []string `json:"saran"`
+	Skor       int      `json:"skor"`
+	Level      string   `json:"level"`
+	Keterangan string   `json:"keterangan"`
+	Saran      []string `json:"saran"`
 }
 
 // HitungKekuatanKataSandi menghitung kekuatan kata sandi dan memberikan saran
@@ -140,9 +140,9 @@ func HitungKekuatanKataSandi(kataSandi string) *KekuatanKataSandi {
 
 	// Periksa kompleksitas
 	var (
-		adaHurufBesar   = false
-		adaHurufKecil   = false
-		adaAngka        = false
+		adaHurufBesar      = false
+		adaHurufKecil      = false
+		adaAngka           = false
 		adaKarakterSpesial = false
 	)
 
