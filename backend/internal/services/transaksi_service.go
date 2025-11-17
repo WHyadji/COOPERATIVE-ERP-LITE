@@ -274,6 +274,9 @@ func (s *TransaksiService) GenerateNomorJurnal(idKoperasi uuid.UUID, tanggal tim
 func (s *TransaksiService) DapatkanSemuaTransaksi(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir, tipeTransaksi string, page, pageSize int) ([]models.TransaksiResponse, int64, error) {
 	const method = "DapatkanSemuaTransaksi"
 
+	// Validate and normalize pagination parameters to prevent DoS attacks
+	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
+
 	var transaksiList []models.Transaksi
 	var total int64
 
@@ -301,9 +304,14 @@ func (s *TransaksiService) DapatkanSemuaTransaksi(idKoperasi uuid.UUID, tanggalM
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal menghitung total transaksi")
 	}
 
-	// Pagination
-	offset := (page - 1) * pageSize
-	err := query.Offset(offset).Limit(pageSize).
+	// Pagination with validated parameters
+	offset := utils.CalculateOffset(validPage, validPageSize)
+
+	// Create context with timeout to prevent long-running queries
+	ctx, cancel := utils.CreateQueryContext()
+	defer cancel()
+
+	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).
 		Order("tanggal_transaksi DESC, nomor_jurnal DESC").
 		Preload("BarisTransaksi.Akun").
 		Find(&transaksiList).Error
@@ -314,8 +322,8 @@ func (s *TransaksiService) DapatkanSemuaTransaksi(idKoperasi uuid.UUID, tanggalM
 			"tanggal_mulai":  tanggalMulai,
 			"tanggal_akhir":  tanggalAkhir,
 			"tipe_transaksi": tipeTransaksi,
-			"page":           page,
-			"page_size":      pageSize,
+			"page":           validPage,
+			"page_size":      validPageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar transaksi")
 	}
@@ -330,7 +338,7 @@ func (s *TransaksiService) DapatkanSemuaTransaksi(idKoperasi uuid.UUID, tanggalM
 		"koperasi_id": idKoperasi.String(),
 		"total":       total,
 		"jumlah":      len(transaksiList),
-		"page":        page,
+		"page":        validPage,
 	})
 
 	return responseDaftar, total, nil

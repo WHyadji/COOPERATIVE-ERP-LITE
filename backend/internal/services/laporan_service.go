@@ -458,3 +458,78 @@ func (s *LaporanService) GetDashboardStats(idKoperasi uuid.UUID) (map[string]int
 
 	return stats, nil
 }
+
+// GenerateLaporanPerubahanModal generates statement of changes in equity
+func (s *LaporanService) GenerateLaporanPerubahanModal(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir string) (map[string]interface{}, error) {
+	// This is a placeholder implementation
+	// TODO: Implement full statement of changes in equity
+	return map[string]interface{}{
+		"message": "Laporan Perubahan Modal - Not yet implemented",
+	}, nil
+}
+
+// GenerateBukuBesar generates general ledger for an account
+func (s *LaporanService) GenerateBukuBesar(idKoperasi, idAkun uuid.UUID, tanggalMulai, tanggalAkhir string) (map[string]interface{}, error) {
+	// Delegate to AkunService
+	result, err := s.akunService.GetBukuBesar(idKoperasi, idAkun, tanggalMulai, tanggalAkhir)
+	if err != nil {
+		return nil, err
+	}
+
+	// Type assert to map[string]interface{}
+	if bukuBesar, ok := result.(map[string]interface{}); ok {
+		return bukuBesar, nil
+	}
+
+	return nil, errors.New("format buku besar tidak valid")
+}
+
+// GenerateNeracaSaldo generates trial balance
+func (s *LaporanService) GenerateNeracaSaldo(idKoperasi uuid.UUID, tanggalPer string) (map[string]interface{}, error) {
+	// Get all active accounts
+	akunList, err := s.akunService.DapatkanSemuaAkun(idKoperasi, "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	type NeracaSaldoItem struct {
+		KodeAkun    string  `json:"kodeAkun"`
+		NamaAkun    string  `json:"namaAkun"`
+		TipeAkun    string  `json:"tipeAkun"`
+		SaldoDebit  float64 `json:"saldoDebit"`
+		SaldoKredit float64 `json:"saldoKredit"`
+	}
+
+	var items []NeracaSaldoItem
+	var totalDebit, totalKredit float64
+
+	for _, akun := range akunList {
+		saldo, _ := s.akunService.HitungSaldoAkun(akun.ID, tanggalPer)
+
+		item := NeracaSaldoItem{
+			KodeAkun: akun.KodeAkun,
+			NamaAkun: akun.NamaAkun,
+			TipeAkun: string(akun.TipeAkun),
+		}
+
+		if saldo > 0 {
+			if akun.NormalSaldo == "debit" {
+				item.SaldoDebit = saldo
+				totalDebit += saldo
+			} else {
+				item.SaldoKredit = saldo
+				totalKredit += saldo
+			}
+		}
+
+		items = append(items, item)
+	}
+
+	return map[string]interface{}{
+		"tanggalPer":  tanggalPer,
+		"items":       items,
+		"totalDebit":  totalDebit,
+		"totalKredit": totalKredit,
+		"isBalanced":  totalDebit == totalKredit,
+	}, nil
+}
