@@ -20,17 +20,19 @@ const (
 
 // Pengguna merepresentasikan user/pengguna sistem
 type Pengguna struct {
-	ID                uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
-	IDKoperasi        uuid.UUID      `gorm:"type:uuid;not null;index" json:"idKoperasi" validate:"required"`
-	NamaLengkap       string         `gorm:"type:varchar(255);not null" json:"namaLengkap" validate:"required"`
-	NamaPengguna      string         `gorm:"type:varchar(100);not null;uniqueIndex:idx_koperasi_username" json:"namaPengguna" validate:"required,min=3"`
-	Email             string         `gorm:"type:varchar(100);not null" json:"email" validate:"required,email"`
-	KataSandiHash     string         `gorm:"type:varchar(255);not null" json:"-"` // Password hash, tidak di-export ke JSON
-	Peran             PeranPengguna  `gorm:"type:varchar(20);not null" json:"peran" validate:"required,oneof=admin bendahara kasir anggota"`
-	StatusAktif       bool           `gorm:"type:boolean;default:true" json:"statusAktif"`
-	TanggalDibuat     time.Time      `gorm:"autoCreateTime" json:"tanggalDibuat"`
-	TanggalDiperbarui time.Time      `gorm:"autoUpdateTime" json:"tanggalDiperbarui"`
-	TanggalDihapus    gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                    uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
+	IDKoperasi            uuid.UUID      `gorm:"type:uuid;not null;index" json:"idKoperasi" validate:"required"`
+	NamaLengkap           string         `gorm:"type:varchar(255);not null" json:"namaLengkap" validate:"required"`
+	NamaPengguna          string         `gorm:"type:varchar(100);not null;uniqueIndex:idx_koperasi_username" json:"namaPengguna" validate:"required,min=3"`
+	Email                 string         `gorm:"type:varchar(100);not null" json:"email" validate:"required,email"`
+	KataSandiHash         string         `gorm:"type:varchar(255);not null" json:"-"` // Password hash, tidak di-export ke JSON
+	Peran                 PeranPengguna  `gorm:"type:varchar(20);not null" json:"peran" validate:"required,oneof=admin bendahara kasir anggota"`
+	StatusAktif           bool           `gorm:"type:boolean;default:true" json:"statusAktif"`
+	RequirePasswordChange bool           `gorm:"type:boolean;default:false" json:"requirePasswordChange"` // Flag untuk memaksa user mengubah password
+	FirstLoginAt          *time.Time     `gorm:"type:timestamp" json:"firstLoginAt"`                       // Timestamp login pertama kali
+	TanggalDibuat         time.Time      `gorm:"autoCreateTime" json:"tanggalDibuat"`
+	TanggalDiperbarui     time.Time      `gorm:"autoUpdateTime" json:"tanggalDiperbarui"`
+	TanggalDihapus        gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relasi
 	Koperasi Koperasi `gorm:"foreignKey:IDKoperasi;constraint:OnDelete:CASCADE" json:"-"`
@@ -67,24 +69,28 @@ func (Pengguna) TableName() string {
 
 // PenggunaResponse adalah response untuk API (tanpa password hash)
 type PenggunaResponse struct {
-	ID           uuid.UUID     `json:"id"`
-	IDKoperasi   uuid.UUID     `json:"idKoperasi"`
-	NamaLengkap  string        `json:"namaLengkap"`
-	NamaPengguna string        `json:"namaPengguna"`
-	Email        string        `json:"email"`
-	Peran        PeranPengguna `json:"peran"`
-	StatusAktif  bool          `json:"statusAktif"`
+	ID                    uuid.UUID     `json:"id"`
+	IDKoperasi            uuid.UUID     `json:"idKoperasi"`
+	NamaLengkap           string        `json:"namaLengkap"`
+	NamaPengguna          string        `json:"namaPengguna"`
+	Email                 string        `json:"email"`
+	Peran                 PeranPengguna `json:"peran"`
+	StatusAktif           bool          `json:"statusAktif"`
+	RequirePasswordChange bool          `json:"requirePasswordChange"`
+	PasswordDefault       string        `json:"passwordDefault,omitempty"` // Hanya ditampilkan saat pembuatan/reset password (tidak disimpan)
 }
 
 // ToResponse mengkonversi Pengguna ke PenggunaResponse
 func (p *Pengguna) ToResponse() PenggunaResponse {
 	return PenggunaResponse{
-		ID:           p.ID,
-		IDKoperasi:   p.IDKoperasi,
-		NamaLengkap:  p.NamaLengkap,
-		NamaPengguna: p.NamaPengguna,
-		Email:        p.Email,
-		Peran:        p.Peran,
-		StatusAktif:  p.StatusAktif,
+		ID:                    p.ID,
+		IDKoperasi:            p.IDKoperasi,
+		NamaLengkap:           p.NamaLengkap,
+		NamaPengguna:          p.NamaPengguna,
+		Email:                 p.Email,
+		Peran:                 p.Peran,
+		StatusAktif:           p.StatusAktif,
+		RequirePasswordChange: p.RequirePasswordChange,
+		// PasswordDefault tidak diisi di sini - hanya diisi saat creation/reset
 	}
 }

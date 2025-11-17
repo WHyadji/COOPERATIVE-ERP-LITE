@@ -149,7 +149,7 @@ func (h *PenggunaHandler) Delete(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Pengguna berhasil dihapus", nil)
 }
 
-// ResetPassword handles POST /api/v1/pengguna/:id/reset-password
+// ResetPassword handles POST /api/v1/pengguna/:id/reset-password (admin sets specific password)
 func (h *PenggunaHandler) ResetPassword(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
@@ -170,12 +170,42 @@ func (h *PenggunaHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.penggunaService.ResetKataSandi(koperasiUUID, id, req.KataSandiBaru); err != nil {
+	if err := h.penggunaService.UbahKataSandiPengguna(koperasiUUID, id, req.KataSandiBaru); err != nil {
 		utils.InternalServerErrorResponse(c, err.Error(), nil)
 		return
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Kata sandi berhasil direset", nil)
+}
+
+// GenerateRandomPassword handles POST /api/v1/pengguna/:id/generate-password (admin generates random password)
+func (h *PenggunaHandler) GenerateRandomPassword(c *gin.Context) {
+	idKoperasi, _ := c.Get("idKoperasi")
+	koperasiUUID := idKoperasi.(uuid.UUID)
+
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.BadRequestResponse(c, "ID pengguna tidak valid")
+		return
+	}
+
+	// Generate random password via service
+	randomPassword, err := h.penggunaService.ResetKataSandi(koperasiUUID, id)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		return
+	}
+
+	// Return password with security warning
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Kata sandi acak berhasil dibuat",
+		"data": gin.H{
+			"passwordBaru": randomPassword,
+		},
+		"warning": "PENTING: Password ini hanya ditampilkan sekali. Simpan dengan aman dan berikan kepada user. User akan diminta mengubah password saat login pertama.",
+	})
 }
 
 // ChangePassword handles PUT /api/v1/pengguna/:id/change-password

@@ -39,20 +39,6 @@ func setupTestDBForRollback(t *testing.T) *gorm.DB {
 	return db
 }
 
-// cleanupTestData removes test data after test
-func cleanupTestData(t *testing.T, db *gorm.DB) {
-	// Delete in reverse order of foreign key dependencies
-	db.Exec("DELETE FROM baris_transaksi")
-	db.Exec("DELETE FROM transaksi")
-	db.Exec("DELETE FROM item_penjualan")
-	db.Exec("DELETE FROM penjualan")
-	db.Exec("DELETE FROM simpanan")
-	db.Exec("DELETE FROM produk")
-	db.Exec("DELETE FROM anggota")
-	db.Exec("DELETE FROM akun")
-	db.Exec("DELETE FROM pengguna")
-	db.Exec("DELETE FROM koperasi")
-}
 
 // TestSimpananService_CatatSetoran_RollbackOnPostingFailure tests that simpanan is rolled back if posting fails
 func TestSimpananService_CatatSetoran_RollbackOnPostingFailure(t *testing.T) {
@@ -60,7 +46,6 @@ func TestSimpananService_CatatSetoran_RollbackOnPostingFailure(t *testing.T) {
 	if db == nil {
 		return
 	}
-	defer cleanupTestData(t, db)
 
 	// Create test data
 	koperasi := &models.Koperasi{
@@ -69,6 +54,7 @@ func TestSimpananService_CatatSetoran_RollbackOnPostingFailure(t *testing.T) {
 		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
+	defer cleanupTestData(db, koperasi.ID)
 
 	anggota := &models.Anggota{
 		IDKoperasi:       koperasi.ID,
@@ -144,7 +130,6 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 	if db == nil {
 		return
 	}
-	defer cleanupTestData(t, db)
 
 	// Create test data
 	koperasi := &models.Koperasi{
@@ -153,6 +138,7 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
+	defer cleanupTestData(db, koperasi.ID)
 
 	anggota := &models.Anggota{
 		IDKoperasi:       koperasi.ID,
@@ -181,7 +167,7 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 		IDKoperasi:  koperasi.ID,
 		KodeAkun:    "1101",
 		NamaAkun:    "Kas",
-		Kategori:    models.KategoriAset,
+		TipeAkun:    models.AkunAset,
 		NormalSaldo: "debit",
 	}
 	db.Create(akunKas)
@@ -190,7 +176,7 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 		IDKoperasi:  koperasi.ID,
 		KodeAkun:    "3101",
 		NamaAkun:    "Simpanan Pokok",
-		Kategori:    models.KategoriModal,
+		TipeAkun:    models.AkunModal,
 		NormalSaldo: "kredit",
 	}
 	db.Create(akunSimpananPokok)
@@ -259,7 +245,6 @@ func TestPenjualanService_ProsesPenjualan_RollbackOnPostingFailure(t *testing.T)
 	if db == nil {
 		return
 	}
-	defer cleanupTestData(t, db)
 
 	// Create test data
 	koperasi := &models.Koperasi{
@@ -268,6 +253,7 @@ func TestPenjualanService_ProsesPenjualan_RollbackOnPostingFailure(t *testing.T)
 		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
+	defer cleanupTestData(db, koperasi.ID)
 
 	pengguna := &models.Pengguna{
 		IDKoperasi:    koperasi.ID,
@@ -284,7 +270,7 @@ func TestPenjualanService_ProsesPenjualan_RollbackOnPostingFailure(t *testing.T)
 		IDKoperasi:  koperasi.ID,
 		KodeProduk:  "P001",
 		NamaProduk:  "Test Product",
-		HargaJual:   10000,
+		Harga:       10000,
 		HargaBeli:   8000,
 		Stok:        100,
 		StokMinimum: 10,
@@ -360,7 +346,6 @@ func TestPenjualanService_ProsesPenjualan_CommitOnSuccess(t *testing.T) {
 	if db == nil {
 		return
 	}
-	defer cleanupTestData(t, db)
 
 	// Create test data
 	koperasi := &models.Koperasi{
@@ -369,6 +354,7 @@ func TestPenjualanService_ProsesPenjualan_CommitOnSuccess(t *testing.T) {
 		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
+	defer cleanupTestData(db, koperasi.ID)
 
 	pengguna := &models.Pengguna{
 		IDKoperasi:    koperasi.ID,
@@ -385,7 +371,7 @@ func TestPenjualanService_ProsesPenjualan_CommitOnSuccess(t *testing.T) {
 		IDKoperasi:  koperasi.ID,
 		KodeProduk:  "P001",
 		NamaProduk:  "Test Product",
-		HargaJual:   10000,
+		Harga:       10000,
 		HargaBeli:   8000,
 		Stok:        100,
 		StokMinimum: 10,
@@ -394,10 +380,10 @@ func TestPenjualanService_ProsesPenjualan_CommitOnSuccess(t *testing.T) {
 
 	// Create required accounts
 	accounts := []models.Akun{
-		{IDKoperasi: koperasi.ID, KodeAkun: "1101", NamaAkun: "Kas", Kategori: models.KategoriAset, NormalSaldo: "debit"},
-		{IDKoperasi: koperasi.ID, KodeAkun: "4101", NamaAkun: "Penjualan", Kategori: models.KategoriPendapatan, NormalSaldo: "kredit"},
-		{IDKoperasi: koperasi.ID, KodeAkun: "5201", NamaAkun: "HPP", Kategori: models.KategoriBeban, NormalSaldo: "debit"},
-		{IDKoperasi: koperasi.ID, KodeAkun: "1301", NamaAkun: "Persediaan", Kategori: models.KategoriAset, NormalSaldo: "debit"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "4101", NamaAkun: "Penjualan", TipeAkun: models.AkunPendapatan, NormalSaldo: "kredit"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "5201", NamaAkun: "HPP", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "1301", NamaAkun: "Persediaan", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
 	}
 	for _, akun := range accounts {
 		db.Create(&akun)

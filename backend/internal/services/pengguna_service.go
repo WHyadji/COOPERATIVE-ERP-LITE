@@ -4,7 +4,6 @@ import (
 	"cooperative-erp-lite/internal/models"
 	"cooperative-erp-lite/internal/utils"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -25,7 +24,7 @@ type BuatPenggunaRequest struct {
 	NamaLengkap  string               `json:"namaLengkap" binding:"required"`
 	NamaPengguna string               `json:"namaPengguna" binding:"required,min=3"`
 	Email        string               `json:"email" binding:"required,email"`
-	KataSandi    string               `json:"kataSandi" binding:"required,min=10"`
+	KataSandi    string               `json:"kataSandi" binding:"required,min=6"`
 	Peran        models.PeranPengguna `json:"peran" binding:"required"`
 }
 
@@ -39,11 +38,6 @@ func (s *PenggunaService) BuatPengguna(idKoperasi uuid.UUID, req *BuatPenggunaRe
 
 	if count > 0 {
 		return nil, errors.New("nama pengguna sudah digunakan")
-	}
-
-	// Validasi kekuatan kata sandi
-	if err := utils.ValidasiKataSandi(req.KataSandi); err != nil {
-		return nil, err
 	}
 
 	// Buat pengguna baru
@@ -190,9 +184,9 @@ func (s *PenggunaService) HapusPengguna(idKoperasi, id uuid.UUID) error {
 
 // UbahKataSandiPengguna mengubah password pengguna (oleh admin)
 func (s *PenggunaService) UbahKataSandiPengguna(idKoperasi, id uuid.UUID, kataSandiBaru string) error {
-	// Validasi kekuatan kata sandi
-	if err := utils.ValidasiKataSandi(kataSandiBaru); err != nil {
-		return err
+	// Validasi password
+	if len(kataSandiBaru) < 6 {
+		return errors.New("kata sandi minimal 6 karakter")
 	}
 
 	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
@@ -222,7 +216,7 @@ func (s *PenggunaService) UbahKataSandiPengguna(idKoperasi, id uuid.UUID, kataSa
 
 // ResetKataSandi mereset password pengguna ke default (admin only)
 func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, error) {
-	// Generate password default (menggunakan username)
+	// Cari pengguna
 	var pengguna models.Pengguna
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
 	if err != nil {
@@ -232,30 +226,20 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 		return "", err
 	}
 
-	// Password default yang kuat: Username dengan huruf pertama besar + simbol + angka
-	// Contoh: username "bendahara" menjadi "Bendahara@2025"
-	namaPenggunaCapitalized := ""
-	if len(pengguna.NamaPengguna) > 0 {
-		namaPenggunaCapitalized = string([]rune(pengguna.NamaPengguna)[0])
-		if len(pengguna.NamaPengguna) > 1 {
-			namaPenggunaCapitalized = fmt.Sprintf("%c%s",
-				[]rune(pengguna.NamaPengguna)[0]-32, // Convert to uppercase
-				pengguna.NamaPengguna[1:])
-		}
-	}
-	kataSandiDefault := fmt.Sprintf("%s@2025", namaPenggunaCapitalized)
-
-	// Validasi bahwa password default memenuhi persyaratan
-	if err := utils.ValidasiKataSandi(kataSandiDefault); err != nil {
-		// Jika tidak memenuhi, gunakan format yang lebih kuat
-		kataSandiDefault = fmt.Sprintf("%s@Koperasi2025!", namaPenggunaCapitalized)
+	// Generate random password (12 characters, cryptographically secure)
+	passwordDefault, err := utils.GenerateRandomPassword(12)
+	if err != nil {
+		return "", errors.New("gagal membuat kata sandi acak")
 	}
 
 	// Set password
-	err = pengguna.SetKataSandi(kataSandiDefault)
+	err = pengguna.SetKataSandi(passwordDefault)
 	if err != nil {
 		return "", errors.New("gagal mengenkripsi kata sandi")
 	}
+
+	// Force user to change password on next login
+	pengguna.RequirePasswordChange = true
 
 	// Simpan
 	err = s.db.Save(&pengguna).Error
@@ -263,7 +247,7 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 		return "", errors.New("gagal mereset kata sandi")
 	}
 
-	return kataSandiDefault, nil
+	return passwordDefault, nil
 }
 
 // DapatkanPenggunaByUsername mengambil pengguna berdasarkan username
