@@ -64,9 +64,9 @@ func TestSimpananService_CatatSetoran_RollbackOnPostingFailure(t *testing.T) {
 
 	// Create test data
 	koperasi := &models.Koperasi{
-		NamaKoperasi:  "Test Koperasi",
-		AlamatLengkap: "Test Address",
-		NomorTelepon:  "08123456789",
+		NamaKoperasi: "Test Koperasi",
+		Alamat:       "Test Address",
+		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
 
@@ -75,19 +75,20 @@ func TestSimpananService_CatatSetoran_RollbackOnPostingFailure(t *testing.T) {
 		NomorAnggota:     "001",
 		NamaLengkap:      "Test Member",
 		Alamat:           "Test Address",
-		NomorTelepon:     "08123456789",
+		NoTelepon:        "08123456789",
 		TanggalBergabung: time.Now(),
 		Status:           models.StatusAktif,
 	}
 	db.Create(anggota)
 
 	pengguna := &models.Pengguna{
-		IDKoperasi:   koperasi.ID,
-		NamaPengguna: "testuser",
-		Email:        "test@test.com",
-		KataSandi:    "hashedpassword",
-		Peran:        models.PenggunaPeranAdmin,
-		Status:       models.StatusAktif,
+		IDKoperasi:    koperasi.ID,
+		NamaLengkap:   "Test User",
+		NamaPengguna:  "testuser",
+		Email:         "test@test.com",
+		KataSandiHash: "hashedpassword",
+		Peran:         models.PeranAdmin,
+		StatusAktif:   true,
 	}
 	db.Create(pengguna)
 
@@ -147,9 +148,9 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 
 	// Create test data
 	koperasi := &models.Koperasi{
-		NamaKoperasi:  "Test Koperasi",
-		AlamatLengkap: "Test Address",
-		NomorTelepon:  "08123456789",
+		NamaKoperasi: "Test Koperasi",
+		Alamat:       "Test Address",
+		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
 
@@ -158,19 +159,20 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 		NomorAnggota:     "001",
 		NamaLengkap:      "Test Member",
 		Alamat:           "Test Address",
-		NomorTelepon:     "08123456789",
+		NoTelepon:        "08123456789",
 		TanggalBergabung: time.Now(),
 		Status:           models.StatusAktif,
 	}
 	db.Create(anggota)
 
 	pengguna := &models.Pengguna{
-		IDKoperasi:   koperasi.ID,
-		NamaPengguna: "testuser",
-		Email:        "test@test.com",
-		KataSandi:    "hashedpassword",
-		Peran:        models.PenggunaPeranAdmin,
-		Status:       models.StatusAktif,
+		IDKoperasi:    koperasi.ID,
+		NamaLengkap:   "Test User",
+		NamaPengguna:  "testuser",
+		Email:         "test@test.com",
+		KataSandiHash: "hashedpassword",
+		Peran:         models.PeranAdmin,
+		StatusAktif:   true,
 	}
 	db.Create(pengguna)
 
@@ -261,19 +263,20 @@ func TestPenjualanService_ProsesPenjualan_RollbackOnPostingFailure(t *testing.T)
 
 	// Create test data
 	koperasi := &models.Koperasi{
-		NamaKoperasi:  "Test Koperasi",
-		AlamatLengkap: "Test Address",
-		NomorTelepon:  "08123456789",
+		NamaKoperasi: "Test Koperasi",
+		Alamat:       "Test Address",
+		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
 
 	pengguna := &models.Pengguna{
-		IDKoperasi:   koperasi.ID,
-		NamaPengguna: "kasir",
-		Email:        "kasir@test.com",
-		KataSandi:    "hashedpassword",
-		Peran:        models.PenggunaPeranKasir,
-		Status:       models.StatusAktif,
+		IDKoperasi:    koperasi.ID,
+		NamaLengkap:   "Kasir User",
+		NamaPengguna:  "kasir",
+		Email:         "kasir@test.com",
+		KataSandiHash: "hashedpassword",
+		Peran:         models.PeranKasir,
+		StatusAktif:   true,
 	}
 	db.Create(pengguna)
 
@@ -361,19 +364,20 @@ func TestPenjualanService_ProsesPenjualan_CommitOnSuccess(t *testing.T) {
 
 	// Create test data
 	koperasi := &models.Koperasi{
-		NamaKoperasi:  "Test Koperasi",
-		AlamatLengkap: "Test Address",
-		NomorTelepon:  "08123456789",
+		NamaKoperasi: "Test Koperasi",
+		Alamat:       "Test Address",
+		NoTelepon:    "08123456789",
 	}
 	db.Create(koperasi)
 
 	pengguna := &models.Pengguna{
-		IDKoperasi:   koperasi.ID,
-		NamaPengguna: "kasir",
-		Email:        "kasir@test.com",
-		KataSandi:    "hashedpassword",
-		Peran:        models.PenggunaPeranKasir,
-		Status:       models.StatusAktif,
+		IDKoperasi:    koperasi.ID,
+		NamaLengkap:   "Kasir User",
+		NamaPengguna:  "kasir",
+		Email:         "kasir@test.com",
+		KataSandiHash: "hashedpassword",
+		Peran:         models.PeranKasir,
+		StatusAktif:   true,
 	}
 	db.Create(pengguna)
 
