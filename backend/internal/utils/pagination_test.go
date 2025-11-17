@@ -8,12 +8,12 @@ import (
 
 func TestValidatePagination(t *testing.T) {
 	tests := []struct {
-		name              string
-		inputPage         int
-		inputPageSize     int
-		expectedPage      int
-		expectedPageSize  int
-		description       string
+		name             string
+		inputPage        int
+		inputPageSize    int
+		expectedPage     int
+		expectedPageSize int
+		description      string
 	}{
 		{
 			name:             "Valid pagination parameters",
@@ -122,84 +122,84 @@ func TestValidatePagination(t *testing.T) {
 
 func TestCalculatePaginationMeta(t *testing.T) {
 	tests := []struct {
-		name              string
-		page              int
-		pageSize          int
-		total             int64
+		name               string
+		page               int
+		pageSize           int
+		total              int64
 		expectedTotalPages int
-		expectedHasNext   bool
-		expectedHasPrev   bool
-		description       string
+		expectedHasNext    bool
+		expectedHasPrev    bool
+		description        string
 	}{
 		{
-			name:              "First page with data",
-			page:              1,
-			pageSize:          20,
-			total:             100,
+			name:               "First page with data",
+			page:               1,
+			pageSize:           20,
+			total:              100,
 			expectedTotalPages: 5,
-			expectedHasNext:   true,
-			expectedHasPrev:   false,
-			description:       "First page should have next but no previous",
+			expectedHasNext:    true,
+			expectedHasPrev:    false,
+			description:        "First page should have next but no previous",
 		},
 		{
-			name:              "Middle page",
-			page:              3,
-			pageSize:          20,
-			total:             100,
+			name:               "Middle page",
+			page:               3,
+			pageSize:           20,
+			total:              100,
 			expectedTotalPages: 5,
-			expectedHasNext:   true,
-			expectedHasPrev:   true,
-			description:       "Middle page should have both next and previous",
+			expectedHasNext:    true,
+			expectedHasPrev:    true,
+			description:        "Middle page should have both next and previous",
 		},
 		{
-			name:              "Last page",
-			page:              5,
-			pageSize:          20,
-			total:             100,
+			name:               "Last page",
+			page:               5,
+			pageSize:           20,
+			total:              100,
 			expectedTotalPages: 5,
-			expectedHasNext:   false,
-			expectedHasPrev:   true,
-			description:       "Last page should have previous but no next",
+			expectedHasNext:    false,
+			expectedHasPrev:    true,
+			description:        "Last page should have previous but no next",
 		},
 		{
-			name:              "Single page with few items",
-			page:              1,
-			pageSize:          20,
-			total:             5,
+			name:               "Single page with few items",
+			page:               1,
+			pageSize:           20,
+			total:              5,
 			expectedTotalPages: 1,
-			expectedHasNext:   false,
-			expectedHasPrev:   false,
-			description:       "Single page should have no navigation",
+			expectedHasNext:    false,
+			expectedHasPrev:    false,
+			description:        "Single page should have no navigation",
 		},
 		{
-			name:              "Empty dataset",
-			page:              1,
-			pageSize:          20,
-			total:             0,
+			name:               "Empty dataset",
+			page:               1,
+			pageSize:           20,
+			total:              0,
 			expectedTotalPages: 1,
-			expectedHasNext:   false,
-			expectedHasPrev:   false,
-			description:       "Empty dataset should show 1 total page",
+			expectedHasNext:    false,
+			expectedHasPrev:    false,
+			description:        "Empty dataset should show 1 total page",
 		},
 		{
-			name:              "Partial last page",
-			page:              3,
-			pageSize:          20,
-			total:             55,
+			name:               "Partial last page",
+			page:               3,
+			pageSize:           20,
+			total:              55,
 			expectedTotalPages: 3,
-			expectedHasNext:   false,
-			expectedHasPrev:   true,
-			description:       "Should handle partial last page correctly",
+			expectedHasNext:    false,
+			expectedHasPrev:    true,
+			description:        "Should handle partial last page correctly",
 		},
 		{
-			name:              "Exact page boundary",
-			page:              2,
-			pageSize:          20,
-			total:             40,
+			name:               "Exact page boundary",
+			page:               2,
+			pageSize:           20,
+			total:              40,
 			expectedTotalPages: 2,
-			expectedHasNext:   false,
-			expectedHasPrev:   true,
-			description:       "Should handle exact page boundary",
+			expectedHasNext:    false,
+			expectedHasPrev:    true,
+			description:        "Should handle exact page boundary",
 		},
 	}
 

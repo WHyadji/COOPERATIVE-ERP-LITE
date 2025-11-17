@@ -274,9 +274,25 @@ func (s *PenggunaService) DapatkanPenggunaByUsername(idKoperasi uuid.UUID, namaP
 	return &response, nil
 }
 
-// GetSemuaPengguna is a wrapper for DapatkanSemuaPengguna
-func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran string, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
-	return s.DapatkanSemuaPengguna(idKoperasi, peran, statusAktif, page, pageSize)
+// GetSemuaPengguna is a wrapper for DapatkanSemuaPengguna with flexible peran parameter
+func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran interface{}, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
+	var peranStr string
+
+	// Handle different types for peran parameter
+	switch v := peran.(type) {
+	case string:
+		peranStr = v
+	case *models.PeranPengguna:
+		if v != nil {
+			peranStr = string(*v)
+		}
+	case models.PeranPengguna:
+		peranStr = string(v)
+	case nil:
+		peranStr = ""
+	}
+
+	return s.DapatkanSemuaPengguna(idKoperasi, peranStr, statusAktif, page, pageSize)
 }
 
 // GetPenggunaByID is a wrapper for DapatkanPengguna with multi-tenant validation
@@ -303,4 +319,41 @@ func (s *PenggunaService) GetPenggunaByID(idKoperasi, id uuid.UUID) (*models.Pen
 // GetPenggunaByUsername is a wrapper for DapatkanPenggunaByUsername
 func (s *PenggunaService) GetPenggunaByUsername(idKoperasi uuid.UUID, namaPengguna string) (*models.PenggunaResponse, error) {
 	return s.DapatkanPenggunaByUsername(idKoperasi, namaPengguna)
+}
+
+// UbahKataSandiAdmin changes a user's password (admin action - requires old password verification)
+func (s *PenggunaService) UbahKataSandiAdmin(idKoperasi, id uuid.UUID, kataSandiLama, kataSandiBaru string) error {
+	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
+	var pengguna models.Pengguna
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
+		}
+		return err
+	}
+
+	// Verify old password
+	if !pengguna.CekKataSandi(kataSandiLama) {
+		return errors.New("kata sandi lama tidak sesuai")
+	}
+
+	// Validate new password
+	if err := utils.ValidasiKataSandi(kataSandiBaru); err != nil {
+		return err
+	}
+
+	// Set new password
+	err = pengguna.SetKataSandi(kataSandiBaru)
+	if err != nil {
+		return errors.New("gagal mengenkripsi kata sandi baru")
+	}
+
+	// Save to database
+	err = s.db.Save(&pengguna).Error
+	if err != nil {
+		return errors.New("gagal menyimpan kata sandi baru")
+	}
+
+	return nil
 }

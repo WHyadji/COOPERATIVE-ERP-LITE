@@ -25,17 +25,17 @@ func NewProdukService(db *gorm.DB) *ProdukService {
 
 // BuatProdukRequest adalah struktur request untuk membuat produk
 type BuatProdukRequest struct {
-	KodeProduk   string  `json:"kodeProduk" binding:"required"`
-	NamaProduk   string  `json:"namaProduk" binding:"required"`
-	Kategori     string  `json:"kategori"`
-	Deskripsi    string  `json:"deskripsi"`
-	Harga        float64 `json:"harga" binding:"required,gte=0"`
-	HargaBeli    float64 `json:"hargaBeli" binding:"gte=0"`
-	Stok         int     `json:"stok"`
-	StokMinimum  int     `json:"stokMinimum"`
-	Satuan       string  `json:"satuan"`
-	Barcode      string  `json:"barcode"`
-	GambarURL    string  `json:"gambarUrl"`
+	KodeProduk  string  `json:"kodeProduk" binding:"required"`
+	NamaProduk  string  `json:"namaProduk" binding:"required"`
+	Kategori    string  `json:"kategori"`
+	Deskripsi   string  `json:"deskripsi"`
+	Harga       float64 `json:"harga" binding:"required,gte=0"`
+	HargaBeli   float64 `json:"hargaBeli" binding:"gte=0"`
+	Stok        int     `json:"stok"`
+	StokMinimum int     `json:"stokMinimum"`
+	Satuan      string  `json:"satuan"`
+	Barcode     string  `json:"barcode"`
+	GambarURL   string  `json:"gambarUrl"`
 }
 
 // BuatProduk membuat produk baru
@@ -391,9 +391,9 @@ func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
 
 	if countPenjualan > 0 {
 		s.logger.Error(method, "Tidak dapat menghapus produk yang sudah pernah dijual", nil, map[string]interface{}{
-			"produk_id":        id.String(),
-			"nama_produk":      produk.NamaProduk,
-			"count_penjualan":  countPenjualan,
+			"produk_id":       id.String(),
+			"nama_produk":     produk.NamaProduk,
+			"count_penjualan": countPenjualan,
 		})
 		return utils.NewValidationError("Tidak dapat menghapus produk yang sudah pernah dijual")
 	}
@@ -441,9 +441,9 @@ func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
 	// Validasi stok cukup
 	if produk.Stok < jumlah {
 		s.logger.Error(method, "Stok tidak mencukupi", nil, map[string]interface{}{
-			"produk_id":   id.String(),
-			"nama_produk": produk.NamaProduk,
-			"stok_saat_ini": produk.Stok,
+			"produk_id":         id.String(),
+			"nama_produk":       produk.NamaProduk,
+			"stok_saat_ini":     produk.Stok,
 			"kuantitas_diminta": jumlah,
 		})
 		return utils.NewValidationError("Stok tidak mencukupi")
@@ -542,11 +542,11 @@ func (s *ProdukService) CekStokTersedia(id uuid.UUID, jumlah int) (bool, error) 
 	tersedia := produk.Stok >= jumlah
 
 	s.logger.Debug(method, "Pengecekan stok selesai", map[string]interface{}{
-		"produk_id":   id.String(),
-		"nama_produk": produk.NamaProduk,
-		"stok_saat_ini": produk.Stok,
+		"produk_id":         id.String(),
+		"nama_produk":       produk.NamaProduk,
+		"stok_saat_ini":     produk.Stok,
 		"kuantitas_diminta": jumlah,
-		"tersedia":    tersedia,
+		"tersedia":          tersedia,
 	})
 
 	return tersedia, nil
@@ -586,9 +586,9 @@ func (s *ProdukService) AdjustStok(idKoperasi, id uuid.UUID, jumlah int, keteran
 	// Jika pengurangan, validasi stok cukup
 	if jumlah < 0 && produk.Stok < -jumlah {
 		s.logger.Error(method, "Stok tidak mencukupi untuk pengurangan", nil, map[string]interface{}{
-			"produk_id":         id.String(),
-			"nama_produk":       produk.NamaProduk,
-			"stok_saat_ini":     produk.Stok,
+			"produk_id":          id.String(),
+			"nama_produk":        produk.NamaProduk,
+			"stok_saat_ini":      produk.Stok,
 			"jumlah_pengurangan": -jumlah,
 		})
 		return nil, utils.NewValidationError("Stok tidak mencukupi")
