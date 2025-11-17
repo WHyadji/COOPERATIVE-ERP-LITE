@@ -20,17 +20,17 @@ func NewProdukService(db *gorm.DB) *ProdukService {
 
 // BuatProdukRequest adalah struktur request untuk membuat produk
 type BuatProdukRequest struct {
-	KodeProduk   string  `json:"kodeProduk" binding:"required"`
-	NamaProduk   string  `json:"namaProduk" binding:"required"`
-	Kategori     string  `json:"kategori"`
-	Deskripsi    string  `json:"deskripsi"`
-	Harga        float64 `json:"harga" binding:"required,gte=0"`
-	HargaBeli    float64 `json:"hargaBeli" binding:"gte=0"`
-	Stok         int     `json:"stok"`
-	StokMinimum  int     `json:"stokMinimum"`
-	Satuan       string  `json:"satuan"`
-	Barcode      string  `json:"barcode"`
-	GambarURL    string  `json:"gambarUrl"`
+	KodeProduk  string  `json:"kodeProduk" binding:"required"`
+	NamaProduk  string  `json:"namaProduk" binding:"required"`
+	Kategori    string  `json:"kategori"`
+	Deskripsi   string  `json:"deskripsi"`
+	Harga       float64 `json:"harga" binding:"required,gte=0"`
+	HargaBeli   float64 `json:"hargaBeli" binding:"gte=0"`
+	Stok        int     `json:"stok"`
+	StokMinimum int     `json:"stokMinimum"`
+	Satuan      string  `json:"satuan"`
+	Barcode     string  `json:"barcode"`
+	GambarURL   string  `json:"gambarUrl"`
 }
 
 // BuatProduk membuat produk baru
@@ -255,8 +255,13 @@ func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
 
 // KurangiStok mengurangi stok produk
 func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
+	return s.KurangiStokDenganTransaksi(s.db, id, jumlah)
+}
+
+// KurangiStokDenganTransaksi mengurangi stok produk within an existing transaction
+func (s *ProdukService) KurangiStokDenganTransaksi(tx *gorm.DB, id uuid.UUID, jumlah int) error {
 	var produk models.Produk
-	err := s.db.Where("id = ?", id).First(&produk).Error
+	err := tx.Where("id = ?", id).First(&produk).Error
 	if err != nil {
 		return errors.New("produk tidak ditemukan")
 	}
@@ -268,7 +273,7 @@ func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
 
 	// Kurangi stok
 	produk.Stok -= jumlah
-	err = s.db.Save(&produk).Error
+	err = tx.Save(&produk).Error
 	if err != nil {
 		return errors.New("gagal mengurangi stok")
 	}
