@@ -65,7 +65,7 @@ func (h *PenjualanHandler) List(c *gin.Context) {
 		}
 	}
 
-	penjualanList, total, err := h.penjualanService.GetRiwayatPenjualan(
+	penjualanList, total, err := h.penjualanService.DapatkanSemuaPenjualan(
 		koperasiUUID, tanggalMulai, tanggalAkhir, idKasirPtr, page, pageSize,
 	)
 	if err != nil {
@@ -89,7 +89,7 @@ func (h *PenjualanHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	penjualan, err := h.penjualanService.GetPenjualanByID(koperasiUUID, id)
+	penjualan, err := h.penjualanService.DapatkanPenjualan(koperasiUUID, id)
 	if err != nil {
 		utils.NotFoundResponse(c, "Penjualan tidak ditemukan")
 		return
@@ -110,7 +110,7 @@ func (h *PenjualanHandler) GetStruk(c *gin.Context) {
 		return
 	}
 
-	struk, err := h.penjualanService.GenerateStrukDigital(koperasiUUID, id)
+	struk, err := h.penjualanService.DapatkanStruk(koperasiUUID, id)
 	if err != nil {
 		utils.SafeInternalServerErrorResponse(c, err)
 		return
@@ -124,7 +124,7 @@ func (h *PenjualanHandler) GetHariIni(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
-	summary, err := h.penjualanService.GetSummaryHariIni(koperasiUUID)
+	summary, err := h.penjualanService.DapatkanPenjualanHariIni(koperasiUUID)
 	if err != nil {
 		utils.SafeInternalServerErrorResponse(c, err)
 		return
@@ -139,9 +139,8 @@ func (h *PenjualanHandler) GetTopProduk(c *gin.Context) {
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	periode := c.DefaultQuery("periode", "30") // 7, 30, 90 hari
 
-	topProduk, err := h.penjualanService.GetTopSellingProducts(koperasiUUID, periode, limit)
+	topProduk, err := h.penjualanService.DapatkanTopProduk(koperasiUUID, limit)
 	if err != nil {
 		utils.SafeInternalServerErrorResponse(c, err)
 		return

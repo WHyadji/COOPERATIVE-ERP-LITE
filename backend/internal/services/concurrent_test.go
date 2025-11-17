@@ -58,7 +58,7 @@ func TestGenerateNomorAnggota_Concurrent(t *testing.T) {
 
 	koperasiID := uuid.New()
 	koperasi := &models.Koperasi{
-		ID:         koperasiID,
+		ID:           koperasiID,
 		NamaKoperasi: "Test Koperasi",
 	}
 	db.Create(koperasi)
@@ -136,7 +136,7 @@ func TestGenerateNomorJurnal_Concurrent(t *testing.T) {
 
 	koperasiID := uuid.New()
 	koperasi := &models.Koperasi{
-		ID:         koperasiID,
+		ID:           koperasiID,
 		NamaKoperasi: "Test Koperasi",
 	}
 	db.Create(koperasi)
@@ -213,7 +213,7 @@ func TestGenerateNomorReferensi_Concurrent(t *testing.T) {
 
 	koperasiID := uuid.New()
 	koperasi := &models.Koperasi{
-		ID:         koperasiID,
+		ID:           koperasiID,
 		NamaKoperasi: "Test Koperasi",
 	}
 	db.Create(koperasi)
@@ -290,7 +290,7 @@ func TestGenerateNomorPenjualan_Concurrent(t *testing.T) {
 
 	koperasiID := uuid.New()
 	koperasi := &models.Koperasi{
-		ID:         koperasiID,
+		ID:           koperasiID,
 		NamaKoperasi: "Test Koperasi",
 	}
 	db.Create(koperasi)
@@ -368,7 +368,7 @@ func BenchmarkGenerateNomorAnggota(b *testing.B) {
 
 	koperasiID := uuid.New()
 	koperasi := &models.Koperasi{
-		ID:         koperasiID,
+		ID:           koperasiID,
 		NamaKoperasi: "Test Koperasi",
 	}
 	db.Create(koperasi)
@@ -394,7 +394,7 @@ func TestAllNumberGeneration_Integration(t *testing.T) {
 
 	koperasiID := uuid.New()
 	koperasi := &models.Koperasi{
-		ID:         koperasiID,
+		ID:           koperasiID,
 		NamaKoperasi: "Test Koperasi",
 	}
 	db.Create(koperasi)

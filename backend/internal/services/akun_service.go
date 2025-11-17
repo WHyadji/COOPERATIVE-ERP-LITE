@@ -5,6 +5,7 @@ import (
 	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -49,19 +50,19 @@ func (s *AkunService) BuatAkun(idKoperasi uuid.UUID, req *BuatAkunRequest) (*mod
 	}
 
 	// Cek apakah kode akun sudah ada
-	var count int64
+	var jumlah int64
 	s.db.Model(&models.Akun{}).
 		Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, req.KodeAkun).
-		Count(&count)
+		Count(&jumlah)
 
-	if count > 0 {
+	if jumlah > 0 {
 		return nil, errors.New("kode akun sudah digunakan")
 	}
 
 	// Validasi parent jika ada
 	if req.IDInduk != nil {
-		var parentAkun models.Akun
-		err := s.db.Where("id = ? AND id_koperasi = ?", req.IDInduk, idKoperasi).First(&parentAkun).Error
+		var akunInduk models.Akun
+		err := s.db.Where("id = ? AND id_koperasi = ?", req.IDInduk, idKoperasi).First(&akunInduk).Error
 		if err != nil {
 			return nil, errors.New("akun induk tidak ditemukan")
 		}
@@ -85,8 +86,8 @@ func (s *AkunService) BuatAkun(idKoperasi uuid.UUID, req *BuatAkunRequest) (*mod
 		return nil, errors.New("gagal membuat akun")
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanSemuaAkun mengambil daftar akun dengan filter
@@ -109,12 +110,12 @@ func (s *AkunService) DapatkanSemuaAkun(idKoperasi uuid.UUID, tipeAkun string, s
 	}
 
 	// Convert to response
-	responses := make([]models.AkunResponse, len(akunList))
+	responseDaftar := make([]models.AkunResponse, len(akunList))
 	for i, akun := range akunList {
-		responses[i] = akun.ToResponse()
+		responseDaftar[i] = akun.ToResponse()
 	}
 
-	return responses, nil
+	return responseDaftar, nil
 }
 
 // DapatkanAkun mengambil akun berdasarkan ID
@@ -129,8 +130,8 @@ func (s *AkunService) DapatkanAkun(id uuid.UUID) (*models.AkunResponse, error) {
 		return nil, err
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanAkunByKode mengambil akun berdasarkan kode
@@ -147,8 +148,8 @@ func (s *AkunService) DapatkanAkunByKode(idKoperasi uuid.UUID, kodeAkun string) 
 		return nil, err
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // PerbaruiAkunRequest adalah struktur request untuk update akun
@@ -200,8 +201,8 @@ func (s *AkunService) PerbaruiAkun(idKoperasi, id uuid.UUID, req *PerbaruiAkunRe
 		return nil, errors.New("gagal memperbarui akun")
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // HapusAkun menghapus akun (dengan validasi)
@@ -217,18 +218,18 @@ func (s *AkunService) HapusAkun(idKoperasi, id uuid.UUID) error {
 	}
 
 	// Cek apakah ada transaksi terkait
-	var countTransaksi int64
-	s.db.Model(&models.BarisTransaksi{}).Where("id_akun = ?", id).Count(&countTransaksi)
+	var jumlahTransaksi int64
+	s.db.Model(&models.BarisTransaksi{}).Where("id_akun = ?", id).Count(&jumlahTransaksi)
 
-	if countTransaksi > 0 {
+	if jumlahTransaksi > 0 {
 		return errors.New("tidak dapat menghapus akun yang sudah memiliki transaksi")
 	}
 
 	// Cek apakah ada sub-akun
-	var countSubAkun int64
-	s.db.Model(&models.Akun{}).Where("id_induk = ?", id).Count(&countSubAkun)
+	var jumlahSubAkun int64
+	s.db.Model(&models.Akun{}).Where("id_induk = ?", id).Count(&jumlahSubAkun)
 
-	if countSubAkun > 0 {
+	if jumlahSubAkun > 0 {
 		return errors.New("tidak dapat menghapus akun yang memiliki sub-akun")
 	}
 
@@ -256,7 +257,7 @@ func (s *AkunService) HitungSaldoAkun(idAkun uuid.UUID, tanggalAkhir string) (fl
 		TotalKredit float64
 	}
 
-	var result SaldoResult
+	var hasil SaldoResult
 	query := s.db.Model(&models.BarisTransaksi{}).
 		Select("COALESCE(SUM(jumlah_debit), 0) as total_debit, COALESCE(SUM(jumlah_kredit), 0) as total_kredit").
 		Joins("JOIN transaksi ON transaksi.id = baris_transaksi.id_transaksi").
@@ -266,7 +267,7 @@ func (s *AkunService) HitungSaldoAkun(idAkun uuid.UUID, tanggalAkhir string) (fl
 		query = query.Where("transaksi.tanggal_transaksi <= ?", tanggalAkhir)
 	}
 
-	err = query.Scan(&result).Error
+	err = query.Scan(&hasil).Error
 	if err != nil {
 		return 0, errors.New("gagal menghitung saldo")
 	}
@@ -274,9 +275,9 @@ func (s *AkunService) HitungSaldoAkun(idAkun uuid.UUID, tanggalAkhir string) (fl
 	// Hitung saldo berdasarkan normal saldo
 	var saldo float64
 	if akun.NormalSaldo == "debit" {
-		saldo = result.TotalDebit - result.TotalKredit
+		saldo = hasil.TotalDebit - hasil.TotalKredit
 	} else {
-		saldo = result.TotalKredit - result.TotalDebit
+		saldo = hasil.TotalKredit - hasil.TotalDebit
 	}
 
 	return saldo, nil
@@ -361,12 +362,101 @@ func (s *AkunService) DapatkanHierarkiAkun(idKoperasi uuid.UUID) ([]models.AkunR
 	}
 
 	// Convert to response
-	responses := make([]models.AkunResponse, len(akunList))
+	responseDaftar := make([]models.AkunResponse, len(akunList))
 	for i, akun := range akunList {
-		responses[i] = akun.ToResponse()
+		responseDaftar[i] = akun.ToResponse()
 	}
 
-	return responses, nil
+	return responseDaftar, nil
+}
+
+// GetSemuaAkun is a wrapper for DapatkanSemuaAkun with pagination support
+func (s *AkunService) GetSemuaAkun(idKoperasi uuid.UUID, tipeAkun *models.TipeAkun, statusAktif *bool) ([]models.AkunResponse, error) {
+	// Convert TipeAkun pointer to string
+	tipeAkunStr := ""
+	if tipeAkun != nil {
+		tipeAkunStr = string(*tipeAkun)
+	}
+
+	return s.DapatkanSemuaAkun(idKoperasi, tipeAkunStr, statusAktif)
+}
+
+// GetAkunByID is a wrapper for DapatkanAkun with multi-tenant validation
+func (s *AkunService) GetAkunByID(idKoperasi, id uuid.UUID) (*models.AkunResponse, error) {
+	// Get akun
+	akun, err := s.DapatkanAkun(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate multi-tenancy - ensure akun belongs to the correct cooperative
+	var akunModel models.Akun
+	err = s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&akunModel).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("akun tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
+	}
+
+	return akun, nil
+}
+
+// GetBukuBesar mengambil buku besar (ledger) untuk akun tertentu
+func (s *AkunService) GetBukuBesar(idKoperasi, idAkun uuid.UUID, tanggalMulai, tanggalAkhir string) (interface{}, error) {
+	// Validate akun exists and belongs to cooperative
+	var akun models.Akun
+	err := s.db.Where("id = ? AND id_koperasi = ?", idAkun, idKoperasi).First(&akun).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("akun tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
+	}
+
+	// Query baris transaksi untuk akun ini
+	type BukuBesarEntry struct {
+		TanggalTransaksi time.Time `json:"tanggalTransaksi"`
+		NomorJurnal      string    `json:"nomorJurnal"`
+		Deskripsi        string    `json:"deskripsi"`
+		JumlahDebit      float64   `json:"jumlahDebit"`
+		JumlahKredit     float64   `json:"jumlahKredit"`
+		Saldo            float64   `json:"saldo"`
+	}
+
+	var entries []BukuBesarEntry
+	query := s.db.Table("baris_transaksi").
+		Select("transaksi.tanggal_transaksi, transaksi.nomor_jurnal, transaksi.deskripsi, baris_transaksi.jumlah_debit, baris_transaksi.jumlah_kredit").
+		Joins("JOIN transaksi ON transaksi.id = baris_transaksi.id_transaksi").
+		Where("baris_transaksi.id_akun = ? AND transaksi.id_koperasi = ?", idAkun, idKoperasi)
+
+	if tanggalMulai != "" {
+		query = query.Where("transaksi.tanggal_transaksi >= ?", tanggalMulai)
+	}
+	if tanggalAkhir != "" {
+		query = query.Where("transaksi.tanggal_transaksi <= ?", tanggalAkhir)
+	}
+
+	err = query.Order("transaksi.tanggal_transaksi ASC, transaksi.nomor_jurnal ASC").Scan(&entries).Error
+	if err != nil {
+		return nil, errors.New("gagal mengambil buku besar")
+	}
+
+	// Calculate running balance
+	saldo := 0.0
+	for i := range entries {
+		if akun.NormalSaldo == "debit" {
+			saldo += entries[i].JumlahDebit - entries[i].JumlahKredit
+		} else {
+			saldo += entries[i].JumlahKredit - entries[i].JumlahDebit
+		}
+		entries[i].Saldo = saldo
+	}
+
+	return map[string]interface{}{
+		"akun":    akun.ToResponse(),
+		"entries": entries,
+	}, nil
 }
 
 // GetSemuaAkun is a wrapper for DapatkanSemuaAkun with type conversion

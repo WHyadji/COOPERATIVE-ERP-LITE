@@ -60,7 +60,7 @@ func (h *ProdukHandler) List(c *gin.Context) {
 		statusAktifPtr = &aktif
 	}
 
-	produkList, total, err := h.produkService.GetSemuaProduk(koperasiUUID, kategori, search, statusAktifPtr, page, pageSize)
+	produkList, total, err := h.produkService.DapatkanSemuaProduk(koperasiUUID, kategori, search, statusAktifPtr, page, pageSize)
 	if err != nil {
 		utils.SafeInternalServerErrorResponse(c, err)
 		return
@@ -72,8 +72,10 @@ func (h *ProdukHandler) List(c *gin.Context) {
 
 // GetByID handles GET /api/v1/produk/:id
 func (h *ProdukHandler) GetByID(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -82,7 +84,7 @@ func (h *ProdukHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	produk, err := h.produkService.GetProdukByID(koperasiUUID, id)
+	produk, err := h.produkService.DapatkanProduk(koperasiUUID, id)
 	if err != nil {
 		utils.NotFoundResponse(c, "Produk tidak ditemukan")
 		return
@@ -98,7 +100,7 @@ func (h *ProdukHandler) GetByBarcode(c *gin.Context) {
 
 	barcode := c.Param("barcode")
 
-	produk, err := h.produkService.GetProdukByBarcode(koperasiUUID, barcode)
+	produk, err := h.produkService.DapatkanProdukByBarcode(koperasiUUID, barcode)
 	if err != nil {
 		utils.NotFoundResponse(c, "Produk tidak ditemukan")
 		return
@@ -109,8 +111,10 @@ func (h *ProdukHandler) GetByBarcode(c *gin.Context) {
 
 // Update handles PUT /api/v1/produk/:id
 func (h *ProdukHandler) Update(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -136,8 +140,10 @@ func (h *ProdukHandler) Update(c *gin.Context) {
 
 // Delete handles DELETE /api/v1/produk/:id
 func (h *ProdukHandler) Delete(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -167,7 +173,7 @@ func (h *ProdukHandler) AdjustStok(c *gin.Context) {
 	}
 
 	var req struct {
-		Jumlah    int    `json:"jumlah" binding:"required"`
+		Jumlah     int    `json:"jumlah" binding:"required"`
 		Keterangan string `json:"keterangan"`
 	}
 
@@ -190,7 +196,7 @@ func (h *ProdukHandler) GetStokRendah(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
-	produkList, err := h.produkService.GetProdukStokRendah(koperasiUUID)
+	produkList, err := h.produkService.DapatkanProdukStokRendah(koperasiUUID)
 	if err != nil {
 		utils.SafeInternalServerErrorResponse(c, err)
 		return
