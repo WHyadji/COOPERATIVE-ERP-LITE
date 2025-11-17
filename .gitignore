@@ -53,6 +53,7 @@ coverage/
 # Go build artifacts
 bin/
 *.exe
+backend/main
 
 # Nginx
 nginx/logs/
