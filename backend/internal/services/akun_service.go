@@ -4,6 +4,7 @@ import (
 	"cooperative-erp-lite/internal/models"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -336,4 +337,93 @@ func (s *AkunService) DapatkanHierarkiAkun(idKoperasi uuid.UUID) ([]models.AkunR
 	}
 
 	return responses, nil
+}
+
+// GetSemuaAkun is a wrapper for DapatkanSemuaAkun with pagination support
+func (s *AkunService) GetSemuaAkun(idKoperasi uuid.UUID, tipeAkun *models.TipeAkun, statusAktif *bool) ([]models.AkunResponse, error) {
+	// Convert TipeAkun pointer to string
+	tipeAkunStr := ""
+	if tipeAkun != nil {
+		tipeAkunStr = string(*tipeAkun)
+	}
+
+	return s.DapatkanSemuaAkun(idKoperasi, tipeAkunStr, statusAktif)
+}
+
+// GetAkunByID is a wrapper for DapatkanAkun with multi-tenant validation
+func (s *AkunService) GetAkunByID(idKoperasi, id uuid.UUID) (*models.AkunResponse, error) {
+	// Get akun
+	akun, err := s.DapatkanAkun(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate multi-tenancy - ensure akun belongs to the correct cooperative
+	var akunModel models.Akun
+	err = s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&akunModel).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("akun tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
+	}
+
+	return akun, nil
+}
+
+// GetBukuBesar mengambil buku besar (ledger) untuk akun tertentu
+func (s *AkunService) GetBukuBesar(idKoperasi, idAkun uuid.UUID, tanggalMulai, tanggalAkhir string) (interface{}, error) {
+	// Validate akun exists and belongs to cooperative
+	var akun models.Akun
+	err := s.db.Where("id = ? AND id_koperasi = ?", idAkun, idKoperasi).First(&akun).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("akun tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
+	}
+
+	// Query baris transaksi untuk akun ini
+	type BukuBesarEntry struct {
+		TanggalTransaksi time.Time `json:"tanggalTransaksi"`
+		NomorJurnal      string    `json:"nomorJurnal"`
+		Deskripsi        string    `json:"deskripsi"`
+		JumlahDebit      float64   `json:"jumlahDebit"`
+		JumlahKredit     float64   `json:"jumlahKredit"`
+		Saldo            float64   `json:"saldo"`
+	}
+
+	var entries []BukuBesarEntry
+	query := s.db.Table("baris_transaksi").
+		Select("transaksi.tanggal_transaksi, transaksi.nomor_jurnal, transaksi.deskripsi, baris_transaksi.jumlah_debit, baris_transaksi.jumlah_kredit").
+		Joins("JOIN transaksi ON transaksi.id = baris_transaksi.id_transaksi").
+		Where("baris_transaksi.id_akun = ? AND transaksi.id_koperasi = ?", idAkun, idKoperasi)
+
+	if tanggalMulai != "" {
+		query = query.Where("transaksi.tanggal_transaksi >= ?", tanggalMulai)
+	}
+	if tanggalAkhir != "" {
+		query = query.Where("transaksi.tanggal_transaksi <= ?", tanggalAkhir)
+	}
+
+	err = query.Order("transaksi.tanggal_transaksi ASC, transaksi.nomor_jurnal ASC").Scan(&entries).Error
+	if err != nil {
+		return nil, errors.New("gagal mengambil buku besar")
+	}
+
+	// Calculate running balance
+	saldo := 0.0
+	for i := range entries {
+		if akun.NormalSaldo == "debit" {
+			saldo += entries[i].JumlahDebit - entries[i].JumlahKredit
+		} else {
+			saldo += entries[i].JumlahKredit - entries[i].JumlahDebit
+		}
+		entries[i].Saldo = saldo
+	}
+
+	return map[string]interface{}{
+		"akun":    akun.ToResponse(),
+		"entries": entries,
+	}, nil
 }

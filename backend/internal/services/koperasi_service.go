@@ -164,3 +164,31 @@ func (s *KoperasiService) DapatkanStatistikKoperasi(idKoperasi uuid.UUID) (map[s
 
 	return statistik, nil
 }
+
+// GetSemuaKoperasi is a wrapper for DapatkanSemuaKoperasi with pagination support
+func (s *KoperasiService) GetSemuaKoperasi(page, pageSize int) ([]models.Koperasi, int64, error) {
+	var koperasiList []models.Koperasi
+	var total int64
+
+	// Count total
+	s.db.Model(&models.Koperasi{}).Count(&total)
+
+	// Pagination
+	offset := (page - 1) * pageSize
+	err := s.db.Offset(offset).Limit(pageSize).Find(&koperasiList).Error
+	if err != nil {
+		return nil, 0, errors.New("gagal mengambil daftar koperasi")
+	}
+
+	return koperasiList, total, nil
+}
+
+// GetKoperasiByID is a wrapper for DapatkanKoperasi
+func (s *KoperasiService) GetKoperasiByID(idKoperasi uuid.UUID) (*models.Koperasi, error) {
+	return s.DapatkanKoperasi(idKoperasi)
+}
+
+// GetStatistikKoperasi is a wrapper for DapatkanStatistikKoperasi
+func (s *KoperasiService) GetStatistikKoperasi(idKoperasi uuid.UUID) (map[string]interface{}, error) {
+	return s.DapatkanStatistikKoperasi(idKoperasi)
+}

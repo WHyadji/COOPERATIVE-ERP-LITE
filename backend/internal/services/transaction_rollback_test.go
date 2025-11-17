@@ -39,7 +39,6 @@ func setupTestDBForRollback(t *testing.T) *gorm.DB {
 	return db
 }
 
-
 // TestSimpananService_CatatSetoran_RollbackOnPostingFailure tests that simpanan is rolled back if posting fails
 func TestSimpananService_CatatSetoran_RollbackOnPostingFailure(t *testing.T) {
 	db := setupTestDBForRollback(t)

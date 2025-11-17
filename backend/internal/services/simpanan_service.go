@@ -30,11 +30,11 @@ func NewSimpananService(db *gorm.DB, transaksiService *TransaksiService) *Simpan
 
 // CatatSetoranRequest adalah struktur request untuk catat setoran
 type CatatSetoranRequest struct {
-	IDAnggota        uuid.UUID          `json:"idAnggota" binding:"required"`
+	IDAnggota        uuid.UUID           `json:"idAnggota" binding:"required"`
 	TipeSimpanan     models.TipeSimpanan `json:"tipeSimpanan" binding:"required"`
-	TanggalTransaksi time.Time          `json:"tanggalTransaksi" binding:"required"`
-	JumlahSetoran    float64            `json:"jumlahSetoran" binding:"required,gt=0"`
-	Keterangan       string             `json:"keterangan"`
+	TanggalTransaksi time.Time           `json:"tanggalTransaksi" binding:"required"`
+	JumlahSetoran    float64             `json:"jumlahSetoran" binding:"required,gt=0"`
+	Keterangan       string              `json:"keterangan"`
 }
 
 // CatatSetoran mencatat setoran simpanan anggota
@@ -93,11 +93,11 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 	err = s.db.Create(simpanan).Error
 	if err != nil {
 		s.logger.Error(method, "Failed to create simpanan record", err, map[string]interface{}{
-			"koperasi_id":      idKoperasi.String(),
-			"anggota_id":       req.IDAnggota.String(),
-			"tipe_simpanan":    req.TipeSimpanan,
-			"jumlah_setoran":   req.JumlahSetoran,
-			"nomor_referensi":  nomorReferensi,
+			"koperasi_id":       idKoperasi.String(),
+			"anggota_id":        req.IDAnggota.String(),
+			"tipe_simpanan":     req.TipeSimpanan,
+			"jumlah_setoran":    req.JumlahSetoran,
+			"nomor_referensi":   nomorReferensi,
 			"tanggal_transaksi": req.TanggalTransaksi.Format("2006-01-02"),
 		})
 		return nil, utils.WrapDatabaseError(err, "Gagal mencatat setoran simpanan")
@@ -120,12 +120,12 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 	s.db.Preload("Anggota").First(simpanan, simpanan.ID)
 
 	s.logger.Info(method, "Successfully created simpanan transaction", map[string]interface{}{
-		"simpanan_id":      simpanan.ID.String(),
-		"koperasi_id":      idKoperasi.String(),
-		"anggota_id":       req.IDAnggota.String(),
-		"tipe_simpanan":    req.TipeSimpanan,
-		"jumlah_setoran":   req.JumlahSetoran,
-		"nomor_referensi":  nomorReferensi,
+		"simpanan_id":       simpanan.ID.String(),
+		"koperasi_id":       idKoperasi.String(),
+		"anggota_id":        req.IDAnggota.String(),
+		"tipe_simpanan":     req.TipeSimpanan,
+		"jumlah_setoran":    req.JumlahSetoran,
+		"nomor_referensi":   nomorReferensi,
 		"tanggal_transaksi": req.TanggalTransaksi.Format("2006-01-02"),
 	})
 
@@ -165,7 +165,7 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 			}
 		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			s.logger.Error(method, "Failed to query last simpanan", err, map[string]interface{}{
-				"koperasi_id":      idKoperasi.String(),
+				"koperasi_id":       idKoperasi.String(),
 				"tanggal_transaksi": tanggalDate,
 			})
 			return err
@@ -177,15 +177,15 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 
 	if err != nil {
 		s.logger.Error(method, "Transaction failed while generating nomor referensi", err, map[string]interface{}{
-			"koperasi_id":      idKoperasi.String(),
+			"koperasi_id":       idKoperasi.String(),
 			"tanggal_transaksi": tanggalDate,
 		})
 		return "", utils.WrapGenerationError(err, "Generate nomor referensi")
 	}
 
 	s.logger.Debug(method, "Generated nomor referensi", map[string]interface{}{
-		"nomor_referensi":  nomorReferensi,
-		"koperasi_id":      idKoperasi.String(),
+		"nomor_referensi":   nomorReferensi,
+		"koperasi_id":       idKoperasi.String(),
 		"tanggal_transaksi": tanggalDate,
 	})
 
@@ -195,6 +195,10 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 // DapatkanSemuaTransaksiSimpanan mengambil daftar transaksi simpanan
 func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, tipeSimpanan string, idAnggota *uuid.UUID, tanggalMulai, tanggalAkhir string, page, pageSize int) ([]models.SimpananResponse, int64, error) {
 	const method = "DapatkanSemuaTransaksiSimpanan"
+
+	// Validate and normalize pagination parameters to prevent DoS attacks
+	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
+
 	var simpananList []models.Simpanan
 	var total int64
 
@@ -217,22 +221,27 @@ func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, t
 	// Count total
 	query.Count(&total)
 
-	// Pagination
-	offset := (page - 1) * pageSize
-	err := query.Offset(offset).Limit(pageSize).
+	// Pagination with validated parameters
+	offset := utils.CalculateOffset(validPage, validPageSize)
+
+	// Create context with timeout to prevent long-running queries
+	ctx, cancel := utils.CreateQueryContext()
+	defer cancel()
+
+	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).
 		Order("tanggal_transaksi DESC").
 		Preload("Anggota").
 		Find(&simpananList).Error
 
 	if err != nil {
 		s.logger.Error(method, "Failed to fetch simpanan transaction list", err, map[string]interface{}{
-			"koperasi_id":    idKoperasi.String(),
-			"tipe_simpanan":  tipeSimpanan,
-			"anggota_id":     idAnggota,
-			"tanggal_mulai":  tanggalMulai,
-			"tanggal_akhir":  tanggalAkhir,
-			"page":           page,
-			"page_size":      pageSize,
+			"koperasi_id":   idKoperasi.String(),
+			"tipe_simpanan": tipeSimpanan,
+			"anggota_id":    idAnggota,
+			"tanggal_mulai": tanggalMulai,
+			"tanggal_akhir": tanggalAkhir,
+			"page":          validPage,
+			"page_size":     validPageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar transaksi simpanan")
 	}
