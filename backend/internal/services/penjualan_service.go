@@ -381,28 +381,3 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 
 	return topProduk, nil
 }
-
-// GetRiwayatPenjualan is an English wrapper for DapatkanRiwayatPenjualan
-func (s *PenjualanService) GetRiwayatPenjualan(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir string, page, pageSize int) ([]models.PenjualanResponse, int64, error) {
-	return s.DapatkanRiwayatPenjualan(idKoperasi, tanggalMulai, tanggalAkhir, page, pageSize)
-}
-
-// GetPenjualanByID is an English wrapper for DapatkanPenjualan
-func (s *PenjualanService) GetPenjualanByID(idKoperasi, id uuid.UUID) (*models.PenjualanResponse, error) {
-	return s.DapatkanPenjualan(idKoperasi, id)
-}
-
-// GenerateStrukDigital is an English wrapper for BuatStrukDigital
-func (s *PenjualanService) GenerateStrukDigital(idKoperasi, idPenjualan uuid.UUID) (map[string]interface{}, error) {
-	return s.BuatStrukDigital(idKoperasi, idPenjualan)
-}
-
-// GetSummaryHariIni is an English wrapper for DapatkanSummaryHariIni
-func (s *PenjualanService) GetSummaryHariIni(idKoperasi uuid.UUID) (map[string]interface{}, error) {
-	return s.DapatkanSummaryHariIni(idKoperasi)
-}
-
-// GetTopSellingProducts is an English wrapper for DapatkanTopProduk
-func (s *PenjualanService) GetTopSellingProducts(idKoperasi uuid.UUID, limit int) ([]map[string]interface{}, error) {
-	return s.DapatkanTopProduk(idKoperasi, limit)
-}

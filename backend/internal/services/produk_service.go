@@ -405,13 +405,3 @@ func (s *ProdukService) DapatkanProdukStokRendah(idKoperasi uuid.UUID) ([]models
 
 	return responses, nil
 }
-
-// GetSemuaProduk is an English wrapper for DapatkanSemuaProduk
-func (s *ProdukService) GetSemuaProduk(idKoperasi uuid.UUID, kategori, status, search string, page, pageSize int) ([]models.ProdukResponse, int64, error) {
-	return s.DapatkanSemuaProduk(idKoperasi, kategori, status, search, page, pageSize)
-}
-
-// GetProdukByID is an English wrapper for DapatkanProduk
-func (s *ProdukService) GetProdukByID(idKoperasi, id uuid.UUID) (*models.ProdukResponse, error) {
-	return s.DapatkanProduk(idKoperasi, id)
-}

@@ -312,7 +312,3 @@ func (s *PenggunaService) GetPenggunaByID(idKoperasi, id uuid.UUID) (*models.Pen
 	return s.DapatkanPengguna(id)
 }
 
-// UbahKataSandiAdmin is an English wrapper for admin password change
-func (s *PenggunaService) UbahKataSandiAdmin(idKoperasi, idPengguna uuid.UUID, kataSandiBaru string) error {
-	return s.ResetKataSandi(idKoperasi, idPengguna)
-}

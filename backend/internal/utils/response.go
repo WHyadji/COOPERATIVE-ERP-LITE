@@ -93,3 +93,13 @@ func ConflictResponse(c *gin.Context, message string) {
 func InternalServerErrorResponse(c *gin.Context, message string, details interface{}) {
 	ErrorResponse(c, 500, "INTERNAL_SERVER_ERROR", message, details)
 }
+// SafeInternalServerErrorResponse mengirim response untuk internal server error dengan sanitasi otomatis
+
+// SafeInternalServerErrorResponse mengirim response untuk internal server error dengan sanitasi otomatis
+// Gunakan fungsi ini ketika menerima error object untuk mencegah information disclosure
+// Error details akan di-log secara internal tetapi tidak dikirim ke client
+func SafeInternalServerErrorResponse(c *gin.Context, err error) {
+	// Send sanitized message to client
+	sanitizedMsg := SanitizeError(err)
+	ErrorResponse(c, 500, "INTERNAL_SERVER_ERROR", sanitizedMsg, nil)
+}
