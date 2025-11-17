@@ -161,21 +161,16 @@ func (h *PenggunaHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		KataSandiBaru string `json:"kataSandiBaru" binding:"required,min=6"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ValidationErrorResponse(c, err.Error())
-		return
-	}
-
-	if err := h.penggunaService.ResetKataSandi(koperasiUUID, id, req.KataSandiBaru); err != nil {
+	// ResetKataSandi now returns the default password
+	passwordDefault, err := h.penggunaService.ResetKataSandi(koperasiUUID, id)
+	if err != nil {
 		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Kata sandi berhasil direset", nil)
+	utils.SuccessResponse(c, http.StatusOK, "Kata sandi berhasil direset", gin.H{
+		"passwordDefault": passwordDefault,
+	})
 }
 
 // ChangePassword handles PUT /api/v1/pengguna/:id/change-password
@@ -191,7 +186,6 @@ func (h *PenggunaHandler) ChangePassword(c *gin.Context) {
 	}
 
 	var req struct {
-		KataSandiLama string `json:"kataSandiLama" binding:"required"`
 		KataSandiBaru string `json:"kataSandiBaru" binding:"required,min=6"`
 	}
 
@@ -200,8 +194,9 @@ func (h *PenggunaHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.penggunaService.UbahKataSandiAdmin(koperasiUUID, id, req.KataSandiLama, req.KataSandiBaru); err != nil {
-		utils.BadRequestResponse(c, err.Error())
+	// UbahKataSandiPengguna only takes the new password
+	if err := h.penggunaService.UbahKataSandiPengguna(koperasiUUID, id, req.KataSandiBaru); err != nil {
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

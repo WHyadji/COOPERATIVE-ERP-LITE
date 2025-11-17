@@ -80,11 +80,6 @@ func (h *SimpananHandler) List(c *gin.Context) {
 
 // GetSaldoAnggota handles GET /api/v1/simpanan/anggota/:id
 func (h *SimpananHandler) GetSaldoAnggota(c *gin.Context) {
-	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
-	if !ok {
-		return
-	}
-
 	idStr := c.Param("id")
 	idAnggota, err := uuid.Parse(idStr)
 	if err != nil {
@@ -92,7 +87,7 @@ func (h *SimpananHandler) GetSaldoAnggota(c *gin.Context) {
 		return
 	}
 
-	saldo, err := h.simpananService.DapatkanSaldoAnggota(koperasiUUID, idAnggota)
+	saldo, err := h.simpananService.DapatkanSaldoAnggota(idAnggota)
 	if err != nil {
 		utils.SafeInternalServerErrorResponse(c, err)
 		return

@@ -85,14 +85,14 @@ func ValidatePagination(page, pageSize int) (validPage int, validPageSize int) {
 //   - PaginationMeta with all calculated fields
 func CalculatePaginationMeta(page, pageSize int, total int64) *PaginationMeta {
 	// Calculate total pages (ceiling division)
-	totalPages := int(total) / pageSize
-	if int(total)%pageSize > 0 {
-		totalPages++
-	}
-
-	// Prevent division by zero
-	if totalPages == 0 {
-		totalPages = 1
+	var totalPages int
+	if total == 0 {
+		totalPages = 0
+	} else {
+		totalPages = int(total) / pageSize
+		if int(total)%pageSize > 0 {
+			totalPages++
+		}
 	}
 
 	// Calculate navigation flags

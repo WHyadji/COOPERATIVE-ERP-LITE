@@ -1,0 +1,223 @@
+package main
+
+import (
+	"cooperative-erp-lite/internal/config"
+	"cooperative-erp-lite/internal/handlers"
+	"cooperative-erp-lite/internal/middleware"
+	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/internal/services"
+	"cooperative-erp-lite/internal/utils"
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+func main() {
+	// Load konfigurasi
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Gagal memuat konfigurasi: %v", err)
+	}
+
+	// Set Gin mode
+	gin.SetMode(cfg.Server.GinMode)
+
+	// Inisialisasi database
+	if err := config.InitDatabase(cfg); err != nil {
+		log.Fatalf("Gagal menginisialisasi database: %v", err)
+	}
+	defer config.CloseDatabase()
+
+	log.Println("✓ Database berhasil diinisialisasi")
+
+	// Setup router
+	router := setupRouter(cfg)
+
+	// Start server
+	serverAddr := fmt.Sprintf(":%s", cfg.Server.Port)
+	log.Printf("🚀 Server berjalan di http://localhost%s", serverAddr)
+	log.Printf("📝 Environment: %s", cfg.Server.GinMode)
+	log.Printf("🗄️  Database: %s@%s:%s/%s", cfg.Database.User, cfg.Database.Host, cfg.Database.Port, cfg.Database.DBName)
+
+	if err := router.Run(serverAddr); err != nil {
+		log.Fatalf("Gagal menjalankan server: %v", err)
+	}
+}
+
+// setupRouter mengkonfigurasi router dan semua routes
+func setupRouter(cfg *config.Config) *gin.Engine {
+	router := gin.New()
+
+	// Global middleware
+	router.Use(gin.Recovery())
+	router.Use(middleware.LoggerMiddleware())
+	router.Use(middleware.CORSMiddleware(cfg.CORS.AllowedOrigins))
+
+	// Initialize JWT utility
+	jwtUtil := utils.NewJWTUtil(cfg.JWT.Secret, cfg.JWT.ExpirationHours)
+
+	// Initialize database connection
+	db := config.GetDB()
+
+	// Initialize services (order matters due to dependencies)
+	authService := services.NewAuthService(db, jwtUtil)
+	koperasiService := services.NewKoperasiService(db)
+	anggotaService := services.NewAnggotaService(db)
+	akunService := services.NewAkunService(db)
+	penggunaService := services.NewPenggunaService(db)
+	produkService := services.NewProdukService(db)
+	transaksiService := services.NewTransaksiService(db)
+	simpananService := services.NewSimpananService(db, transaksiService)
+	penjualanService := services.NewPenjualanService(db, produkService, transaksiService)
+	laporanService := services.NewLaporanService(db, akunService, simpananService, penjualanService)
+
+	// Initialize handlers
+	authHandler := handlers.NewAuthHandler(authService)
+	koperasiHandler := handlers.NewKoperasiHandler(koperasiService)
+	anggotaHandler := handlers.NewAnggotaHandler(anggotaService)
+	simpananHandler := handlers.NewSimpananHandler(simpananService)
+	akunHandler := handlers.NewAkunHandler(akunService)
+	transaksiHandler := handlers.NewTransaksiHandler(transaksiService)
+	produkHandler := handlers.NewProdukHandler(produkService)
+	penjualanHandler := handlers.NewPenjualanHandler(penjualanService)
+	penggunaHandler := handlers.NewPenggunaHandler(penggunaService)
+	laporanHandler := handlers.NewLaporanHandler(laporanService)
+
+	// Health check endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "healthy",
+			"message": "Cooperative ERP Lite API is running",
+		})
+	})
+
+	// API v1 routes
+	v1 := router.Group("/api/v1")
+	{
+		// Public routes - Authentication
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/logout", authHandler.Logout)
+
+			// Protected auth routes
+			authProtected := auth.Group("")
+			authProtected.Use(middleware.AuthMiddleware(jwtUtil))
+			{
+				authProtected.GET("/profile", authHandler.GetProfile)
+				authProtected.PUT("/change-password", authHandler.ChangePassword)
+				authProtected.POST("/refresh", authHandler.RefreshToken)
+			}
+		}
+
+		// Protected routes - Require authentication
+		protected := v1.Group("")
+		protected.Use(middleware.AuthMiddleware(jwtUtil))
+		{
+			// Koperasi routes - Admin only
+			koperasi := protected.Group("/koperasi")
+			koperasi.Use(middleware.RequireRole(models.PeranAdmin))
+			{
+				koperasi.POST("", koperasiHandler.Create)
+				koperasi.GET("", koperasiHandler.List)
+				koperasi.GET("/:id", koperasiHandler.GetByID)
+				koperasi.PUT("/:id", koperasiHandler.Update)
+				koperasi.DELETE("/:id", koperasiHandler.Delete)
+			}
+
+			// Anggota routes - Admin and Bendahara can manage
+			anggota := protected.Group("/anggota")
+			{
+				anggota.POST("", anggotaHandler.Create)
+				anggota.GET("", anggotaHandler.List)
+				anggota.GET("/:id", anggotaHandler.GetByID)
+				anggota.PUT("/:id", anggotaHandler.Update)
+				anggota.DELETE("/:id", anggotaHandler.Delete)
+				anggota.GET("/nomor/:nomorAnggota", anggotaHandler.GetByNomor)
+			}
+
+			// Simpanan routes - Admin and Bendahara can manage
+			simpanan := protected.Group("/simpanan")
+			{
+				simpanan.POST("", simpananHandler.CatatSetoran)
+				simpanan.GET("", simpananHandler.List)
+				simpanan.GET("/:id", simpananHandler.GetByID)
+				simpanan.GET("/anggota/:idAnggota", simpananHandler.GetByAnggota)
+				simpanan.GET("/anggota/:idAnggota/saldo", simpananHandler.GetSaldoAnggota)
+				simpanan.PUT("/:id", simpananHandler.Update)
+				simpanan.DELETE("/:id", simpananHandler.Delete)
+			}
+
+			// Akun (Chart of Accounts) routes
+			akun := protected.Group("/akun")
+			{
+				akun.POST("", akunHandler.Create)
+				akun.GET("", akunHandler.List)
+				akun.GET("/:id", akunHandler.GetByID)
+				akun.PUT("/:id", akunHandler.Update)
+				akun.DELETE("/:id", akunHandler.Delete)
+				akun.GET("/kode/:kodeAkun", akunHandler.GetByKodeAkun)
+			}
+
+			// Transaksi (Journal entries) routes
+			transaksi := protected.Group("/transaksi")
+			{
+				transaksi.POST("", transaksiHandler.Create)
+				transaksi.GET("", transaksiHandler.List)
+				transaksi.GET("/:id", transaksiHandler.GetByID)
+				transaksi.PUT("/:id", transaksiHandler.Update)
+				transaksi.DELETE("/:id", transaksiHandler.Delete)
+			}
+
+			// Produk routes
+			produk := protected.Group("/produk")
+			{
+				produk.POST("", produkHandler.Create)
+				produk.GET("", produkHandler.List)
+				produk.GET("/:id", produkHandler.GetByID)
+				produk.PUT("/:id", produkHandler.Update)
+				produk.DELETE("/:id", produkHandler.Delete)
+				produk.GET("/sku/:sku", produkHandler.GetBySKU)
+			}
+
+			// Penjualan (POS) routes
+			penjualan := protected.Group("/penjualan")
+			{
+				penjualan.POST("", penjualanHandler.Create)
+				penjualan.GET("", penjualanHandler.List)
+				penjualan.GET("/:id", penjualanHandler.GetByID)
+				penjualan.DELETE("/:id", penjualanHandler.Delete)
+				penjualan.GET("/nomor/:nomorPenjualan", penjualanHandler.GetByNomorPenjualan)
+			}
+
+			// Pengguna (User management) routes - Admin only
+			pengguna := protected.Group("/pengguna")
+			pengguna.Use(middleware.RequireRole(models.PeranAdmin))
+			{
+				pengguna.POST("", penggunaHandler.Create)
+				pengguna.GET("", penggunaHandler.List)
+				pengguna.GET("/:id", penggunaHandler.GetByID)
+				pengguna.PUT("/:id", penggunaHandler.Update)
+				pengguna.DELETE("/:id", penggunaHandler.Delete)
+				pengguna.PUT("/:id/reset-password", penggunaHandler.ResetPassword)
+			}
+
+			// Laporan (Reports) routes
+			laporan := protected.Group("/laporan")
+			{
+				laporan.GET("/saldo-anggota", laporanHandler.GetSaldoAnggota)
+				laporan.GET("/transaksi-harian", laporanHandler.GetTransaksiHarian)
+				laporan.GET("/neraca-saldo", laporanHandler.GetNeracaSaldo)
+				laporan.GET("/neraca", laporanHandler.GetNeraca)
+				laporan.GET("/laba-rugi", laporanHandler.GetLabaRugi)
+				laporan.GET("/buku-besar", laporanHandler.GetBukuBesar)
+			}
+		}
+	}
+
+	log.Println("✓ Routes berhasil dikonfigurasi")
+
+	return router
+}

@@ -103,3 +103,10 @@ func SafeInternalServerErrorResponse(c *gin.Context, err error) {
 	sanitizedMsg := SanitizeError(err)
 	ErrorResponse(c, 500, "INTERNAL_SERVER_ERROR", sanitizedMsg, nil)
 }
+
+// SafeValidationErrorResponse mengirim response untuk validation error dengan sanitasi otomatis
+// Gunakan fungsi ini ketika menerima error object untuk mencegah information disclosure
+func SafeValidationErrorResponse(c *gin.Context, err error) {
+	sanitizedMsg := SanitizeError(err)
+	ErrorResponse(c, 400, "VALIDATION_ERROR", sanitizedMsg, nil)
+}

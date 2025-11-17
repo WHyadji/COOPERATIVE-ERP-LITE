@@ -218,9 +218,9 @@ func TestPaginatedSuccessResponse(t *testing.T) {
 			Page:       1,
 			PageSize:   2,
 			TotalPages: 5,
-			TotalItems: 10,
+			Total:      10,
 		}
-		PaginatedSuccessResponse(c, http.StatusOK, "Data retrieved", data, pagination)
+		PaginatedSuccessResponse(c, http.StatusOK, "Data retrieved", data, &pagination)
 	})
 
 	w := httptest.NewRecorder()
@@ -244,8 +244,8 @@ func TestPaginatedSuccessResponse(t *testing.T) {
 		t.Errorf("Expected page 1, got %d", response.Pagination.Page)
 	}
 
-	if response.Pagination.TotalItems != 10 {
-		t.Errorf("Expected total items 10, got %d", response.Pagination.TotalItems)
+	if response.Pagination.Total != 10 {
+		t.Errorf("Expected total items 10, got %d", response.Pagination.Total)
 	}
 }
 
@@ -363,8 +363,8 @@ func TestCalculatePaginationMeta(t *testing.T) {
 				t.Errorf("Expected total pages %d, got %d", tt.expectedPages, meta.TotalPages)
 			}
 
-			if meta.TotalItems != tt.expectedItems {
-				t.Errorf("Expected total items %d, got %d", tt.expectedItems, meta.TotalItems)
+			if meta.Total != tt.expectedItems {
+				t.Errorf("Expected total items %d, got %d", tt.expectedItems, meta.Total)
 			}
 		})
 	}

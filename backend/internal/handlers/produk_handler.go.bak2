@@ -72,6 +72,11 @@ func (h *ProdukHandler) List(c *gin.Context) {
 
 // GetByID handles GET /api/v1/produk/:id
 func (h *ProdukHandler) GetByID(c *gin.Context) {
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
+
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -153,6 +158,37 @@ func (h *ProdukHandler) Delete(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Produk berhasil dihapus", nil)
+}
+
+// AdjustStok handles POST /api/v1/produk/:id/adjust-stok
+func (h *ProdukHandler) AdjustStok(c *gin.Context) {
+	idKoperasi, _ := c.Get("idKoperasi")
+	koperasiUUID := idKoperasi.(uuid.UUID)
+
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.BadRequestResponse(c, "ID produk tidak valid")
+		return
+	}
+
+	var req struct {
+		Jumlah     int    `json:"jumlah" binding:"required"`
+		Keterangan string `json:"keterangan"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ValidationErrorResponse(c, err.Error())
+		return
+	}
+
+	produk, err := h.produkService.AdjustStok(koperasiUUID, id, req.Jumlah, req.Keterangan)
+	if err != nil {
+		utils.SafeInternalServerErrorResponse(c, err)
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Stok berhasil disesuaikan", produk)
 }
 
 // GetStokRendah handles GET /api/v1/produk/stok-rendah

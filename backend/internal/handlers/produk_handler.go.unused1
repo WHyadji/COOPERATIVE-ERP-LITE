@@ -72,6 +72,11 @@ func (h *ProdukHandler) List(c *gin.Context) {
 
 // GetByID handles GET /api/v1/produk/:id
 func (h *ProdukHandler) GetByID(c *gin.Context) {
+	koperasiUUID, ok := AmbilIDKoperasiDariContext(c)
+	if !ok {
+		return
+	}
+
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
