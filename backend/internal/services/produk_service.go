@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/internal/utils"
 	"errors"
 
 	"github.com/google/uuid"
@@ -10,39 +11,57 @@ import (
 
 // ProdukService menangani logika bisnis produk
 type ProdukService struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *utils.Logger
 }
 
 // NewProdukService membuat instance baru ProdukService
 func NewProdukService(db *gorm.DB) *ProdukService {
-	return &ProdukService{db: db}
+	return &ProdukService{
+		db:     db,
+		logger: utils.NewLogger("ProdukService"),
+	}
 }
 
 // BuatProdukRequest adalah struktur request untuk membuat produk
 type BuatProdukRequest struct {
-	KodeProduk  string  `json:"kodeProduk" binding:"required"`
-	NamaProduk  string  `json:"namaProduk" binding:"required"`
-	Kategori    string  `json:"kategori"`
-	Deskripsi   string  `json:"deskripsi"`
-	Harga       float64 `json:"harga" binding:"required,gte=0"`
-	HargaBeli   float64 `json:"hargaBeli" binding:"gte=0"`
-	Stok        int     `json:"stok"`
-	StokMinimum int     `json:"stokMinimum"`
-	Satuan      string  `json:"satuan"`
-	Barcode     string  `json:"barcode"`
-	GambarURL   string  `json:"gambarUrl"`
+	KodeProduk   string  `json:"kodeProduk" binding:"required"`
+	NamaProduk   string  `json:"namaProduk" binding:"required"`
+	Kategori     string  `json:"kategori"`
+	Deskripsi    string  `json:"deskripsi"`
+	Harga        float64 `json:"harga" binding:"required,gte=0"`
+	HargaBeli    float64 `json:"hargaBeli" binding:"gte=0"`
+	Stok         int     `json:"stok"`
+	StokMinimum  int     `json:"stokMinimum"`
+	Satuan       string  `json:"satuan"`
+	Barcode      string  `json:"barcode"`
+	GambarURL    string  `json:"gambarUrl"`
 }
 
 // BuatProduk membuat produk baru
 func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest) (*models.ProdukResponse, error) {
+	const method = "BuatProduk"
+
 	// Validasi kode produk unique
 	var count int64
-	s.db.Model(&models.Produk{}).
+	err := s.db.Model(&models.Produk{}).
 		Where("id_koperasi = ? AND kode_produk = ?", idKoperasi, req.KodeProduk).
-		Count(&count)
+		Count(&count).Error
+
+	if err != nil {
+		s.logger.Error(method, "Gagal mengecek kode produk", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"kode_produk": req.KodeProduk,
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mengecek kode produk")
+	}
 
 	if count > 0 {
-		return nil, errors.New("kode produk sudah digunakan")
+		s.logger.Error(method, "Kode produk sudah digunakan", nil, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"kode_produk": req.KodeProduk,
+		})
+		return nil, utils.NewValidationError("Kode produk sudah digunakan")
 	}
 
 	// Buat produk
@@ -62,10 +81,22 @@ func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest)
 		StatusAktif: true,
 	}
 
-	err := s.db.Create(produk).Error
+	err = s.db.Create(produk).Error
 	if err != nil {
-		return nil, errors.New("gagal membuat produk")
+		s.logger.Error(method, "Gagal membuat produk", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"kode_produk": req.KodeProduk,
+			"nama_produk": req.NamaProduk,
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal membuat produk")
 	}
+
+	s.logger.Info(method, "Berhasil membuat produk", map[string]interface{}{
+		"koperasi_id": idKoperasi.String(),
+		"produk_id":   produk.ID.String(),
+		"kode_produk": produk.KodeProduk,
+		"nama_produk": produk.NamaProduk,
+	})
 
 	response := produk.ToResponse()
 	return &response, nil
@@ -73,6 +104,8 @@ func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest)
 
 // DapatkanSemuaProduk mengambil daftar produk dengan filter
 func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, search string, statusAktif *bool, page, pageSize int) ([]models.ProdukResponse, int64, error) {
+	const method = "DapatkanSemuaProduk"
+
 	var produkList []models.Produk
 	var total int64
 
@@ -90,15 +123,37 @@ func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, sear
 	}
 
 	// Count total
-	query.Count(&total)
+	err := query.Count(&total).Error
+	if err != nil {
+		s.logger.Error(method, "Gagal menghitung total produk", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"kategori":    kategori,
+			"search":      search,
+		})
+		return nil, 0, utils.WrapDatabaseError(err, "Gagal menghitung total produk")
+	}
 
 	// Pagination
 	offset := (page - 1) * pageSize
-	err := query.Offset(offset).Limit(pageSize).Order("nama_produk ASC").Find(&produkList).Error
+	err = query.Offset(offset).Limit(pageSize).Order("nama_produk ASC").Find(&produkList).Error
 
 	if err != nil {
-		return nil, 0, errors.New("gagal mengambil daftar produk")
+		s.logger.Error(method, "Gagal mengambil daftar produk", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"kategori":    kategori,
+			"search":      search,
+			"page":        page,
+			"page_size":   pageSize,
+		})
+		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar produk")
 	}
+
+	s.logger.Debug(method, "Berhasil mengambil daftar produk", map[string]interface{}{
+		"koperasi_id":   idKoperasi.String(),
+		"total":         total,
+		"jumlah_result": len(produkList),
+		"page":          page,
+	})
 
 	// Convert to response
 	responses := make([]models.ProdukResponse, len(produkList))
@@ -109,17 +164,34 @@ func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, sear
 	return responses, total, nil
 }
 
-// DapatkanProduk mengambil produk berdasarkan ID
-func (s *ProdukService) DapatkanProduk(id uuid.UUID) (*models.ProdukResponse, error) {
+// DapatkanProduk mengambil produk berdasarkan ID dengan validasi multi-tenant
+func (s *ProdukService) DapatkanProduk(idKoperasi, id uuid.UUID) (*models.ProdukResponse, error) {
+	const method = "DapatkanProduk"
+
 	var produk models.Produk
-	err := s.db.Where("id = ?", id).First(&produk).Error
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&produk).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("produk tidak ditemukan")
+			s.logger.Error(method, "Produk tidak ditemukan atau tidak memiliki akses", err, map[string]interface{}{
+				"produk_id":   id.String(),
+				"koperasi_id": idKoperasi.String(),
+			})
+			return nil, utils.WrapDatabaseError(err, "Produk")
 		}
-		return nil, err
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"koperasi_id": idKoperasi.String(),
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
+
+	s.logger.Debug(method, "Berhasil mengambil data produk", map[string]interface{}{
+		"produk_id":   id.String(),
+		"koperasi_id": idKoperasi.String(),
+		"nama_produk": produk.NamaProduk,
+		"kode_produk": produk.KodeProduk,
+	})
 
 	response := produk.ToResponse()
 	return &response, nil
@@ -127,15 +199,32 @@ func (s *ProdukService) DapatkanProduk(id uuid.UUID) (*models.ProdukResponse, er
 
 // DapatkanProdukByKode mengambil produk berdasarkan kode
 func (s *ProdukService) DapatkanProdukByKode(idKoperasi uuid.UUID, kodeProduk string) (*models.ProdukResponse, error) {
+	const method = "DapatkanProdukByKode"
+
 	var produk models.Produk
 	err := s.db.Where("id_koperasi = ? AND kode_produk = ?", idKoperasi, kodeProduk).First(&produk).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("produk tidak ditemukan")
+			s.logger.Error(method, "Produk tidak ditemukan", err, map[string]interface{}{
+				"koperasi_id": idKoperasi.String(),
+				"kode_produk": kodeProduk,
+			})
+			return nil, utils.WrapDatabaseError(err, "Produk")
 		}
-		return nil, err
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"kode_produk": kodeProduk,
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
+
+	s.logger.Debug(method, "Berhasil mengambil data produk", map[string]interface{}{
+		"koperasi_id": idKoperasi.String(),
+		"produk_id":   produk.ID.String(),
+		"kode_produk": kodeProduk,
+		"nama_produk": produk.NamaProduk,
+	})
 
 	response := produk.ToResponse()
 	return &response, nil
@@ -143,15 +232,32 @@ func (s *ProdukService) DapatkanProdukByKode(idKoperasi uuid.UUID, kodeProduk st
 
 // DapatkanProdukByBarcode mengambil produk berdasarkan barcode
 func (s *ProdukService) DapatkanProdukByBarcode(idKoperasi uuid.UUID, barcode string) (*models.ProdukResponse, error) {
+	const method = "DapatkanProdukByBarcode"
+
 	var produk models.Produk
 	err := s.db.Where("id_koperasi = ? AND barcode = ?", idKoperasi, barcode).First(&produk).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("produk tidak ditemukan")
+			s.logger.Error(method, "Produk tidak ditemukan", err, map[string]interface{}{
+				"koperasi_id": idKoperasi.String(),
+				"barcode":     barcode,
+			})
+			return nil, utils.WrapDatabaseError(err, "Produk")
 		}
-		return nil, err
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+			"barcode":     barcode,
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
+
+	s.logger.Debug(method, "Berhasil mengambil data produk", map[string]interface{}{
+		"koperasi_id": idKoperasi.String(),
+		"produk_id":   produk.ID.String(),
+		"barcode":     barcode,
+		"nama_produk": produk.NamaProduk,
+	})
 
 	response := produk.ToResponse()
 	return &response, nil
@@ -171,16 +277,25 @@ type PerbaruiProdukRequest struct {
 	StatusAktif *bool   `json:"statusAktif"`
 }
 
-// PerbaruiProduk mengupdate data produk
+// PerbaruiProduk mengupdate data produk dengan validasi multi-tenant
 func (s *ProdukService) PerbaruiProduk(idKoperasi, id uuid.UUID, req *PerbaruiProdukRequest) (*models.ProdukResponse, error) {
-	// Cek apakah produk ada DAN milik koperasi yang benar (multi-tenant validation)
+	const method = "PerbaruiProduk"
+
 	var produk models.Produk
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&produk).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("produk tidak ditemukan atau tidak memiliki akses")
+			s.logger.Error(method, "Produk tidak ditemukan atau tidak memiliki akses", err, map[string]interface{}{
+				"produk_id":   id.String(),
+				"koperasi_id": idKoperasi.String(),
+			})
+			return nil, utils.WrapDatabaseError(err, "Produk")
 		}
-		return nil, err
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"koperasi_id": idKoperasi.String(),
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
 
 	// Update fields
@@ -217,101 +332,311 @@ func (s *ProdukService) PerbaruiProduk(idKoperasi, id uuid.UUID, req *PerbaruiPr
 
 	err = s.db.Save(&produk).Error
 	if err != nil {
-		return nil, errors.New("gagal memperbarui produk")
+		s.logger.Error(method, "Gagal memperbarui produk", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"nama_produk": req.NamaProduk,
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal memperbarui produk")
 	}
+
+	s.logger.Info(method, "Berhasil memperbarui produk", map[string]interface{}{
+		"produk_id":   id.String(),
+		"nama_produk": produk.NamaProduk,
+		"kode_produk": produk.KodeProduk,
+	})
 
 	response := produk.ToResponse()
 	return &response, nil
 }
 
-// HapusProduk menghapus produk (dengan validasi)
+// HapusProduk menghapus produk (dengan validasi multi-tenant)
 func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
-	// Cek apakah produk ada DAN milik koperasi yang benar (multi-tenant validation)
+	const method = "HapusProduk"
+
+	// Ambil data produk terlebih dahulu untuk logging dengan validasi multi-tenant
 	var produk models.Produk
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&produk).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("produk tidak ditemukan atau tidak memiliki akses")
+			s.logger.Error(method, "Produk tidak ditemukan atau tidak memiliki akses", err, map[string]interface{}{
+				"produk_id":   id.String(),
+				"koperasi_id": idKoperasi.String(),
+			})
+			return utils.WrapDatabaseError(err, "Produk")
 		}
-		return err
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"koperasi_id": idKoperasi.String(),
+		})
+		return utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
 
 	// Cek apakah ada di item penjualan
 	var countPenjualan int64
-	s.db.Model(&models.ItemPenjualan{}).Where("id_produk = ?", id).Count(&countPenjualan)
+	err = s.db.Model(&models.ItemPenjualan{}).Where("id_produk = ?", id).Count(&countPenjualan).Error
+	if err != nil {
+		s.logger.Error(method, "Gagal memeriksa item penjualan", err, map[string]interface{}{
+			"produk_id": id.String(),
+		})
+		return utils.WrapDatabaseError(err, "Gagal memeriksa item penjualan")
+	}
 
 	if countPenjualan > 0 {
-		return errors.New("tidak dapat menghapus produk yang sudah pernah dijual")
+		s.logger.Error(method, "Tidak dapat menghapus produk yang sudah pernah dijual", nil, map[string]interface{}{
+			"produk_id":        id.String(),
+			"nama_produk":      produk.NamaProduk,
+			"count_penjualan":  countPenjualan,
+		})
+		return utils.NewValidationError("Tidak dapat menghapus produk yang sudah pernah dijual")
 	}
 
 	// Soft delete
-	err = s.db.Delete(&produk).Error
+	err = s.db.Delete(&models.Produk{}, id).Error
 	if err != nil {
-		return errors.New("gagal menghapus produk")
+		s.logger.Error(method, "Gagal menghapus produk", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"nama_produk": produk.NamaProduk,
+		})
+		return utils.WrapDatabaseError(err, "Gagal menghapus produk")
 	}
+
+	s.logger.Info(method, "Berhasil menghapus produk", map[string]interface{}{
+		"produk_id":   id.String(),
+		"nama_produk": produk.NamaProduk,
+		"kode_produk": produk.KodeProduk,
+	})
 
 	return nil
 }
 
 // KurangiStok mengurangi stok produk
 func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
-	return s.KurangiStokDenganTransaksi(s.db, id, jumlah)
-}
+	const method = "KurangiStok"
 
-// KurangiStokDenganTransaksi mengurangi stok produk within an existing transaction
-func (s *ProdukService) KurangiStokDenganTransaksi(tx *gorm.DB, id uuid.UUID, jumlah int) error {
 	var produk models.Produk
-	err := tx.Where("id = ?", id).First(&produk).Error
+	err := s.db.Where("id = ?", id).First(&produk).Error
 	if err != nil {
-		return errors.New("produk tidak ditemukan")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Error(method, "Produk tidak ditemukan", err, map[string]interface{}{
+				"produk_id": id.String(),
+				"kuantitas": jumlah,
+			})
+			return utils.WrapDatabaseError(err, "Produk")
+		}
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"produk_id": id.String(),
+			"kuantitas": jumlah,
+		})
+		return utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
 
 	// Validasi stok cukup
 	if produk.Stok < jumlah {
-		return errors.New("stok tidak mencukupi")
+		s.logger.Error(method, "Stok tidak mencukupi", nil, map[string]interface{}{
+			"produk_id":   id.String(),
+			"nama_produk": produk.NamaProduk,
+			"stok_saat_ini": produk.Stok,
+			"kuantitas_diminta": jumlah,
+		})
+		return utils.NewValidationError("Stok tidak mencukupi")
 	}
 
 	// Kurangi stok
+	stokLama := produk.Stok
 	produk.Stok -= jumlah
-	err = tx.Save(&produk).Error
+	err = s.db.Save(&produk).Error
 	if err != nil {
-		return errors.New("gagal mengurangi stok")
+		s.logger.Error(method, "Gagal mengurangi stok", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"nama_produk": produk.NamaProduk,
+			"kuantitas":   jumlah,
+		})
+		return utils.WrapDatabaseError(err, "Gagal mengurangi stok")
 	}
+
+	s.logger.Info(method, "Berhasil mengurangi stok", map[string]interface{}{
+		"produk_id":   id.String(),
+		"nama_produk": produk.NamaProduk,
+		"stok_lama":   stokLama,
+		"stok_baru":   produk.Stok,
+		"kuantitas":   jumlah,
+	})
 
 	return nil
 }
 
 // TambahStok menambah stok produk
 func (s *ProdukService) TambahStok(id uuid.UUID, jumlah int) error {
+	const method = "TambahStok"
+
 	var produk models.Produk
 	err := s.db.Where("id = ?", id).First(&produk).Error
 	if err != nil {
-		return errors.New("produk tidak ditemukan")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Error(method, "Produk tidak ditemukan", err, map[string]interface{}{
+				"produk_id": id.String(),
+				"kuantitas": jumlah,
+			})
+			return utils.WrapDatabaseError(err, "Produk")
+		}
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"produk_id": id.String(),
+			"kuantitas": jumlah,
+		})
+		return utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
 
 	// Tambah stok
+	stokLama := produk.Stok
 	produk.Stok += jumlah
 	err = s.db.Save(&produk).Error
 	if err != nil {
-		return errors.New("gagal menambah stok")
+		s.logger.Error(method, "Gagal menambah stok", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"nama_produk": produk.NamaProduk,
+			"kuantitas":   jumlah,
+		})
+		return utils.WrapDatabaseError(err, "Gagal menambah stok")
 	}
+
+	s.logger.Info(method, "Berhasil menambah stok", map[string]interface{}{
+		"produk_id":   id.String(),
+		"nama_produk": produk.NamaProduk,
+		"stok_lama":   stokLama,
+		"stok_baru":   produk.Stok,
+		"kuantitas":   jumlah,
+	})
 
 	return nil
 }
 
 // CekStokTersedia mengecek apakah stok tersedia
 func (s *ProdukService) CekStokTersedia(id uuid.UUID, jumlah int) (bool, error) {
+	const method = "CekStokTersedia"
+
 	var produk models.Produk
 	err := s.db.Where("id = ?", id).First(&produk).Error
 	if err != nil {
-		return false, errors.New("produk tidak ditemukan")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Error(method, "Produk tidak ditemukan", err, map[string]interface{}{
+				"produk_id": id.String(),
+				"kuantitas": jumlah,
+			})
+			return false, utils.WrapDatabaseError(err, "Produk")
+		}
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"produk_id": id.String(),
+			"kuantitas": jumlah,
+		})
+		return false, utils.WrapDatabaseError(err, "Gagal mengambil data produk")
 	}
 
-	return produk.Stok >= jumlah, nil
+	tersedia := produk.Stok >= jumlah
+
+	s.logger.Debug(method, "Pengecekan stok selesai", map[string]interface{}{
+		"produk_id":   id.String(),
+		"nama_produk": produk.NamaProduk,
+		"stok_saat_ini": produk.Stok,
+		"kuantitas_diminta": jumlah,
+		"tersedia":    tersedia,
+	})
+
+	return tersedia, nil
+}
+
+// AdjustStok menyesuaikan stok produk (tambah atau kurang) dengan keterangan
+func (s *ProdukService) AdjustStok(idKoperasi, id uuid.UUID, jumlah int, keterangan string) (*models.ProdukResponse, error) {
+	const method = "AdjustStok"
+
+	// Validasi produk exists dan milik koperasi yang benar (multi-tenant)
+	var produk models.Produk
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&produk).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Error(method, "Produk tidak ditemukan atau tidak memiliki akses", err, map[string]interface{}{
+				"produk_id":   id.String(),
+				"koperasi_id": idKoperasi.String(),
+			})
+			return nil, utils.WrapDatabaseError(err, "Produk")
+		}
+		s.logger.Error(method, "Gagal mengambil data produk", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"koperasi_id": idKoperasi.String(),
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mengambil data produk")
+	}
+
+	// Validasi jumlah tidak boleh 0
+	if jumlah == 0 {
+		s.logger.Error(method, "Jumlah adjustment tidak boleh 0", nil, map[string]interface{}{
+			"produk_id": id.String(),
+			"jumlah":    jumlah,
+		})
+		return nil, utils.NewValidationError("Jumlah adjustment tidak boleh 0")
+	}
+
+	// Jika pengurangan, validasi stok cukup
+	if jumlah < 0 && produk.Stok < -jumlah {
+		s.logger.Error(method, "Stok tidak mencukupi untuk pengurangan", nil, map[string]interface{}{
+			"produk_id":         id.String(),
+			"nama_produk":       produk.NamaProduk,
+			"stok_saat_ini":     produk.Stok,
+			"jumlah_pengurangan": -jumlah,
+		})
+		return nil, utils.NewValidationError("Stok tidak mencukupi")
+	}
+
+	// Adjust stok
+	stokLama := produk.Stok
+	produk.Stok += jumlah
+
+	err = s.db.Save(&produk).Error
+	if err != nil {
+		s.logger.Error(method, "Gagal menyesuaikan stok", err, map[string]interface{}{
+			"produk_id":   id.String(),
+			"nama_produk": produk.NamaProduk,
+			"jumlah":      jumlah,
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal menyesuaikan stok")
+	}
+
+	jenisAdjustment := "penambahan"
+	if jumlah < 0 {
+		jenisAdjustment = "pengurangan"
+	}
+
+	s.logger.Info(method, "Berhasil menyesuaikan stok", map[string]interface{}{
+		"produk_id":   id.String(),
+		"nama_produk": produk.NamaProduk,
+		"stok_lama":   stokLama,
+		"stok_baru":   produk.Stok,
+		"jumlah":      jumlah,
+		"jenis":       jenisAdjustment,
+		"keterangan":  keterangan,
+	})
+
+	// Return response
+	return &models.ProdukResponse{
+		ID:          produk.ID,
+		KodeProduk:  produk.KodeProduk,
+		NamaProduk:  produk.NamaProduk,
+		Kategori:    produk.Kategori,
+		Deskripsi:   produk.Deskripsi,
+		Harga:       produk.Harga,
+		HargaBeli:   produk.HargaBeli,
+		Stok:        produk.Stok,
+		StokMinimum: produk.StokMinimum,
+		Satuan:      produk.Satuan,
+		Barcode:     produk.Barcode,
+		GambarURL:   produk.GambarURL,
+		StatusAktif: produk.StatusAktif,
+	}, nil
 }
 
 // DapatkanProdukStokRendah mengambil produk dengan stok rendah
 func (s *ProdukService) DapatkanProdukStokRendah(idKoperasi uuid.UUID) ([]models.ProdukResponse, error) {
+	const method = "DapatkanProdukStokRendah"
+
 	var produkList []models.Produk
 
 	// Produk dengan stok <= stok minimum
@@ -320,8 +645,16 @@ func (s *ProdukService) DapatkanProdukStokRendah(idKoperasi uuid.UUID) ([]models
 		Find(&produkList).Error
 
 	if err != nil {
-		return nil, errors.New("gagal mengambil daftar produk stok rendah")
+		s.logger.Error(method, "Gagal mengambil daftar produk stok rendah", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+		})
+		return nil, utils.WrapDatabaseError(err, "Gagal mengambil daftar produk stok rendah")
 	}
+
+	s.logger.Debug(method, "Berhasil mengambil daftar produk stok rendah", map[string]interface{}{
+		"koperasi_id": idKoperasi.String(),
+		"jumlah":      len(produkList),
+	})
 
 	// Convert to response
 	responses := make([]models.ProdukResponse, len(produkList))
