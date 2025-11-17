@@ -179,8 +179,8 @@ func TestInitLoggerFromEnv(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Setenv("LOG_LEVEL", tt.envValue)
-			defer os.Unsetenv("LOG_LEVEL")
+			_ = os.Setenv("LOG_LEVEL", tt.envValue)
+			defer func() { _ = os.Unsetenv("LOG_LEVEL") }()
 
 			InitLoggerFromEnv()
 
