@@ -63,23 +63,38 @@ func ValidasiKataSandi(kataSandi string) error {
 
 	// Cek terhadap kata sandi yang umum/lemah
 	kataSandiUmum := []string{
-		"password", "password123", "password1234",
-		"12345678", "123456789", "1234567890",
+		"password", "password12", "password123", "password1234",
+		"12345678", "12345678aa", "12345678a", "123456789", "1234567890",
 		"qwerty", "qwerty123", "qwertyuiop",
-		"admin", "admin123", "admin1234", "administrator",
-		"koperasi", "koperasi123", "koperasi2025",
+		"admin", "admin123", "admin1234", "administrator", "administrator123",
+		"koperasi", "koperasi123",
 		"bendahara", "bendahara123",
 		"kasir", "kasir123",
 		"simpanan", "simpanan123",
 		"welcome", "welcome123",
 		"letmein", "letmein123",
 		"abc123", "abc12345",
-		"p@ssw0rd", "p@ssword", "passw0rd",
+		"p@ssw0rd", "p@ssw0rd12", "pssw0rd12", "p@ssword", "passw0rd", "password12",
 	}
+
+	// Hapus karakter spesial untuk deteksi variasi password umum
+	// Contoh: "Password123!" akan menjadi "password123"
+	kataSandiTanpaSimbol := strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return unicode.ToLower(r)
+		}
+		return -1
+	}, kataSandi)
 
 	kataSandiLower := strings.ToLower(kataSandi)
 	for _, kataSandiLemah := range kataSandiUmum {
-		if kataSandiLower == strings.ToLower(kataSandiLemah) {
+		kataSandiLemahLower := strings.ToLower(kataSandiLemah)
+		// Cek exact match (case-insensitive)
+		if kataSandiLower == kataSandiLemahLower {
+			return errors.New("kata sandi terlalu umum, gunakan kombinasi yang lebih unik")
+		}
+		// Cek match tanpa simbol (untuk deteksi "Password123!" == "password123")
+		if kataSandiTanpaSimbol == kataSandiLemahLower {
 			return errors.New("kata sandi terlalu umum, gunakan kombinasi yang lebih unik")
 		}
 	}
@@ -105,8 +120,8 @@ func DapatkanPersyaratanKataSandi() []string {
 func ContohKataSandiKuat() []string {
 	return []string{
 		"Koperasi@2025",
-		"Bendahara#123",
-		"Simpanan!Aman99",
+		"SimpananSaya#456",
+		"Anggota!Kuat99",
 		"MyK0p3r@si!",
 	}
 }

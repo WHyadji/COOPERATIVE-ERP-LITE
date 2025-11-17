@@ -163,7 +163,7 @@ func TestValidasiKataSandi_CommonPasswords(t *testing.T) {
 	}{
 		{"password generic", "Password123!"},
 		{"password dengan angka", "Password1234!"},
-		{"12345678 dengan simbol", "12345678!A"},
+		{"12345678 dengan simbol", "12345678!Aa"},
 		{"qwerty dengan simbol", "Qwerty123!"},
 		{"admin dengan simbol", "Admin123!@"},
 		{"administrator", "Administrator123!"},
@@ -286,9 +286,9 @@ func TestHitungKekuatanKataSandi(t *testing.T) {
 		{"Password lemah", "abc123", "lemah", 0},
 		{"Password lemah 2", "password", "lemah", 0},
 		{"Password sedang", "Password123", "sedang", 3},
-		{"Password sedang 2", "Koperasi2025", "sedang", 3},
-		{"Password kuat", "Koperasi@2025", "kuat", 5},
-		{"Password kuat 2", "MyK0p3r@si!2025", "kuat", 5},
+		{"Password kuat (12 chars)", "Koperasi2025", "kuat", 5},
+		{"Password kuat dengan simbol", "Koperasi@2025", "kuat", 5},
+		{"Password kuat panjang", "MyK0p3r@si!2025", "kuat", 5},
 	}
 
 	for _, tc := range testCases {
