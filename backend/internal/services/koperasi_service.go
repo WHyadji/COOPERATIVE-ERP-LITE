@@ -165,7 +165,6 @@ func (s *KoperasiService) DapatkanStatistikKoperasi(idKoperasi uuid.UUID) (map[s
 	return statistik, nil
 }
 
-
 // GetSemuaKoperasi is an English wrapper for DapatkanSemuaKoperasi with pagination
 func (s *KoperasiService) GetSemuaKoperasi(page, pageSize int) ([]models.Koperasi, int64, error) {
 	// Get all koperasi
@@ -181,7 +180,7 @@ func (s *KoperasiService) GetSemuaKoperasi(page, pageSize int) ([]models.Koperas
 	}
 
 	total := int64(len(responses))
-	
+
 	// Apply pagination
 	start := (page - 1) * pageSize
 	end := start + pageSize

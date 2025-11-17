@@ -297,7 +297,6 @@ func (s *PenggunaService) DapatkanPenggunaByUsername(idKoperasi uuid.UUID, namaP
 	return &response, nil
 }
 
-
 // GetSemuaPengguna is an English wrapper for DapatkanSemuaPengguna
 func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran *models.PeranPengguna, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
 	peranStr := ""
@@ -311,4 +310,3 @@ func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran *models.P
 func (s *PenggunaService) GetPenggunaByID(idKoperasi, id uuid.UUID) (*models.PenggunaResponse, error) {
 	return s.DapatkanPengguna(id)
 }
-

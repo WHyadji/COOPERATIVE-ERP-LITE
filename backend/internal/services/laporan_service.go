@@ -488,12 +488,12 @@ func (s *LaporanService) GenerateBukuBesar(idKoperasi, idAkun uuid.UUID, tanggal
 
 	// Get all transaction lines for this account within date range
 	type TransactionDetail struct {
-		Tanggal     string  `json:"tanggal"`
-		NoJurnal    string  `json:"noJurnal"`
-		Keterangan  string  `json:"keterangan"`
-		Debit       float64 `json:"debit"`
-		Kredit      float64 `json:"kredit"`
-		Saldo       float64 `json:"saldo"`
+		Tanggal    string  `json:"tanggal"`
+		NoJurnal   string  `json:"noJurnal"`
+		Keterangan string  `json:"keterangan"`
+		Debit      float64 `json:"debit"`
+		Kredit     float64 `json:"kredit"`
+		Saldo      float64 `json:"saldo"`
 	}
 
 	var details []TransactionDetail
@@ -557,10 +557,10 @@ func (s *LaporanService) GenerateBukuBesar(idKoperasi, idAkun uuid.UUID, tanggal
 			"tipe": akun.TipeAkun,
 		},
 		"periode": map[string]string{
-			"tanggalMulai":  tanggalMulai,
-			"tanggalAkhir":  tanggalAkhir,
+			"tanggalMulai": tanggalMulai,
+			"tanggalAkhir": tanggalAkhir,
 		},
-		"transaksi": details,
+		"transaksi":  details,
 		"saldoAkhir": runningBalance,
 	}, nil
 }

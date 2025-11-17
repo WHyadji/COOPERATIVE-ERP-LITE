@@ -458,4 +458,3 @@ func (s *AkunService) GetBukuBesar(idKoperasi, idAkun uuid.UUID, tanggalMulai, t
 		"entries": entries,
 	}, nil
 }
-

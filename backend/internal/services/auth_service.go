@@ -31,8 +31,8 @@ type LoginRequest struct {
 
 // LoginResponse adalah struktur response untuk login
 type LoginResponse struct {
-	Token    string                    `json:"token"`
-	Pengguna models.PenggunaResponse   `json:"pengguna"`
+	Token    string                  `json:"token"`
+	Pengguna models.PenggunaResponse `json:"pengguna"`
 }
 
 // Login melakukan autentikasi pengguna dan menghasilkan JWT token
