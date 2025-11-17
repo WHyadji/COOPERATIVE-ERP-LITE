@@ -14,8 +14,8 @@ import (
 
 // SimpananService menangani logika bisnis simpanan anggota
 type SimpananService struct {
-	db                *gorm.DB
-	transaksiService  *TransaksiService
+	db               *gorm.DB
+	transaksiService *TransaksiService
 }
 
 // NewSimpananService membuat instance baru SimpananService
@@ -28,11 +28,11 @@ func NewSimpananService(db *gorm.DB, transaksiService *TransaksiService) *Simpan
 
 // CatatSetoranRequest adalah struktur request untuk catat setoran
 type CatatSetoranRequest struct {
-	IDAnggota        uuid.UUID          `json:"idAnggota" binding:"required"`
+	IDAnggota        uuid.UUID           `json:"idAnggota" binding:"required"`
 	TipeSimpanan     models.TipeSimpanan `json:"tipeSimpanan" binding:"required"`
-	TanggalTransaksi time.Time          `json:"tanggalTransaksi" binding:"required"`
-	JumlahSetoran    float64            `json:"jumlahSetoran" binding:"required,gt=0"`
-	Keterangan       string             `json:"keterangan"`
+	TanggalTransaksi time.Time           `json:"tanggalTransaksi" binding:"required"`
+	JumlahSetoran    float64             `json:"jumlahSetoran" binding:"required,gt=0"`
+	Keterangan       string              `json:"keterangan"`
 }
 
 // CatatSetoran mencatat setoran simpanan anggota
@@ -59,6 +59,18 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 		First(&anggota).Error
 	if err != nil {
 		return nil, errors.New("anggota tidak ditemukan atau tidak aktif")
+	}
+
+	// Validasi Simpanan Pokok hanya boleh dibayar sekali (UU No. 25 Tahun 1992)
+	if req.TipeSimpanan == models.SimpananPokok {
+		var jumlahSimpananPokok int64
+		s.db.Model(&models.Simpanan{}).
+			Where("id_anggota = ? AND tipe_simpanan = ?", req.IDAnggota, models.SimpananPokok).
+			Count(&jumlahSimpananPokok)
+
+		if jumlahSimpananPokok > 0 {
+			return nil, errors.New("anggota sudah membayar simpanan pokok")
+		}
 	}
 
 	// Generate nomor referensi
