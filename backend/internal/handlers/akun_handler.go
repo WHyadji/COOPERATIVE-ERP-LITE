@@ -35,7 +35,7 @@ func (h *AkunHandler) Create(c *gin.Context) {
 
 	akun, err := h.akunService.BuatAkun(koperasiUUID, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (h *AkunHandler) List(c *gin.Context) {
 
 	akunList, err := h.akunService.GetSemuaAkun(koperasiUUID, tipeAkunPtr, statusAktifPtr)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -114,7 +114,7 @@ func (h *AkunHandler) Update(c *gin.Context) {
 
 	akun, err := h.akunService.PerbaruiAkun(koperasiUUID, id, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *AkunHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.akunService.HapusAkun(koperasiUUID, id); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -143,9 +143,6 @@ func (h *AkunHandler) Delete(c *gin.Context) {
 
 // GetSaldo handles GET /api/v1/akun/:id/saldo
 func (h *AkunHandler) GetSaldo(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
-
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -155,9 +152,9 @@ func (h *AkunHandler) GetSaldo(c *gin.Context) {
 
 	tanggalPer := c.Query("tanggalPer") // Optional, format: YYYY-MM-DD
 
-	saldo, err := h.akunService.HitungSaldoAkun(koperasiUUID, id, tanggalPer)
+	saldo, err := h.akunService.HitungSaldoAkun(id, tanggalPer)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -166,37 +163,13 @@ func (h *AkunHandler) GetSaldo(c *gin.Context) {
 	})
 }
 
-// GetBukuBesar handles GET /api/v1/akun/:id/buku-besar
-func (h *AkunHandler) GetBukuBesar(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
-
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "ID akun tidak valid")
-		return
-	}
-
-	tanggalMulai := c.Query("tanggalMulai")
-	tanggalAkhir := c.Query("tanggalAkhir")
-
-	bukuBesar, err := h.akunService.GetBukuBesar(koperasiUUID, id, tanggalMulai, tanggalAkhir)
-	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Buku besar berhasil diambil", bukuBesar)
-}
-
 // SeedCOA handles POST /api/v1/akun/seed-coa
 func (h *AkunHandler) SeedCOA(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
 	if err := h.akunService.InisialisasiCOADefault(koperasiUUID); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

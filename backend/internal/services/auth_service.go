@@ -31,8 +31,8 @@ type LoginRequest struct {
 
 // LoginResponse adalah struktur response untuk login
 type LoginResponse struct {
-	Token    string                  `json:"token"`
-	Pengguna models.PenggunaResponse `json:"pengguna"`
+	Token    string                    `json:"token"`
+	Pengguna models.PenggunaResponse   `json:"pengguna"`
 }
 
 // Login melakukan autentikasi pengguna dan menghasilkan JWT token
@@ -61,12 +61,12 @@ func (s *AuthService) Login(namaPengguna, kataSandi string) (*LoginResponse, err
 	}
 
 	// Buat response
-	respons := &LoginResponse{
+	response := &LoginResponse{
 		Token:    token,
 		Pengguna: pengguna.ToResponse(),
 	}
 
-	return respons, nil
+	return response, nil
 }
 
 // ValidasiToken memvalidasi JWT token dan mengembalikan claims
@@ -107,12 +107,12 @@ func (s *AuthService) RefreshToken(tokenString string) (string, error) {
 	}
 
 	// Generate token baru
-	tokenBaru, err := s.jwtUtil.GenerateToken(&pengguna)
+	newToken, err := s.jwtUtil.GenerateToken(&pengguna)
 	if err != nil {
 		return "", errors.New("gagal membuat token baru")
 	}
 
-	return tokenBaru, nil
+	return newToken, nil
 }
 
 // DapatkanProfilPengguna mengambil profil pengguna berdasarkan ID dari token
@@ -127,31 +127,15 @@ func (s *AuthService) DapatkanProfilPengguna(idPengguna string) (*models.Penggun
 		return nil, err
 	}
 
-	respons := pengguna.ToResponse()
-	return &respons, nil
-}
-
-// UbahKataSandiRequest adalah struktur request untuk ubah kata sandi
-type UbahKataSandiRequest struct {
-	KataSandiLama string `json:"kataSandiLama" binding:"required"`
-	KataSandiBaru string `json:"kataSandiBaru" binding:"required"`
+	response := pengguna.ToResponse()
+	return &response, nil
 }
 
 // UbahKataSandi mengubah password pengguna
-func (s *AuthService) UbahKataSandi(idPengguna interface{}, kataSandiLama, kataSandiBaru string) error {
-	// Convert idPengguna to string
-	var idStr string
-	if id, ok := idPengguna.(uuid.UUID); ok {
-		idStr = id.String()
-	} else if id, ok := idPengguna.(string); ok {
-		idStr = id
-	} else {
-		return errors.New("ID pengguna tidak valid")
-	}
-
+func (s *AuthService) UbahKataSandi(idPengguna, kataSandiLama, kataSandiBaru string) error {
 	// Dapatkan pengguna
 	var pengguna models.Pengguna
-	err := s.db.Where("id = ?", idStr).First(&pengguna).Error
+	err := s.db.Where("id = ?", idPengguna).First(&pengguna).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("pengguna tidak ditemukan")
@@ -165,8 +149,8 @@ func (s *AuthService) UbahKataSandi(idPengguna interface{}, kataSandiLama, kataS
 	}
 
 	// Validasi password baru
-	if err := utils.ValidasiKataSandi(kataSandiBaru); err != nil {
-		return err
+	if len(kataSandiBaru) < 6 {
+		return errors.New("kata sandi baru minimal 6 karakter")
 	}
 
 	// Set password baru
@@ -184,24 +168,27 @@ func (s *AuthService) UbahKataSandi(idPengguna interface{}, kataSandiLama, kataS
 	return nil
 }
 
-// GetProfilPengguna is a wrapper for DapatkanProfilPengguna with UUID support
-func (s *AuthService) GetProfilPengguna(idPengguna interface{}) (*models.PenggunaResponse, error) {
-	var idStr string
-	if id, ok := idPengguna.(uuid.UUID); ok {
-		idStr = id.String()
-	} else if id, ok := idPengguna.(string); ok {
-		idStr = id
-	} else {
-		return nil, errors.New("ID pengguna tidak valid")
-	}
-	return s.DapatkanProfilPengguna(idStr)
+// GetProfilPengguna is an English wrapper for DapatkanProfilPengguna
+func (s *AuthService) GetProfilPengguna(idPengguna uuid.UUID) (*models.PenggunaResponse, error) {
+	return s.DapatkanProfilPengguna(idPengguna.String())
 }
 
-// RefreshTokenByUUID generates a new token for a user by UUID
+// UbahKataSandiRequest is the request struct for changing password
+type UbahKataSandiRequest struct {
+	KataSandiLama string `json:"kataSandiLama" binding:"required"`
+	KataSandiBaru string `json:"kataSandiBaru" binding:"required,min=8"`
+}
+
+// UbahKataSandiByUUID is an English wrapper for UbahKataSandi using UUID
+func (s *AuthService) UbahKataSandiByUUID(idPengguna uuid.UUID, kataSandiLama, kataSandiBaru string) error {
+	return s.UbahKataSandi(idPengguna.String(), kataSandiLama, kataSandiBaru)
+}
+
+// RefreshTokenByUUID is an English wrapper for token refresh using UUID
 func (s *AuthService) RefreshTokenByUUID(idPengguna uuid.UUID) (*LoginResponse, error) {
-	// Get user from database
+	// Get the pengguna from database
 	var pengguna models.Pengguna
-	err := s.db.Where("id = ?", idPengguna).First(&pengguna).Error
+	err := s.db.Where("id = ? AND status_aktif = ?", idPengguna, true).First(&pengguna).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("pengguna tidak ditemukan")
@@ -212,13 +199,11 @@ func (s *AuthService) RefreshTokenByUUID(idPengguna uuid.UUID) (*LoginResponse, 
 	// Generate new token
 	token, err := s.jwtUtil.GenerateToken(&pengguna)
 	if err != nil {
-		return nil, errors.New("gagal membuat token baru")
+		return nil, errors.New("gagal membuat token autentikasi")
 	}
 
-	response := &LoginResponse{
+	return &LoginResponse{
 		Token:    token,
 		Pengguna: pengguna.ToResponse(),
-	}
-
-	return response, nil
+	}, nil
 }

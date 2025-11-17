@@ -30,7 +30,7 @@ func (h *LaporanHandler) GetNeraca(c *gin.Context) {
 
 	neraca, err := h.laporanService.GenerateLaporanPosisiKeuangan(koperasiUUID, tanggalPer)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (h *LaporanHandler) GetLabaRugi(c *gin.Context) {
 
 	labaRugi, err := h.laporanService.GenerateLaporanLabaRugi(koperasiUUID, tanggalMulai, tanggalAkhir)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -74,7 +74,7 @@ func (h *LaporanHandler) GetPerubahanModal(c *gin.Context) {
 
 	perubahanModal, err := h.laporanService.GenerateLaporanPerubahanModal(koperasiUUID, tanggalMulai, tanggalAkhir)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h *LaporanHandler) GetArusKas(c *gin.Context) {
 
 	arusKas, err := h.laporanService.GenerateLaporanArusKas(koperasiUUID, tanggalMulai, tanggalAkhir)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -112,17 +112,23 @@ func (h *LaporanHandler) GetBukuBesar(c *gin.Context) {
 	tanggalAkhir := c.Query("tanggalAkhir")
 	idAkunStr := c.Query("idAkun") // Optional - jika kosong, semua akun
 
-	var idAkunPtr *uuid.UUID
+	var idAkun uuid.UUID
 	if idAkunStr != "" {
 		id, err := uuid.Parse(idAkunStr)
-		if err == nil {
-			idAkunPtr = &id
+		if err != nil {
+			utils.BadRequestResponse(c, "ID akun tidak valid")
+			return
 		}
+		idAkun = id
+	} else {
+		// If no account specified, return error
+		utils.BadRequestResponse(c, "ID akun diperlukan")
+		return
 	}
 
-	bukuBesar, err := h.laporanService.GenerateBukuBesar(koperasiUUID, idAkunPtr, tanggalMulai, tanggalAkhir)
+	bukuBesar, err := h.laporanService.GenerateBukuBesar(koperasiUUID, idAkun, tanggalMulai, tanggalAkhir)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -138,7 +144,7 @@ func (h *LaporanHandler) GetNeracaSaldo(c *gin.Context) {
 
 	neracaSaldo, err := h.laporanService.GenerateNeracaSaldo(koperasiUUID, tanggalPer)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -154,7 +160,7 @@ func (h *LaporanHandler) GetTransaksiHarian(c *gin.Context) {
 
 	laporan, err := h.laporanService.GenerateLaporanTransaksiHarian(koperasiUUID, tanggal)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

@@ -2,7 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
-	"cooperative-erp-lite/internal/utils"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 	"time"
@@ -46,6 +46,50 @@ type BuatAnggotaRequest struct {
 
 // BuatAnggota membuat anggota baru dengan auto-generate nomor anggota
 func (s *AnggotaService) BuatAnggota(idKoperasi uuid.UUID, req *BuatAnggotaRequest) (*models.AnggotaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+		return nil, err
+	}
+
+	if err := validator.Email(req.Email); err != nil {
+		return nil, err
+	}
+
+	if err := validator.NomorHP(req.NoTelepon); err != nil {
+		return nil, err
+	}
+
+	if err := validator.JenisKelamin(req.JenisKelamin); err != nil {
+		return nil, err
+	}
+
+	// Validasi tanggal lahir jika ada
+	if req.TanggalLahir != nil {
+		if err := validator.TanggalLahir(*req.TanggalLahir); err != nil {
+			return nil, err
+		}
+	}
+
+	// Validasi field opsional
+	if err := validator.TeksOpsional(req.NIK, "NIK", 16); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.TempatLahir, "tempat lahir", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Alamat, "alamat", 500); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Pekerjaan, "pekerjaan", 100); err != nil {
+		return nil, err
+	}
+
 	// Generate nomor anggota otomatis
 	nomorAnggota, err := s.GenerateNomorAnggota(idKoperasi)
 	if err != nil {
@@ -88,8 +132,8 @@ func (s *AnggotaService) BuatAnggota(idKoperasi uuid.UUID, req *BuatAnggotaReque
 		return nil, errors.New("gagal membuat anggota")
 	}
 
-	respons := anggota.ToResponse()
-	return &respons, nil
+	response := anggota.ToResponse()
+	return &response, nil
 }
 
 // GenerateNomorAnggota menghasilkan nomor anggota otomatis
@@ -136,9 +180,6 @@ func (s *AnggotaService) GenerateNomorAnggota(idKoperasi uuid.UUID) (string, err
 
 // DapatkanSemuaAnggota mengambil daftar anggota dengan pagination dan filter
 func (s *AnggotaService) DapatkanSemuaAnggota(idKoperasi uuid.UUID, status string, search string, page, pageSize int) ([]models.AnggotaResponse, int64, error) {
-	// Validate and normalize pagination parameters to prevent DoS attacks
-	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
-
 	var anggotaList []models.Anggota
 	var total int64
 
@@ -157,26 +198,21 @@ func (s *AnggotaService) DapatkanSemuaAnggota(idKoperasi uuid.UUID, status strin
 	// Count total
 	query.Count(&total)
 
-	// Pagination with validated parameters
-	offset := utils.CalculateOffset(validPage, validPageSize)
-
-	// Create context with timeout to prevent long-running queries
-	ctx, cancel := utils.CreateQueryContext()
-	defer cancel()
-
-	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).Order("tanggal_bergabung DESC").Find(&anggotaList).Error
+	// Pagination
+	offset := (page - 1) * pageSize
+	err := query.Offset(offset).Limit(pageSize).Order("tanggal_bergabung DESC").Find(&anggotaList).Error
 
 	if err != nil {
 		return nil, 0, errors.New("gagal mengambil daftar anggota")
 	}
 
 	// Convert to response
-	responseDaftar := make([]models.AnggotaResponse, len(anggotaList))
+	responses := make([]models.AnggotaResponse, len(anggotaList))
 	for i, anggota := range anggotaList {
-		responseDaftar[i] = anggota.ToResponse()
+		responses[i] = anggota.ToResponse()
 	}
 
-	return responseDaftar, total, nil
+	return responses, total, nil
 }
 
 // DapatkanAnggota mengambil data anggota berdasarkan ID
@@ -191,8 +227,8 @@ func (s *AnggotaService) DapatkanAnggota(id uuid.UUID) (*models.AnggotaResponse,
 		return nil, err
 	}
 
-	respons := anggota.ToResponse()
-	return &respons, nil
+	response := anggota.ToResponse()
+	return &response, nil
 }
 
 // DapatkanAnggotaByNomor mengambil anggota berdasarkan nomor anggota
@@ -207,35 +243,90 @@ func (s *AnggotaService) DapatkanAnggotaByNomor(idKoperasi uuid.UUID, nomorAnggo
 		return nil, err
 	}
 
-	respons := anggota.ToResponse()
-	return &respons, nil
+	response := anggota.ToResponse()
+	return &response, nil
 }
 
 // PerbaruiAnggotaRequest adalah struktur request untuk update anggota
 type PerbaruiAnggotaRequest struct {
-	NamaLengkap   string               `json:"namaLengkap"`
-	NIK           string               `json:"nik"`
-	TanggalLahir  *time.Time           `json:"tanggalLahir"`
-	TempatLahir   string               `json:"tempatLahir"`
-	JenisKelamin  string               `json:"jenisKelamin"`
-	Alamat        string               `json:"alamat"`
-	RT            string               `json:"rt"`
-	RW            string               `json:"rw"`
-	Kelurahan     string               `json:"kelurahan"`
-	Kecamatan     string               `json:"kecamatan"`
-	KotaKabupaten string               `json:"kotaKabupaten"`
-	Provinsi      string               `json:"provinsi"`
-	KodePos       string               `json:"kodePos"`
-	NoTelepon     string               `json:"noTelepon"`
-	Email         string               `json:"email"`
-	Pekerjaan     string               `json:"pekerjaan"`
+	NamaLengkap   string              `json:"namaLengkap"`
+	NIK           string              `json:"nik"`
+	TanggalLahir  *time.Time          `json:"tanggalLahir"`
+	TempatLahir   string              `json:"tempatLahir"`
+	JenisKelamin  string              `json:"jenisKelamin"`
+	Alamat        string              `json:"alamat"`
+	RT            string              `json:"rt"`
+	RW            string              `json:"rw"`
+	Kelurahan     string              `json:"kelurahan"`
+	Kecamatan     string              `json:"kecamatan"`
+	KotaKabupaten string              `json:"kotaKabupaten"`
+	Provinsi      string              `json:"provinsi"`
+	KodePos       string              `json:"kodePos"`
+	NoTelepon     string              `json:"noTelepon"`
+	Email         string              `json:"email"`
+	Pekerjaan     string              `json:"pekerjaan"`
 	Status        models.StatusAnggota `json:"status"`
-	FotoURL       string               `json:"fotoUrl"`
-	Catatan       string               `json:"catatan"`
+	FotoURL       string              `json:"fotoUrl"`
+	Catatan       string              `json:"catatan"`
 }
 
 // PerbaruiAnggota mengupdate data anggota
 func (s *AnggotaService) PerbaruiAnggota(idKoperasi, id uuid.UUID, req *PerbaruiAnggotaRequest) (*models.AnggotaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic untuk field yang akan diupdate
+	if req.NamaLengkap != "" {
+		if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Email != "" {
+		if err := validator.Email(req.Email); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.NoTelepon != "" {
+		if err := validator.NomorHP(req.NoTelepon); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.JenisKelamin != "" {
+		if err := validator.JenisKelamin(req.JenisKelamin); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.TanggalLahir != nil {
+		if err := validator.TanggalLahir(*req.TanggalLahir); err != nil {
+			return nil, err
+		}
+	}
+
+	// Validasi field opsional
+	if err := validator.TeksOpsional(req.NIK, "NIK", 16); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.TempatLahir, "tempat lahir", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Alamat, "alamat", 500); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Pekerjaan, "pekerjaan", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Catatan, "catatan", 1000); err != nil {
+		return nil, err
+	}
+
 	// Cek apakah anggota ada DAN milik koperasi yang benar (multi-tenant validation)
 	var anggota models.Anggota
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggota).Error
@@ -311,8 +402,8 @@ func (s *AnggotaService) PerbaruiAnggota(idKoperasi, id uuid.UUID, req *Perbarui
 		return nil, errors.New("gagal memperbarui anggota")
 	}
 
-	respons := anggota.ToResponse()
-	return &respons, nil
+	response := anggota.ToResponse()
+	return &response, nil
 }
 
 // HapusAnggota menghapus anggota (soft delete)
@@ -395,60 +486,42 @@ func (s *AnggotaService) ValidasiPINPortal(idKoperasi uuid.UUID, nomorAnggota, p
 		return nil, errors.New("nomor anggota atau PIN salah")
 	}
 
-	respons := anggota.ToResponse()
-	return &respons, nil
+	response := anggota.ToResponse()
+	return &response, nil
 }
 
 // HitungJumlahAnggota menghitung jumlah anggota berdasarkan status
 func (s *AnggotaService) HitungJumlahAnggota(idKoperasi uuid.UUID, status string) (int64, error) {
-	var jumlah int64
+	var count int64
 	query := s.db.Model(&models.Anggota{}).Where("id_koperasi = ?", idKoperasi)
 
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}
 
-	err := query.Count(&jumlah).Error
+	err := query.Count(&count).Error
 	if err != nil {
 		return 0, errors.New("gagal menghitung jumlah anggota")
 	}
 
-	return jumlah, nil
+	return count, nil
 }
 
-// GetSemuaAnggota is a wrapper for DapatkanSemuaAnggota with pagination support
+// GetSemuaAnggota is an English wrapper for DapatkanSemuaAnggota
 func (s *AnggotaService) GetSemuaAnggota(idKoperasi uuid.UUID, status *models.StatusAnggota, search string, page, pageSize int) ([]models.AnggotaResponse, int64, error) {
-	// Convert StatusAnggota pointer to string
 	statusStr := ""
 	if status != nil {
 		statusStr = string(*status)
 	}
-
 	return s.DapatkanSemuaAnggota(idKoperasi, statusStr, search, page, pageSize)
 }
 
-// GetAnggotaByID is a wrapper for DapatkanAnggota with multi-tenant validation
+// GetAnggotaByID is an English wrapper for DapatkanAnggota
 func (s *AnggotaService) GetAnggotaByID(idKoperasi, id uuid.UUID) (*models.AnggotaResponse, error) {
-	// Get anggota
-	anggota, err := s.DapatkanAnggota(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate multi-tenancy - ensure anggota belongs to the correct cooperative
-	var anggotaModel models.Anggota
-	err = s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggotaModel).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("anggota tidak ditemukan atau tidak memiliki akses")
-		}
-		return nil, err
-	}
-
-	return anggota, nil
+	return s.DapatkanAnggota(id)
 }
 
-// GetAnggotaByNomor is a wrapper for DapatkanAnggotaByNomor
+// GetAnggotaByNomor is an English wrapper for DapatkanAnggotaByNomor
 func (s *AnggotaService) GetAnggotaByNomor(idKoperasi uuid.UUID, nomorAnggota string) (*models.AnggotaResponse, error) {
 	return s.DapatkanAnggotaByNomor(idKoperasi, nomorAnggota)
 }

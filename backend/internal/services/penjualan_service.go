@@ -2,7 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
-	"cooperative-erp-lite/internal/utils"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 	"time"
@@ -17,7 +17,6 @@ type PenjualanService struct {
 	db               *gorm.DB
 	produkService    *ProdukService
 	transaksiService *TransaksiService
-	logger           *utils.Logger
 }
 
 // NewPenjualanService membuat instance baru PenjualanService
@@ -26,7 +25,6 @@ func NewPenjualanService(db *gorm.DB, produkService *ProdukService, transaksiSer
 		db:               db,
 		produkService:    produkService,
 		transaksiService: transaksiService,
-		logger:           utils.NewLogger("PenjualanService"),
 	}
 }
 
@@ -47,15 +45,20 @@ type ProsesPenjualanRequest struct {
 
 // ProsesPenjualan memproses transaksi penjualan lengkap
 func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *ProsesPenjualanRequest) (*models.PenjualanResponse, error) {
-	const method = "ProsesPenjualan"
+	// Initialize validator
+	validator := validasi.Baru()
 
-	// Validasi items (stok tersedia)
+	// Validasi business logic
+	if err := validator.Jumlah(req.JumlahBayar, "jumlah bayar"); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Catatan, "catatan", 500); err != nil {
+		return nil, err
+	}
+
+	// Validasi items (stok tersedia dan format)
 	if err := s.ValidasiItemPenjualan(req.Items); err != nil {
-		s.logger.Error(method, "Validasi item penjualan gagal", err, map[string]interface{}{
-			"koperasi_id": idKoperasi.String(),
-			"kasir_id":    idKasir.String(),
-			"jumlah_item": len(req.Items),
-		})
 		return nil, err
 	}
 
@@ -67,20 +70,12 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 
 	// Validasi pembayaran
 	if err := s.ValidasiPembayaran(totalBelanja, req.JumlahBayar); err != nil {
-		s.logger.Error(method, "Validasi pembayaran gagal", err, map[string]interface{}{
-			"koperasi_id":   idKoperasi.String(),
-			"total_belanja": totalBelanja,
-			"jumlah_bayar":  req.JumlahBayar,
-		})
 		return nil, err
 	}
 
 	// Generate nomor penjualan
 	nomorPenjualan, err := s.GenerateNomorPenjualan(idKoperasi, time.Now())
 	if err != nil {
-		s.logger.Error(method, "Gagal generate nomor penjualan", err, map[string]interface{}{
-			"koperasi_id": idKoperasi.String(),
-		})
 		return nil, err
 	}
 
@@ -106,12 +101,7 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 		}
 
 		if err := tx.Create(&penjualan).Error; err != nil {
-			s.logger.Error(method, "Gagal membuat record penjualan di database", err, map[string]interface{}{
-				"koperasi_id":     idKoperasi.String(),
-				"nomor_penjualan": nomorPenjualan,
-				"total_belanja":   totalBelanja,
-			})
-			return utils.WrapDatabaseError(err, "Gagal membuat penjualan")
+			return errors.New("gagal membuat penjualan")
 		}
 
 		// 2. Buat item penjualan dan kurangi stok
@@ -119,14 +109,7 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 			// Dapatkan produk untuk nama
 			var produk models.Produk
 			if err := tx.Where("id = ?", itemReq.IDProduk).First(&produk).Error; err != nil {
-				s.logger.Error(method, "Produk tidak ditemukan saat proses penjualan", err, map[string]interface{}{
-					"koperasi_id": idKoperasi.String(),
-					"produk_id":   itemReq.IDProduk.String(),
-				})
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return utils.WrapDatabaseError(err, "Produk")
-				}
-				return utils.WrapDatabaseError(err, "Gagal mengambil data produk")
+				return fmt.Errorf("produk %s tidak ditemukan", itemReq.IDProduk)
 			}
 
 			// Buat item penjualan
@@ -139,21 +122,11 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 			}
 
 			if err := tx.Create(&item).Error; err != nil {
-				s.logger.Error(method, "Gagal membuat item penjualan", err, map[string]interface{}{
-					"penjualan_id": penjualan.ID.String(),
-					"produk_id":    itemReq.IDProduk.String(),
-					"nama_produk":  produk.NamaProduk,
-				})
-				return utils.WrapDatabaseError(err, "Gagal membuat item penjualan")
+				return errors.New("gagal membuat item penjualan")
 			}
 
 			// Kurangi stok produk
 			if err := s.produkService.KurangiStok(itemReq.IDProduk, itemReq.Kuantitas); err != nil {
-				s.logger.Error(method, "Gagal mengurangi stok produk", err, map[string]interface{}{
-					"produk_id":   itemReq.IDProduk.String(),
-					"nama_produk": produk.NamaProduk,
-					"kuantitas":   itemReq.Kuantitas,
-				})
 				return fmt.Errorf("gagal mengurangi stok: %w", err)
 			}
 		}
@@ -162,10 +135,6 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 	})
 
 	if err != nil {
-		s.logger.Error(method, "Transaksi penjualan gagal", err, map[string]interface{}{
-			"koperasi_id":     idKoperasi.String(),
-			"nomor_penjualan": nomorPenjualan,
-		})
 		return nil, err
 	}
 
@@ -173,38 +142,33 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 	err = s.transaksiService.PostingOtomatisPenjualan(idKoperasi, idKasir, penjualan.ID)
 	if err != nil {
 		// Warning: penjualan sudah tersimpan tapi posting gagal
-		s.logger.Error(method, "Penjualan berhasil tetapi posting ke jurnal gagal", err, map[string]interface{}{
-			"penjualan_id":    penjualan.ID.String(),
-			"nomor_penjualan": nomorPenjualan,
-			"koperasi_id":     idKoperasi.String(),
-		})
+		// Bisa di-handle dengan background job untuk retry
 		return nil, fmt.Errorf("penjualan berhasil, tetapi posting gagal: %w", err)
 	}
 
 	// Reload dengan relasi
-	if err := s.db.Preload("ItemPenjualan.Produk").Preload("Kasir").Preload("Anggota").First(&penjualan, penjualan.ID).Error; err != nil {
-		s.logger.Error(method, "Gagal reload data penjualan setelah berhasil", err, map[string]interface{}{
-			"penjualan_id": penjualan.ID.String(),
-		})
-		return nil, utils.WrapDatabaseError(err, "Gagal mengambil data penjualan")
-	}
+	s.db.Preload("ItemPenjualan.Produk").Preload("Kasir").Preload("Anggota").First(&penjualan, penjualan.ID)
 
-	s.logger.Info(method, "Berhasil memproses penjualan", map[string]interface{}{
-		"penjualan_id":    penjualan.ID.String(),
-		"nomor_penjualan": nomorPenjualan,
-		"total_belanja":   totalBelanja,
-		"jumlah_item":     len(req.Items),
-		"koperasi_id":     idKoperasi.String(),
-		"kasir_id":        idKasir.String(),
-	})
-
-	respons := penjualan.ToResponse()
-	return &respons, nil
+	response := penjualan.ToResponse()
+	return &response, nil
 }
 
-// ValidasiItemPenjualan memvalidasi semua item (stok tersedia)
+// ValidasiItemPenjualan memvalidasi semua item (stok tersedia dan format)
 func (s *PenjualanService) ValidasiItemPenjualan(items []ItemPenjualanRequest) error {
-	for _, item := range items {
+	validator := validasi.Baru()
+
+	for i, item := range items {
+		// Validasi kuantitas
+		if err := validator.KuantitasProduk(float64(item.Kuantitas), fmt.Sprintf("kuantitas item ke-%d", i+1)); err != nil {
+			return err
+		}
+
+		// Validasi harga satuan
+		if err := validator.Jumlah(item.HargaSatuan, fmt.Sprintf("harga satuan item ke-%d", i+1)); err != nil {
+			return err
+		}
+
+		// Validasi stok tersedia
 		tersedia, err := s.produkService.CekStokTersedia(item.IDProduk, item.Kuantitas)
 		if err != nil {
 			return err
@@ -228,17 +192,15 @@ func (s *PenjualanService) ValidasiPembayaran(totalBelanja, jumlahBayar float64)
 
 // GenerateNomorPenjualan menghasilkan nomor penjualan otomatis
 // Format: POS-YYYYMMDD-NNNN
-// Menggunakan row-level locking untuk mencegah race condition pada concurrent requests
+// Uses row-level locking to prevent race conditions in concurrent requests
 func (s *PenjualanService) GenerateNomorPenjualan(idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
-	const method = "GenerateNomorPenjualan"
-
 	tanggalStr := tanggal.Format("20060102")
 	tanggalDate := tanggal.Format("2006-01-02")
 	var nomorPenjualan string
 
-	// Gunakan transaction dengan row-level locking untuk mencegah race condition
+	// Use transaction with row-level locking to prevent race conditions
 	err := s.db.Transaction(func(tx *gorm.DB) error {
-		// Lock dan ambil nomor penjualan terakhir untuk tanggal ini
+		// Lock and get the last sales number for this date
 		var lastPenjualan models.Penjualan
 		err := tx.Where("id_koperasi = ? AND DATE(tanggal_penjualan) = ?", idKoperasi, tanggalDate).
 			Order("nomor_penjualan DESC").
@@ -248,9 +210,9 @@ func (s *PenjualanService) GenerateNomorPenjualan(idKoperasi uuid.UUID, tanggal 
 
 		nomorUrut := 1
 
-		// Jika ada penjualan sebelumnya, parse dan increment
+		// If there's a previous sale, parse and increment
 		if err == nil && lastPenjualan.NomorPenjualan != "" {
-			// Extract number dari POS-20250116-0001
+			// Extract number from POS-20250116-0001
 			var parsedTanggal string
 			var parsedUrut int
 			_, scanErr := fmt.Sscanf(lastPenjualan.NomorPenjualan, "POS-%s-%04d", &parsedTanggal, &parsedUrut)
@@ -258,11 +220,7 @@ func (s *PenjualanService) GenerateNomorPenjualan(idKoperasi uuid.UUID, tanggal 
 				nomorUrut = parsedUrut + 1
 			}
 		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			s.logger.Error(method, "Gagal mengambil nomor penjualan terakhir", err, map[string]interface{}{
-				"koperasi_id": idKoperasi.String(),
-				"tanggal":     tanggalDate,
-			})
-			return utils.WrapDatabaseError(err, "Gagal mengambil nomor penjualan terakhir")
+			return err
 		}
 
 		nomorPenjualan = fmt.Sprintf("POS-%s-%04d", tanggalStr, nomorUrut)
@@ -270,31 +228,20 @@ func (s *PenjualanService) GenerateNomorPenjualan(idKoperasi uuid.UUID, tanggal 
 	})
 
 	if err != nil {
-		s.logger.Error(method, "Transaksi generate nomor penjualan gagal", err, map[string]interface{}{
-			"koperasi_id": idKoperasi.String(),
-			"tanggal":     tanggalDate,
-		})
-		return "", err
+		return "", errors.New("gagal generate nomor penjualan")
 	}
-
-	s.logger.Debug(method, "Berhasil generate nomor penjualan", map[string]interface{}{
-		"nomor_penjualan": nomorPenjualan,
-		"koperasi_id":     idKoperasi.String(),
-	})
 
 	return nomorPenjualan, nil
 }
 
 // DapatkanSemuaPenjualan mengambil daftar penjualan dengan filter
 func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir string, idKasir *uuid.UUID, page, pageSize int) ([]models.PenjualanResponse, int64, error) {
-	const method = "DapatkanSemuaPenjualan"
-
 	var penjualanList []models.Penjualan
 	var total int64
 
 	query := s.db.Model(&models.Penjualan{}).Where("id_koperasi = ?", idKoperasi)
 
-	// Terapkan filter
+	// Apply filters
 	if tanggalMulai != "" {
 		query = query.Where("tanggal_penjualan >= ?", tanggalMulai)
 	}
@@ -305,7 +252,7 @@ func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalM
 		query = query.Where("id_kasir = ?", *idKasir)
 	}
 
-	// Hitung total
+	// Count total
 	query.Count(&total)
 
 	// Pagination
@@ -318,83 +265,51 @@ func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalM
 		Find(&penjualanList).Error
 
 	if err != nil {
-		s.logger.Error(method, "Gagal mengambil daftar penjualan dari database", err, map[string]interface{}{
-			"koperasi_id":   idKoperasi.String(),
-			"tanggal_mulai": tanggalMulai,
-			"tanggal_akhir": tanggalAkhir,
-			"page":          page,
-			"page_size":     pageSize,
-		})
-		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar penjualan")
+		return nil, 0, errors.New("gagal mengambil daftar penjualan")
 	}
 
-	// Convert ke response
-	responseDaftar := make([]models.PenjualanResponse, len(penjualanList))
+	// Convert to response
+	responses := make([]models.PenjualanResponse, len(penjualanList))
 	for i, penjualan := range penjualanList {
-		responseDaftar[i] = penjualan.ToResponse()
+		responses[i] = penjualan.ToResponse()
 	}
 
-	s.logger.Debug(method, "Berhasil mengambil daftar penjualan", map[string]interface{}{
-		"koperasi_id": idKoperasi.String(),
-		"total":       total,
-		"count":       len(responseDaftar),
-		"page":        page,
-	})
-
-	return responseDaftar, total, nil
+	return responses, total, nil
 }
 
 // DapatkanPenjualan mengambil penjualan berdasarkan ID
-func (s *PenjualanService) DapatkanPenjualan(idKoperasi, id uuid.UUID) (*models.PenjualanResponse, error) {
-	const method = "DapatkanPenjualan"
-
+func (s *PenjualanService) DapatkanPenjualan(id uuid.UUID) (*models.PenjualanResponse, error) {
 	var penjualan models.Penjualan
 	err := s.db.Preload("ItemPenjualan.Produk").
 		Preload("Kasir").
 		Preload("Anggota").
-		Where("id = ? AND id_koperasi = ?", id, idKoperasi).
+		Where("id = ?", id).
 		First(&penjualan).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			s.logger.Error(method, "Penjualan tidak ditemukan atau tidak memiliki akses", err, map[string]interface{}{
-				"penjualan_id": id.String(),
-				"koperasi_id":  idKoperasi.String(),
-			})
-			return nil, utils.WrapDatabaseError(err, "Penjualan")
+			return nil, errors.New("penjualan tidak ditemukan")
 		}
-		s.logger.Error(method, "Gagal mengambil data penjualan", err, map[string]interface{}{
-			"penjualan_id": id.String(),
-			"koperasi_id":  idKoperasi.String(),
-		})
-		return nil, utils.WrapDatabaseError(err, "Gagal mengambil data penjualan")
+		return nil, err
 	}
 
-	s.logger.Debug(method, "Berhasil mengambil data penjualan", map[string]interface{}{
-		"penjualan_id":    id.String(),
-		"koperasi_id":     idKoperasi.String(),
-		"nomor_penjualan": penjualan.NomorPenjualan,
-	})
-
-	respons := penjualan.ToResponse()
-	return &respons, nil
+	response := penjualan.ToResponse()
+	return &response, nil
 }
 
 // DapatkanStruk mengambil data struk digital
-func (s *PenjualanService) DapatkanStruk(idKoperasi, id uuid.UUID) (*models.PenjualanResponse, error) {
-	return s.DapatkanPenjualan(idKoperasi, id)
+func (s *PenjualanService) DapatkanStruk(id uuid.UUID) (*models.PenjualanResponse, error) {
+	return s.DapatkanPenjualan(id)
 }
 
 // HitungTotalPenjualan menghitung total penjualan dalam periode
 func (s *PenjualanService) HitungTotalPenjualan(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir string) (map[string]interface{}, error) {
-	const method = "HitungTotalPenjualan"
-
 	type SalesResult struct {
 		TotalPenjualan  float64
 		JumlahTransaksi int64
 	}
 
-	var hasil SalesResult
+	var result SalesResult
 	query := s.db.Model(&models.Penjualan{}).
 		Select("COALESCE(SUM(total_belanja), 0) as total_penjualan, COUNT(*) as jumlah_transaksi").
 		Where("id_koperasi = ?", idKoperasi)
@@ -406,45 +321,32 @@ func (s *PenjualanService) HitungTotalPenjualan(idKoperasi uuid.UUID, tanggalMul
 		query = query.Where("tanggal_penjualan <= ?", tanggalAkhir)
 	}
 
-	err := query.Scan(&hasil).Error
+	err := query.Scan(&result).Error
 	if err != nil {
-		s.logger.Error(method, "Gagal menghitung total penjualan", err, map[string]interface{}{
-			"koperasi_id":   idKoperasi.String(),
-			"tanggal_mulai": tanggalMulai,
-			"tanggal_akhir": tanggalAkhir,
-		})
-		return nil, utils.WrapDatabaseError(err, "Gagal menghitung total penjualan")
+		return nil, errors.New("gagal menghitung total penjualan")
 	}
 
 	summary := map[string]interface{}{
-		"totalPenjualan":  hasil.TotalPenjualan,
-		"jumlahTransaksi": hasil.JumlahTransaksi,
+		"totalPenjualan":  result.TotalPenjualan,
+		"jumlahTransaksi": result.JumlahTransaksi,
 		"rataRata":        float64(0),
 	}
 
-	if hasil.JumlahTransaksi > 0 {
-		summary["rataRata"] = hasil.TotalPenjualan / float64(hasil.JumlahTransaksi)
+	if result.JumlahTransaksi > 0 {
+		summary["rataRata"] = result.TotalPenjualan / float64(result.JumlahTransaksi)
 	}
-
-	s.logger.Debug(method, "Berhasil menghitung total penjualan", map[string]interface{}{
-		"koperasi_id":      idKoperasi.String(),
-		"total_penjualan":  hasil.TotalPenjualan,
-		"jumlah_transaksi": hasil.JumlahTransaksi,
-	})
 
 	return summary, nil
 }
 
 // DapatkanPenjualanHariIni mengambil penjualan hari ini
 func (s *PenjualanService) DapatkanPenjualanHariIni(idKoperasi uuid.UUID) (map[string]interface{}, error) {
-	hariIni := time.Now().Format("2006-01-02")
-	return s.HitungTotalPenjualan(idKoperasi, hariIni, hariIni)
+	today := time.Now().Format("2006-01-02")
+	return s.HitungTotalPenjualan(idKoperasi, today, today)
 }
 
 // DapatkanTopProduk mengambil produk terlaris
 func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([]map[string]interface{}, error) {
-	const method = "DapatkanTopProduk"
-
 	type TopProduk struct {
 		IDProduk     uuid.UUID
 		NamaProduk   string
@@ -452,7 +354,7 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 		TotalNilai   float64
 	}
 
-	var hasilDaftar []TopProduk
+	var results []TopProduk
 	err := s.db.Model(&models.ItemPenjualan{}).
 		Select("item_penjualan.id_produk, item_penjualan.nama_produk, SUM(item_penjualan.kuantitas) as total_terjual, SUM(item_penjualan.subtotal) as total_nilai").
 		Joins("JOIN penjualan ON penjualan.id = item_penjualan.id_penjualan").
@@ -460,31 +362,22 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 		Group("item_penjualan.id_produk, item_penjualan.nama_produk").
 		Order("total_terjual DESC").
 		Limit(limit).
-		Scan(&hasilDaftar).Error
+		Scan(&results).Error
 
 	if err != nil {
-		s.logger.Error(method, "Gagal mengambil data top produk", err, map[string]interface{}{
-			"koperasi_id": idKoperasi.String(),
-			"limit":       limit,
-		})
-		return nil, utils.WrapDatabaseError(err, "Gagal mengambil top produk")
+		return nil, errors.New("gagal mengambil top produk")
 	}
 
-	// Convert ke map
-	topProduk := make([]map[string]interface{}, len(hasilDaftar))
-	for i, hasil := range hasilDaftar {
+	// Convert to map
+	topProduk := make([]map[string]interface{}, len(results))
+	for i, result := range results {
 		topProduk[i] = map[string]interface{}{
-			"idProduk":     hasil.IDProduk,
-			"namaProduk":   hasil.NamaProduk,
-			"totalTerjual": hasil.TotalTerjual,
-			"totalNilai":   hasil.TotalNilai,
+			"idProduk":     result.IDProduk,
+			"namaProduk":   result.NamaProduk,
+			"totalTerjual": result.TotalTerjual,
+			"totalNilai":   result.TotalNilai,
 		}
 	}
-
-	s.logger.Debug(method, "Berhasil mengambil top produk", map[string]interface{}{
-		"koperasi_id": idKoperasi.String(),
-		"count":       len(topProduk),
-	})
 
 	return topProduk, nil
 }

@@ -38,7 +38,7 @@ func (h *PenjualanHandler) ProsesPenjualan(c *gin.Context) {
 
 	penjualan, err := h.penjualanService.ProsesPenjualan(koperasiUUID, kasirUUID, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *PenjualanHandler) List(c *gin.Context) {
 		koperasiUUID, tanggalMulai, tanggalAkhir, idKasirPtr, page, pageSize,
 	)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -79,9 +79,6 @@ func (h *PenjualanHandler) List(c *gin.Context) {
 
 // GetByID handles GET /api/v1/penjualan/:id
 func (h *PenjualanHandler) GetByID(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
-
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -89,7 +86,7 @@ func (h *PenjualanHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	penjualan, err := h.penjualanService.DapatkanPenjualan(koperasiUUID, id)
+	penjualan, err := h.penjualanService.DapatkanPenjualan(id)
 	if err != nil {
 		utils.NotFoundResponse(c, "Penjualan tidak ditemukan")
 		return
@@ -100,9 +97,6 @@ func (h *PenjualanHandler) GetByID(c *gin.Context) {
 
 // GetStruk handles GET /api/v1/penjualan/:id/struk
 func (h *PenjualanHandler) GetStruk(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
-
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -110,9 +104,9 @@ func (h *PenjualanHandler) GetStruk(c *gin.Context) {
 		return
 	}
 
-	struk, err := h.penjualanService.DapatkanStruk(koperasiUUID, id)
+	struk, err := h.penjualanService.DapatkanStruk(id)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -126,7 +120,7 @@ func (h *PenjualanHandler) GetHariIni(c *gin.Context) {
 
 	summary, err := h.penjualanService.DapatkanPenjualanHariIni(koperasiUUID)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -142,7 +136,7 @@ func (h *PenjualanHandler) GetTopProduk(c *gin.Context) {
 
 	topProduk, err := h.penjualanService.DapatkanTopProduk(koperasiUUID, limit)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

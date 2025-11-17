@@ -36,7 +36,7 @@ func (h *AnggotaHandler) Create(c *gin.Context) {
 
 	anggota, err := h.anggotaService.BuatAnggota(koperasiUUID, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (h *AnggotaHandler) List(c *gin.Context) {
 
 	anggotaList, total, err := h.anggotaService.GetSemuaAnggota(koperasiUUID, statusPtr, search, page, pageSize)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -127,7 +127,7 @@ func (h *AnggotaHandler) Update(c *gin.Context) {
 
 	anggota, err := h.anggotaService.PerbaruiAnggota(koperasiUUID, id, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h *AnggotaHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.anggotaService.HapusAnggota(koperasiUUID, id); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (h *AnggotaHandler) SetPIN(c *gin.Context) {
 	}
 
 	if err := h.anggotaService.SetPINPortal(koperasiUUID, id, req.PIN); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -198,13 +198,13 @@ func (h *AnggotaHandler) ValidatePIN(c *gin.Context) {
 		return
 	}
 
-	valid, err := h.anggotaService.ValidasiPINPortal(koperasiUUID, req.NomorAnggota, req.PIN)
-	if err != nil || !valid {
+	anggota, err := h.anggotaService.ValidasiPINPortal(koperasiUUID, req.NomorAnggota, req.PIN)
+	if err != nil || anggota == nil {
 		utils.UnauthorizedResponse(c, "Nomor anggota atau PIN tidak valid")
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "PIN valid", gin.H{"valid": true})
+	utils.SuccessResponse(c, http.StatusOK, "PIN valid", anggota)
 }
 
 // GetStatistik handles GET /api/v1/anggota/statistik
@@ -212,9 +212,10 @@ func (h *AnggotaHandler) GetStatistik(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
 
-	jumlah, err := h.anggotaService.HitungJumlahAnggota(koperasiUUID)
+	status := c.Query("status") // Get status filter from query params
+	jumlah, err := h.anggotaService.HitungJumlahAnggota(koperasiUUID, status)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

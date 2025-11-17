@@ -2,8 +2,9 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
-	"cooperative-erp-lite/internal/utils"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -30,13 +31,33 @@ type BuatPenggunaRequest struct {
 
 // BuatPengguna membuat pengguna baru
 func (s *PenggunaService) BuatPengguna(idKoperasi uuid.UUID, req *BuatPenggunaRequest) (*models.PenggunaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.NamaPengguna, "nama pengguna", 3, 50); err != nil {
+		return nil, err
+	}
+
+	if err := validator.Email(req.Email); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.KataSandi, "kata sandi", 6, 100); err != nil {
+		return nil, err
+	}
+
 	// Cek apakah username sudah ada di koperasi yang sama
-	var jumlah int64
+	var count int64
 	s.db.Model(&models.Pengguna{}).
 		Where("id_koperasi = ? AND nama_pengguna = ?", idKoperasi, req.NamaPengguna).
-		Count(&jumlah)
+		Count(&count)
 
-	if jumlah > 0 {
+	if count > 0 {
 		return nil, errors.New("nama pengguna sudah digunakan")
 	}
 
@@ -62,15 +83,12 @@ func (s *PenggunaService) BuatPengguna(idKoperasi uuid.UUID, req *BuatPenggunaRe
 		return nil, errors.New("gagal membuat pengguna")
 	}
 
-	respons := pengguna.ToResponse()
-	return &respons, nil
+	response := pengguna.ToResponse()
+	return &response, nil
 }
 
 // DapatkanSemuaPengguna mengambil daftar pengguna dengan filter
 func (s *PenggunaService) DapatkanSemuaPengguna(idKoperasi uuid.UUID, peran string, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
-	// Validate and normalize pagination parameters to prevent DoS attacks
-	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
-
 	var penggunaList []models.Pengguna
 	var total int64
 
@@ -87,26 +105,21 @@ func (s *PenggunaService) DapatkanSemuaPengguna(idKoperasi uuid.UUID, peran stri
 	// Count total
 	query.Count(&total)
 
-	// Pagination with validated parameters
-	offset := utils.CalculateOffset(validPage, validPageSize)
-
-	// Create context with timeout to prevent long-running queries
-	ctx, cancel := utils.CreateQueryContext()
-	defer cancel()
-
-	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).Order("tanggal_dibuat DESC").Find(&penggunaList).Error
+	// Pagination
+	offset := (page - 1) * pageSize
+	err := query.Offset(offset).Limit(pageSize).Order("tanggal_dibuat DESC").Find(&penggunaList).Error
 
 	if err != nil {
 		return nil, 0, errors.New("gagal mengambil daftar pengguna")
 	}
 
 	// Convert to response
-	responseDaftar := make([]models.PenggunaResponse, len(penggunaList))
+	responses := make([]models.PenggunaResponse, len(penggunaList))
 	for i, pengguna := range penggunaList {
-		responseDaftar[i] = pengguna.ToResponse()
+		responses[i] = pengguna.ToResponse()
 	}
 
-	return responseDaftar, total, nil
+	return responses, total, nil
 }
 
 // DapatkanPengguna mengambil data pengguna berdasarkan ID
@@ -121,8 +134,8 @@ func (s *PenggunaService) DapatkanPengguna(id uuid.UUID) (*models.PenggunaRespon
 		return nil, err
 	}
 
-	respons := pengguna.ToResponse()
-	return &respons, nil
+	response := pengguna.ToResponse()
+	return &response, nil
 }
 
 // PerbaruiPenggunaRequest adalah struktur request untuk update pengguna
@@ -135,6 +148,22 @@ type PerbaruiPenggunaRequest struct {
 
 // PerbaruiPengguna mengupdate data pengguna
 func (s *PenggunaService) PerbaruiPengguna(idKoperasi, id uuid.UUID, req *PerbaruiPenggunaRequest) (*models.PenggunaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic untuk field yang akan diupdate
+	if req.NamaLengkap != "" {
+		if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Email != "" {
+		if err := validator.Email(req.Email); err != nil {
+			return nil, err
+		}
+	}
+
 	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
 	var pengguna models.Pengguna
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
@@ -165,8 +194,8 @@ func (s *PenggunaService) PerbaruiPengguna(idKoperasi, id uuid.UUID, req *Perbar
 		return nil, errors.New("gagal memperbarui pengguna")
 	}
 
-	respons := pengguna.ToResponse()
-	return &respons, nil
+	response := pengguna.ToResponse()
+	return &response, nil
 }
 
 // HapusPengguna menghapus pengguna (soft delete)
@@ -224,7 +253,7 @@ func (s *PenggunaService) UbahKataSandiPengguna(idKoperasi, id uuid.UUID, kataSa
 
 // ResetKataSandi mereset password pengguna ke default (admin only)
 func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, error) {
-	// Cari pengguna
+	// Generate password default (menggunakan username)
 	var pengguna models.Pengguna
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
 	if err != nil {
@@ -234,20 +263,14 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 		return "", err
 	}
 
-	// Generate random password (12 characters, cryptographically secure)
-	kataSandiDefault, err := utils.GenerateRandomPassword(12)
-	if err != nil {
-		return "", errors.New("gagal membuat kata sandi acak")
-	}
+	// Password default: username + "123"
+	passwordDefault := fmt.Sprintf("%s123", pengguna.NamaPengguna)
 
 	// Set password
-	err = pengguna.SetKataSandi(kataSandiDefault)
+	err = pengguna.SetKataSandi(passwordDefault)
 	if err != nil {
 		return "", errors.New("gagal mengenkripsi kata sandi")
 	}
-
-	// Force user to change password on next login
-	pengguna.RequirePasswordChange = true
 
 	// Simpan
 	err = s.db.Save(&pengguna).Error
@@ -255,7 +278,7 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 		return "", errors.New("gagal mereset kata sandi")
 	}
 
-	return kataSandiDefault, nil
+	return passwordDefault, nil
 }
 
 // DapatkanPenggunaByUsername mengambil pengguna berdasarkan username
@@ -270,90 +293,22 @@ func (s *PenggunaService) DapatkanPenggunaByUsername(idKoperasi uuid.UUID, namaP
 		return nil, err
 	}
 
-	respons := pengguna.ToResponse()
-	return &respons, nil
+	response := pengguna.ToResponse()
+	return &response, nil
 }
 
-// GetSemuaPengguna is a wrapper for DapatkanSemuaPengguna with flexible peran parameter
-func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran interface{}, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
-	var peranStr string
 
-	// Handle different types for peran parameter
-	switch v := peran.(type) {
-	case string:
-		peranStr = v
-	case *models.PeranPengguna:
-		if v != nil {
-			peranStr = string(*v)
-		}
-	case models.PeranPengguna:
-		peranStr = string(v)
-	case nil:
-		peranStr = ""
+// GetSemuaPengguna is an English wrapper for DapatkanSemuaPengguna
+func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran *models.PeranPengguna, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
+	peranStr := ""
+	if peran != nil {
+		peranStr = string(*peran)
 	}
-
 	return s.DapatkanSemuaPengguna(idKoperasi, peranStr, statusAktif, page, pageSize)
 }
 
-// GetPenggunaByID is a wrapper for DapatkanPengguna with multi-tenant validation
+// GetPenggunaByID is an English wrapper for DapatkanPengguna
 func (s *PenggunaService) GetPenggunaByID(idKoperasi, id uuid.UUID) (*models.PenggunaResponse, error) {
-	// Get pengguna
-	pengguna, err := s.DapatkanPengguna(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate multi-tenancy - ensure pengguna belongs to the correct cooperative
-	var penggunaModel models.Pengguna
-	err = s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&penggunaModel).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
-		}
-		return nil, err
-	}
-
-	return pengguna, nil
+	return s.DapatkanPengguna(id)
 }
 
-// GetPenggunaByUsername is a wrapper for DapatkanPenggunaByUsername
-func (s *PenggunaService) GetPenggunaByUsername(idKoperasi uuid.UUID, namaPengguna string) (*models.PenggunaResponse, error) {
-	return s.DapatkanPenggunaByUsername(idKoperasi, namaPengguna)
-}
-
-// UbahKataSandiAdmin changes a user's password (admin action - requires old password verification)
-func (s *PenggunaService) UbahKataSandiAdmin(idKoperasi, id uuid.UUID, kataSandiLama, kataSandiBaru string) error {
-	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
-	var pengguna models.Pengguna
-	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
-		}
-		return err
-	}
-
-	// Verify old password
-	if !pengguna.CekKataSandi(kataSandiLama) {
-		return errors.New("kata sandi lama tidak sesuai")
-	}
-
-	// Validate new password
-	if err := utils.ValidasiKataSandi(kataSandiBaru); err != nil {
-		return err
-	}
-
-	// Set new password
-	err = pengguna.SetKataSandi(kataSandiBaru)
-	if err != nil {
-		return errors.New("gagal mengenkripsi kata sandi baru")
-	}
-
-	// Save to database
-	err = s.db.Save(&pengguna).Error
-	if err != nil {
-		return errors.New("gagal menyimpan kata sandi baru")
-	}
-
-	return nil
-}

@@ -94,12 +94,33 @@ func (h *TransaksiHandler) GetByID(c *gin.Context) {
 
 // Update handles PUT /api/v1/transaksi/:id
 func (h *TransaksiHandler) Update(c *gin.Context) {
-	// TODO: PerbaruiTransaksi method not yet implemented in service
+	idKoperasi, _ := c.Get("idKoperasi")
+	koperasiUUID := idKoperasi.(uuid.UUID)
+
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.BadRequestResponse(c, "ID transaksi tidak valid")
+		return
+	}
+	_ = koperasiUUID; _ = id // TODO: will be used when PerbaruiTransaksi is implemented
+
+	var req services.BuatTransaksiRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ValidationErrorResponse(c, err.Error())
+		return
+	}
+
+	// TODO: PerbaruiTransaksi service method not available in current implementation
+	// Need to implement update transaction in TransaksiService
 	utils.BadRequestResponse(c, "Fitur update transaksi belum tersedia")
 }
 
 // Delete handles DELETE /api/v1/transaksi/:id
 func (h *TransaksiHandler) Delete(c *gin.Context) {
+	idKoperasi, _ := c.Get("idKoperasi")
+	koperasiUUID := idKoperasi.(uuid.UUID)
+
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -121,6 +142,29 @@ func (h *TransaksiHandler) Delete(c *gin.Context) {
 
 // Reverse handles POST /api/v1/transaksi/:id/reverse
 func (h *TransaksiHandler) Reverse(c *gin.Context) {
-	// TODO: ReverseTransaksi method not yet implemented in service
+	idKoperasi, _ := c.Get("idKoperasi")
+	koperasiUUID := idKoperasi.(uuid.UUID)
+
+	idPengguna, _ := c.Get("idPengguna")
+	penggunaUUID := idPengguna.(uuid.UUID)
+
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.BadRequestResponse(c, "ID transaksi tidak valid")
+		return
+	}
+
+	var req struct {
+		Keterangan string `json:"keterangan" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ValidationErrorResponse(c, err.Error())
+		return
+	}
+
+	// TODO: ReverseTransaksi service method not available in current implementation
+	// Need to implement reverse transaction in TransaksiService
 	utils.BadRequestResponse(c, "Fitur reverse transaksi belum tersedia")
 }

@@ -40,7 +40,7 @@ func (h *PenggunaHandler) Create(c *gin.Context) {
 			utils.ConflictResponse(c, err.Error())
 			return
 		}
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *PenggunaHandler) List(c *gin.Context) {
 
 	penggunaList, total, err := h.penggunaService.GetSemuaPengguna(koperasiUUID, peranPtr, statusAktifPtr, page, pageSize)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *PenggunaHandler) Update(c *gin.Context) {
 
 	pengguna, err := h.penggunaService.PerbaruiPengguna(koperasiUUID, id, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -142,14 +142,14 @@ func (h *PenggunaHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.penggunaService.HapusPengguna(koperasiUUID, id); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Pengguna berhasil dihapus", nil)
 }
 
-// ResetPassword handles POST /api/v1/pengguna/:id/reset-password (admin sets specific password)
+// ResetPassword handles POST /api/v1/pengguna/:id/reset-password
 func (h *PenggunaHandler) ResetPassword(c *gin.Context) {
 	idKoperasi, _ := c.Get("idKoperasi")
 	koperasiUUID := idKoperasi.(uuid.UUID)
@@ -161,50 +161,15 @@ func (h *PenggunaHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		KataSandiBaru string `json:"kataSandiBaru" binding:"required,min=6"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ValidationErrorResponse(c, err.Error())
-		return
-	}
-
-	if err := h.penggunaService.UbahKataSandiPengguna(koperasiUUID, id, req.KataSandiBaru); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Kata sandi berhasil direset", nil)
-}
-
-// GenerateRandomPassword handles POST /api/v1/pengguna/:id/generate-password (admin generates random password)
-func (h *PenggunaHandler) GenerateRandomPassword(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
-
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
+	// ResetKataSandi now returns the default password
+	passwordDefault, err := h.penggunaService.ResetKataSandi(koperasiUUID, id)
 	if err != nil {
-		utils.BadRequestResponse(c, "ID pengguna tidak valid")
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
-	// Generate random password via service
-	randomPassword, err := h.penggunaService.ResetKataSandi(koperasiUUID, id)
-	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
-		return
-	}
-
-	// Return password with security warning
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Kata sandi acak berhasil dibuat",
-		"data": gin.H{
-			"passwordBaru": randomPassword,
-		},
-		"warning": "PENTING: Password ini hanya ditampilkan sekali. Simpan dengan aman dan berikan kepada user. User akan diminta mengubah password saat login pertama.",
+	utils.SuccessResponse(c, http.StatusOK, "Kata sandi berhasil direset", gin.H{
+		"passwordDefault": passwordDefault,
 	})
 }
 
@@ -221,7 +186,6 @@ func (h *PenggunaHandler) ChangePassword(c *gin.Context) {
 	}
 
 	var req struct {
-		KataSandiLama string `json:"kataSandiLama" binding:"required"`
 		KataSandiBaru string `json:"kataSandiBaru" binding:"required,min=6"`
 	}
 
@@ -230,8 +194,9 @@ func (h *PenggunaHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.penggunaService.UbahKataSandiAdmin(koperasiUUID, id, req.KataSandiLama, req.KataSandiBaru); err != nil {
-		utils.BadRequestResponse(c, err.Error())
+	// UbahKataSandiPengguna only takes the new password
+	if err := h.penggunaService.UbahKataSandiPengguna(koperasiUUID, id, req.KataSandiBaru); err != nil {
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
