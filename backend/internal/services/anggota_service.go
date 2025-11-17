@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 	"time"
@@ -45,6 +46,50 @@ type BuatAnggotaRequest struct {
 
 // BuatAnggota membuat anggota baru dengan auto-generate nomor anggota
 func (s *AnggotaService) BuatAnggota(idKoperasi uuid.UUID, req *BuatAnggotaRequest) (*models.AnggotaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+		return nil, err
+	}
+
+	if err := validator.Email(req.Email); err != nil {
+		return nil, err
+	}
+
+	if err := validator.NomorHP(req.NoTelepon); err != nil {
+		return nil, err
+	}
+
+	if err := validator.JenisKelamin(req.JenisKelamin); err != nil {
+		return nil, err
+	}
+
+	// Validasi tanggal lahir jika ada
+	if req.TanggalLahir != nil {
+		if err := validator.TanggalLahir(*req.TanggalLahir); err != nil {
+			return nil, err
+		}
+	}
+
+	// Validasi field opsional
+	if err := validator.TeksOpsional(req.NIK, "NIK", 16); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.TempatLahir, "tempat lahir", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Alamat, "alamat", 500); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Pekerjaan, "pekerjaan", 100); err != nil {
+		return nil, err
+	}
+
 	// Generate nomor anggota otomatis
 	nomorAnggota, err := s.GenerateNomorAnggota(idKoperasi)
 	if err != nil {
@@ -227,6 +272,61 @@ type PerbaruiAnggotaRequest struct {
 
 // PerbaruiAnggota mengupdate data anggota
 func (s *AnggotaService) PerbaruiAnggota(idKoperasi, id uuid.UUID, req *PerbaruiAnggotaRequest) (*models.AnggotaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic untuk field yang akan diupdate
+	if req.NamaLengkap != "" {
+		if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Email != "" {
+		if err := validator.Email(req.Email); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.NoTelepon != "" {
+		if err := validator.NomorHP(req.NoTelepon); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.JenisKelamin != "" {
+		if err := validator.JenisKelamin(req.JenisKelamin); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.TanggalLahir != nil {
+		if err := validator.TanggalLahir(*req.TanggalLahir); err != nil {
+			return nil, err
+		}
+	}
+
+	// Validasi field opsional
+	if err := validator.TeksOpsional(req.NIK, "NIK", 16); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.TempatLahir, "tempat lahir", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Alamat, "alamat", 500); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Pekerjaan, "pekerjaan", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Catatan, "catatan", 1000); err != nil {
+		return nil, err
+	}
+
 	// Cek apakah anggota ada DAN milik koperasi yang benar (multi-tenant validation)
 	var anggota models.Anggota
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggota).Error

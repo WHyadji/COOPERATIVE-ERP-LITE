@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 
 	"github.com/google/uuid"
@@ -35,6 +36,45 @@ type BuatProdukRequest struct {
 
 // BuatProduk membuat produk baru
 func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest) (*models.ProdukResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.TeksWajib(req.KodeProduk, "kode produk", 1, 50); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.NamaProduk, "nama produk", 3, 255); err != nil {
+		return nil, err
+	}
+
+	if err := validator.Jumlah(req.Harga, "harga"); err != nil {
+		return nil, err
+	}
+
+	if req.HargaBeli > 0 {
+		if err := validator.Jumlah(req.HargaBeli, "harga beli"); err != nil {
+			return nil, err
+		}
+	}
+
+	// Validasi field opsional
+	if err := validator.TeksOpsional(req.Kategori, "kategori", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Deskripsi, "deskripsi", 1000); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Satuan, "satuan", 50); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Barcode, "barcode", 100); err != nil {
+		return nil, err
+	}
+
 	// Validasi kode produk unique
 	var count int64
 	s.db.Model(&models.Produk{}).
@@ -173,6 +213,45 @@ type PerbaruiProdukRequest struct {
 
 // PerbaruiProduk mengupdate data produk
 func (s *ProdukService) PerbaruiProduk(idKoperasi, id uuid.UUID, req *PerbaruiProdukRequest) (*models.ProdukResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic untuk field yang akan diupdate
+	if req.NamaProduk != "" {
+		if err := validator.TeksWajib(req.NamaProduk, "nama produk", 3, 255); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Harga > 0 {
+		if err := validator.Jumlah(req.Harga, "harga"); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.HargaBeli > 0 {
+		if err := validator.Jumlah(req.HargaBeli, "harga beli"); err != nil {
+			return nil, err
+		}
+	}
+
+	// Validasi field opsional
+	if err := validator.TeksOpsional(req.Kategori, "kategori", 100); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Deskripsi, "deskripsi", 1000); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Satuan, "satuan", 50); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Barcode, "barcode", 100); err != nil {
+		return nil, err
+	}
+
 	// Cek apakah produk ada DAN milik koperasi yang benar (multi-tenant validation)
 	var produk models.Produk
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&produk).Error

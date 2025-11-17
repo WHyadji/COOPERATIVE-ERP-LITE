@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 	"math"
@@ -47,6 +48,26 @@ type BuatBarisTransaksiRequest struct {
 
 // BuatTransaksi membuat jurnal entry baru dengan validasi double-entry
 func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *BuatTransaksiRequest) (*models.TransaksiResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.TanggalTransaksi(req.TanggalTransaksi); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.Deskripsi, "deskripsi", 5, 500); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.NomorReferensi, "nomor referensi", 50); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.TipeTransaksi, "tipe transaksi", 50); err != nil {
+		return nil, err
+	}
+
 	// Validasi baris transaksi (debit = kredit)
 	if err := s.ValidasiTransaksi(req.BarisTransaksi); err != nil {
 		return nil, err
@@ -124,6 +145,8 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 
 // ValidasiTransaksi memvalidasi bahwa total debit = total kredit
 func (s *TransaksiService) ValidasiTransaksi(barisTransaksi []BuatBarisTransaksiRequest) error {
+	validator := validasi.Baru()
+
 	if len(barisTransaksi) < 2 {
 		return errors.New("transaksi harus memiliki minimal 2 baris (debit dan kredit)")
 	}
@@ -132,7 +155,7 @@ func (s *TransaksiService) ValidasiTransaksi(barisTransaksi []BuatBarisTransaksi
 	hasDebit := false
 	hasKredit := false
 
-	for _, baris := range barisTransaksi {
+	for i, baris := range barisTransaksi {
 		// Validasi tidak boleh debit dan kredit bersamaan
 		if baris.JumlahDebit > 0 && baris.JumlahKredit > 0 {
 			return errors.New("satu baris tidak boleh memiliki debit dan kredit sekaligus")
@@ -143,15 +166,29 @@ func (s *TransaksiService) ValidasiTransaksi(barisTransaksi []BuatBarisTransaksi
 			return errors.New("setiap baris harus memiliki nilai debit atau kredit")
 		}
 
-		totalDebit += baris.JumlahDebit
-		totalKredit += baris.JumlahKredit
-
+		// Validasi jumlah debit jika ada
 		if baris.JumlahDebit > 0 {
+			if err := validator.Jumlah(baris.JumlahDebit, fmt.Sprintf("jumlah debit baris ke-%d", i+1)); err != nil {
+				return err
+			}
 			hasDebit = true
 		}
+
+		// Validasi jumlah kredit jika ada
 		if baris.JumlahKredit > 0 {
+			if err := validator.Jumlah(baris.JumlahKredit, fmt.Sprintf("jumlah kredit baris ke-%d", i+1)); err != nil {
+				return err
+			}
 			hasKredit = true
 		}
+
+		// Validasi keterangan (opsional)
+		if err := validator.TeksOpsional(baris.Keterangan, fmt.Sprintf("keterangan baris ke-%d", i+1), 500); err != nil {
+			return err
+		}
+
+		totalDebit += baris.JumlahDebit
+		totalKredit += baris.JumlahKredit
 	}
 
 	// Validasi ada debit dan kredit

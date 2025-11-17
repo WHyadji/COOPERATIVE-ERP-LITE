@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 	"time"
@@ -36,17 +37,28 @@ type CatatSetoranRequest struct {
 
 // CatatSetoran mencatat setoran simpanan anggota
 func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *CatatSetoranRequest) (*models.SimpananResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.Jumlah(req.JumlahSetoran, "jumlah setoran"); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TanggalTransaksi(req.TanggalTransaksi); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Keterangan, "keterangan", 500); err != nil {
+		return nil, err
+	}
+
 	// Validasi anggota exists dan aktif
 	var anggota models.Anggota
 	err := s.db.Where("id = ? AND id_koperasi = ? AND status = ?", req.IDAnggota, idKoperasi, models.StatusAktif).
 		First(&anggota).Error
 	if err != nil {
 		return nil, errors.New("anggota tidak ditemukan atau tidak aktif")
-	}
-
-	// Validasi jumlah setoran
-	if req.JumlahSetoran <= 0 {
-		return nil, errors.New("jumlah setoran harus lebih dari 0")
 	}
 
 	// Generate nomor referensi

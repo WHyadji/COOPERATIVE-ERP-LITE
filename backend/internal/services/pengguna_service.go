@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 
@@ -30,6 +31,26 @@ type BuatPenggunaRequest struct {
 
 // BuatPengguna membuat pengguna baru
 func (s *PenggunaService) BuatPengguna(idKoperasi uuid.UUID, req *BuatPenggunaRequest) (*models.PenggunaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.NamaPengguna, "nama pengguna", 3, 50); err != nil {
+		return nil, err
+	}
+
+	if err := validator.Email(req.Email); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.KataSandi, "kata sandi", 6, 100); err != nil {
+		return nil, err
+	}
+
 	// Cek apakah username sudah ada di koperasi yang sama
 	var count int64
 	s.db.Model(&models.Pengguna{}).
@@ -127,6 +148,22 @@ type PerbaruiPenggunaRequest struct {
 
 // PerbaruiPengguna mengupdate data pengguna
 func (s *PenggunaService) PerbaruiPengguna(idKoperasi, id uuid.UUID, req *PerbaruiPenggunaRequest) (*models.PenggunaResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic untuk field yang akan diupdate
+	if req.NamaLengkap != "" {
+		if err := validator.TeksWajib(req.NamaLengkap, "nama lengkap", 3, 255); err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Email != "" {
+		if err := validator.Email(req.Email); err != nil {
+			return nil, err
+		}
+	}
+
 	// Cek apakah pengguna ada DAN milik koperasi yang benar (multi-tenant validation)
 	var pengguna models.Pengguna
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error

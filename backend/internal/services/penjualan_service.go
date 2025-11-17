@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 	"time"
@@ -44,7 +45,19 @@ type ProsesPenjualanRequest struct {
 
 // ProsesPenjualan memproses transaksi penjualan lengkap
 func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *ProsesPenjualanRequest) (*models.PenjualanResponse, error) {
-	// Validasi items (stok tersedia)
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.Jumlah(req.JumlahBayar, "jumlah bayar"); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Catatan, "catatan", 500); err != nil {
+		return nil, err
+	}
+
+	// Validasi items (stok tersedia dan format)
 	if err := s.ValidasiItemPenjualan(req.Items); err != nil {
 		return nil, err
 	}
@@ -140,9 +153,22 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 	return &response, nil
 }
 
-// ValidasiItemPenjualan memvalidasi semua item (stok tersedia)
+// ValidasiItemPenjualan memvalidasi semua item (stok tersedia dan format)
 func (s *PenjualanService) ValidasiItemPenjualan(items []ItemPenjualanRequest) error {
-	for _, item := range items {
+	validator := validasi.Baru()
+
+	for i, item := range items {
+		// Validasi kuantitas
+		if err := validator.KuantitasProduk(float64(item.Kuantitas), fmt.Sprintf("kuantitas item ke-%d", i+1)); err != nil {
+			return err
+		}
+
+		// Validasi harga satuan
+		if err := validator.Jumlah(item.HargaSatuan, fmt.Sprintf("harga satuan item ke-%d", i+1)); err != nil {
+			return err
+		}
+
+		// Validasi stok tersedia
 		tersedia, err := s.produkService.CekStokTersedia(item.IDProduk, item.Kuantitas)
 		if err != nil {
 			return err

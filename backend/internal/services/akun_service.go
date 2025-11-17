@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/pkg/validasi"
 	"errors"
 	"fmt"
 
@@ -31,6 +32,22 @@ type BuatAkunRequest struct {
 
 // BuatAkun membuat akun baru
 func (s *AkunService) BuatAkun(idKoperasi uuid.UUID, req *BuatAkunRequest) (*models.AkunResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.KodeAkun(req.KodeAkun); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.NamaAkun, "nama akun", 3, 255); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.Deskripsi, "deskripsi", 500); err != nil {
+		return nil, err
+	}
+
 	// Cek apakah kode akun sudah ada
 	var count int64
 	s.db.Model(&models.Akun{}).
@@ -143,6 +160,20 @@ type PerbaruiAkunRequest struct {
 
 // PerbaruiAkun mengupdate data akun
 func (s *AkunService) PerbaruiAkun(idKoperasi, id uuid.UUID, req *PerbaruiAkunRequest) (*models.AkunResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic untuk field yang akan diupdate
+	if req.NamaAkun != "" {
+		if err := validator.TeksWajib(req.NamaAkun, "nama akun", 3, 255); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := validator.TeksOpsional(req.Deskripsi, "deskripsi", 500); err != nil {
+		return nil, err
+	}
+
 	// Cek apakah akun ada DAN milik koperasi yang benar (multi-tenant validation)
 	var akun models.Akun
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&akun).Error
