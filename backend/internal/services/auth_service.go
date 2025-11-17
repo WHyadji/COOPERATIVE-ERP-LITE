@@ -5,6 +5,7 @@ import (
 	"cooperative-erp-lite/internal/utils"
 	"errors"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -130,11 +131,27 @@ func (s *AuthService) DapatkanProfilPengguna(idPengguna string) (*models.Penggun
 	return &response, nil
 }
 
+// UbahKataSandiRequest adalah struktur request untuk ubah kata sandi
+type UbahKataSandiRequest struct {
+	KataSandiLama string `json:"kataSandiLama" binding:"required"`
+	KataSandiBaru string `json:"kataSandiBaru" binding:"required"`
+}
+
 // UbahKataSandi mengubah password pengguna
-func (s *AuthService) UbahKataSandi(idPengguna, kataSandiLama, kataSandiBaru string) error {
+func (s *AuthService) UbahKataSandi(idPengguna interface{}, kataSandiLama, kataSandiBaru string) error {
+	// Convert idPengguna to string
+	var idStr string
+	if id, ok := idPengguna.(uuid.UUID); ok {
+		idStr = id.String()
+	} else if id, ok := idPengguna.(string); ok {
+		idStr = id
+	} else {
+		return errors.New("ID pengguna tidak valid")
+	}
+
 	// Dapatkan pengguna
 	var pengguna models.Pengguna
-	err := s.db.Where("id = ?", idPengguna).First(&pengguna).Error
+	err := s.db.Where("id = ?", idStr).First(&pengguna).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("pengguna tidak ditemukan")
@@ -165,4 +182,43 @@ func (s *AuthService) UbahKataSandi(idPengguna, kataSandiLama, kataSandiBaru str
 	}
 
 	return nil
+}
+
+// GetProfilPengguna is a wrapper for DapatkanProfilPengguna with UUID support
+func (s *AuthService) GetProfilPengguna(idPengguna interface{}) (*models.PenggunaResponse, error) {
+	var idStr string
+	if id, ok := idPengguna.(uuid.UUID); ok {
+		idStr = id.String()
+	} else if id, ok := idPengguna.(string); ok {
+		idStr = id
+	} else {
+		return nil, errors.New("ID pengguna tidak valid")
+	}
+	return s.DapatkanProfilPengguna(idStr)
+}
+
+// RefreshTokenByUUID generates a new token for a user by UUID
+func (s *AuthService) RefreshTokenByUUID(idPengguna uuid.UUID) (*LoginResponse, error) {
+	// Get user from database
+	var pengguna models.Pengguna
+	err := s.db.Where("id = ?", idPengguna).First(&pengguna).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("pengguna tidak ditemukan")
+		}
+		return nil, err
+	}
+
+	// Generate new token
+	token, err := s.jwtUtil.GenerateToken(&pengguna)
+	if err != nil {
+		return nil, errors.New("gagal membuat token baru")
+	}
+
+	response := &LoginResponse{
+		Token:    token,
+		Pengguna: pengguna.ToResponse(),
+	}
+
+	return response, nil
 }

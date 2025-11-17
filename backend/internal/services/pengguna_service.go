@@ -68,6 +68,9 @@ func (s *PenggunaService) BuatPengguna(idKoperasi uuid.UUID, req *BuatPenggunaRe
 
 // DapatkanSemuaPengguna mengambil daftar pengguna dengan filter
 func (s *PenggunaService) DapatkanSemuaPengguna(idKoperasi uuid.UUID, peran string, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
+	// Validate and normalize pagination parameters to prevent DoS attacks
+	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
+
 	var penggunaList []models.Pengguna
 	var total int64
 
@@ -84,9 +87,14 @@ func (s *PenggunaService) DapatkanSemuaPengguna(idKoperasi uuid.UUID, peran stri
 	// Count total
 	query.Count(&total)
 
-	// Pagination
-	offset := (page - 1) * pageSize
-	err := query.Offset(offset).Limit(pageSize).Order("tanggal_dibuat DESC").Find(&penggunaList).Error
+	// Pagination with validated parameters
+	offset := utils.CalculateOffset(validPage, validPageSize)
+
+	// Create context with timeout to prevent long-running queries
+	ctx, cancel := utils.CreateQueryContext()
+	defer cancel()
+
+	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).Order("tanggal_dibuat DESC").Find(&penggunaList).Error
 
 	if err != nil {
 		return nil, 0, errors.New("gagal mengambil daftar pengguna")
@@ -264,4 +272,35 @@ func (s *PenggunaService) DapatkanPenggunaByUsername(idKoperasi uuid.UUID, namaP
 
 	response := pengguna.ToResponse()
 	return &response, nil
+}
+
+// GetSemuaPengguna is a wrapper for DapatkanSemuaPengguna
+func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran string, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
+	return s.DapatkanSemuaPengguna(idKoperasi, peran, statusAktif, page, pageSize)
+}
+
+// GetPenggunaByID is a wrapper for DapatkanPengguna with multi-tenant validation
+func (s *PenggunaService) GetPenggunaByID(idKoperasi, id uuid.UUID) (*models.PenggunaResponse, error) {
+	// Get pengguna
+	pengguna, err := s.DapatkanPengguna(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate multi-tenancy - ensure pengguna belongs to the correct cooperative
+	var penggunaModel models.Pengguna
+	err = s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&penggunaModel).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("pengguna tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
+	}
+
+	return pengguna, nil
+}
+
+// GetPenggunaByUsername is a wrapper for DapatkanPenggunaByUsername
+func (s *PenggunaService) GetPenggunaByUsername(idKoperasi uuid.UUID, namaPengguna string) (*models.PenggunaResponse, error) {
+	return s.DapatkanPenggunaByUsername(idKoperasi, namaPengguna)
 }

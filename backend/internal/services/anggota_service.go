@@ -2,6 +2,7 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/internal/utils"
 	"errors"
 	"fmt"
 	"time"
@@ -135,6 +136,9 @@ func (s *AnggotaService) GenerateNomorAnggota(idKoperasi uuid.UUID) (string, err
 
 // DapatkanSemuaAnggota mengambil daftar anggota dengan pagination dan filter
 func (s *AnggotaService) DapatkanSemuaAnggota(idKoperasi uuid.UUID, status string, search string, page, pageSize int) ([]models.AnggotaResponse, int64, error) {
+	// Validate and normalize pagination parameters to prevent DoS attacks
+	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
+
 	var anggotaList []models.Anggota
 	var total int64
 
@@ -153,9 +157,14 @@ func (s *AnggotaService) DapatkanSemuaAnggota(idKoperasi uuid.UUID, status strin
 	// Count total
 	query.Count(&total)
 
-	// Pagination
-	offset := (page - 1) * pageSize
-	err := query.Offset(offset).Limit(pageSize).Order("tanggal_bergabung DESC").Find(&anggotaList).Error
+	// Pagination with validated parameters
+	offset := utils.CalculateOffset(validPage, validPageSize)
+
+	// Create context with timeout to prevent long-running queries
+	ctx, cancel := utils.CreateQueryContext()
+	defer cancel()
+
+	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).Order("tanggal_bergabung DESC").Find(&anggotaList).Error
 
 	if err != nil {
 		return nil, 0, errors.New("gagal mengambil daftar anggota")
@@ -405,4 +414,41 @@ func (s *AnggotaService) HitungJumlahAnggota(idKoperasi uuid.UUID, status string
 	}
 
 	return count, nil
+}
+
+// GetSemuaAnggota is a wrapper for DapatkanSemuaAnggota with pagination support
+func (s *AnggotaService) GetSemuaAnggota(idKoperasi uuid.UUID, status *models.StatusAnggota, search string, page, pageSize int) ([]models.AnggotaResponse, int64, error) {
+	// Convert StatusAnggota pointer to string
+	statusStr := ""
+	if status != nil {
+		statusStr = string(*status)
+	}
+
+	return s.DapatkanSemuaAnggota(idKoperasi, statusStr, search, page, pageSize)
+}
+
+// GetAnggotaByID is a wrapper for DapatkanAnggota with multi-tenant validation
+func (s *AnggotaService) GetAnggotaByID(idKoperasi, id uuid.UUID) (*models.AnggotaResponse, error) {
+	// Get anggota
+	anggota, err := s.DapatkanAnggota(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate multi-tenancy - ensure anggota belongs to the correct cooperative
+	var anggotaModel models.Anggota
+	err = s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggotaModel).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("anggota tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
+	}
+
+	return anggota, nil
+}
+
+// GetAnggotaByNomor is a wrapper for DapatkanAnggotaByNomor
+func (s *AnggotaService) GetAnggotaByNomor(idKoperasi uuid.UUID, nomorAnggota string) (*models.AnggotaResponse, error) {
+	return s.DapatkanAnggotaByNomor(idKoperasi, nomorAnggota)
 }

@@ -289,6 +289,9 @@ func (s *PenjualanService) GenerateNomorPenjualan(idKoperasi uuid.UUID, tanggal 
 func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir string, idKasir *uuid.UUID, page, pageSize int) ([]models.PenjualanResponse, int64, error) {
 	const method = "DapatkanSemuaPenjualan"
 
+	// Validate and normalize pagination parameters to prevent DoS attacks
+	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
+
 	var penjualanList []models.Penjualan
 	var total int64
 
@@ -308,9 +311,14 @@ func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalM
 	// Hitung total
 	query.Count(&total)
 
-	// Pagination
-	offset := (page - 1) * pageSize
-	err := query.Offset(offset).Limit(pageSize).
+	// Pagination with validated parameters
+	offset := utils.CalculateOffset(validPage, validPageSize)
+
+	// Create context with timeout to prevent long-running queries
+	ctx, cancel := utils.CreateQueryContext()
+	defer cancel()
+
+	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).
 		Order("tanggal_penjualan DESC").
 		Preload("ItemPenjualan.Produk").
 		Preload("Kasir").
@@ -322,8 +330,8 @@ func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalM
 			"koperasi_id":   idKoperasi.String(),
 			"tanggal_mulai": tanggalMulai,
 			"tanggal_akhir": tanggalAkhir,
-			"page":          page,
-			"page_size":     pageSize,
+			"page":          validPage,
+			"page_size":     validPageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar penjualan")
 	}
@@ -338,7 +346,7 @@ func (s *PenjualanService) DapatkanSemuaPenjualan(idKoperasi uuid.UUID, tanggalM
 		"koperasi_id": idKoperasi.String(),
 		"total":       total,
 		"count":       len(responses),
-		"page":        page,
+		"page":        validPage,
 	})
 
 	return responses, total, nil

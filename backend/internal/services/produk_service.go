@@ -106,6 +106,9 @@ func (s *ProdukService) BuatProduk(idKoperasi uuid.UUID, req *BuatProdukRequest)
 func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, search string, statusAktif *bool, page, pageSize int) ([]models.ProdukResponse, int64, error) {
 	const method = "DapatkanSemuaProduk"
 
+	// Validate and normalize pagination parameters to prevent DoS attacks
+	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
+
 	var produkList []models.Produk
 	var total int64
 
@@ -133,17 +136,22 @@ func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, sear
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal menghitung total produk")
 	}
 
-	// Pagination
-	offset := (page - 1) * pageSize
-	err = query.Offset(offset).Limit(pageSize).Order("nama_produk ASC").Find(&produkList).Error
+	// Pagination with validated parameters
+	offset := utils.CalculateOffset(validPage, validPageSize)
+
+	// Create context with timeout to prevent long-running queries
+	ctx, cancel := utils.CreateQueryContext()
+	defer cancel()
+
+	err = query.WithContext(ctx).Offset(offset).Limit(validPageSize).Order("nama_produk ASC").Find(&produkList).Error
 
 	if err != nil {
 		s.logger.Error(method, "Gagal mengambil daftar produk", err, map[string]interface{}{
 			"koperasi_id": idKoperasi.String(),
 			"kategori":    kategori,
 			"search":      search,
-			"page":        page,
-			"page_size":   pageSize,
+			"page":        validPage,
+			"page_size":   validPageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar produk")
 	}
@@ -152,7 +160,7 @@ func (s *ProdukService) DapatkanSemuaProduk(idKoperasi uuid.UUID, kategori, sear
 		"koperasi_id":   idKoperasi.String(),
 		"total":         total,
 		"jumlah_result": len(produkList),
-		"page":          page,
+		"page":          validPage,
 	})
 
 	// Convert to response

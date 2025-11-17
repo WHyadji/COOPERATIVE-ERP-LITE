@@ -195,6 +195,10 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 // DapatkanSemuaTransaksiSimpanan mengambil daftar transaksi simpanan
 func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, tipeSimpanan string, idAnggota *uuid.UUID, tanggalMulai, tanggalAkhir string, page, pageSize int) ([]models.SimpananResponse, int64, error) {
 	const method = "DapatkanSemuaTransaksiSimpanan"
+
+	// Validate and normalize pagination parameters to prevent DoS attacks
+	validPage, validPageSize := utils.ValidatePagination(page, pageSize)
+
 	var simpananList []models.Simpanan
 	var total int64
 
@@ -217,9 +221,14 @@ func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, t
 	// Count total
 	query.Count(&total)
 
-	// Pagination
-	offset := (page - 1) * pageSize
-	err := query.Offset(offset).Limit(pageSize).
+	// Pagination with validated parameters
+	offset := utils.CalculateOffset(validPage, validPageSize)
+
+	// Create context with timeout to prevent long-running queries
+	ctx, cancel := utils.CreateQueryContext()
+	defer cancel()
+
+	err := query.WithContext(ctx).Offset(offset).Limit(validPageSize).
 		Order("tanggal_transaksi DESC").
 		Preload("Anggota").
 		Find(&simpananList).Error
@@ -231,8 +240,8 @@ func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, t
 			"anggota_id":     idAnggota,
 			"tanggal_mulai":  tanggalMulai,
 			"tanggal_akhir":  tanggalAkhir,
-			"page":           page,
-			"page_size":      pageSize,
+			"page":           validPage,
+			"page_size":      validPageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar transaksi simpanan")
 	}
