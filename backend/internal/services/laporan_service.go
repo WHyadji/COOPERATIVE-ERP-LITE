@@ -470,18 +470,99 @@ func (s *LaporanService) GenerateLaporanPerubahanModal(idKoperasi uuid.UUID, tan
 
 // GenerateBukuBesar generates general ledger for an account
 func (s *LaporanService) GenerateBukuBesar(idKoperasi, idAkun uuid.UUID, tanggalMulai, tanggalAkhir string) (map[string]interface{}, error) {
-	// Delegate to AkunService
-	result, err := s.akunService.GetBukuBesar(idKoperasi, idAkun, tanggalMulai, tanggalAkhir)
+	// Get account information
+	akun, err := s.akunService.DapatkanAkun(idAkun)
 	if err != nil {
 		return nil, err
 	}
 
-	// Type assert to map[string]interface{}
-	if bukuBesar, ok := result.(map[string]interface{}); ok {
-		return bukuBesar, nil
+	// Validate multi-tenancy
+	var akunModel models.Akun
+	err = s.db.Where("id = ? AND id_koperasi = ?", idAkun, idKoperasi).First(&akunModel).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("akun tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
 	}
 
-	return nil, errors.New("format buku besar tidak valid")
+	// Get all transaction lines for this account within date range
+	type TransactionDetail struct {
+		Tanggal     string  `json:"tanggal"`
+		NoJurnal    string  `json:"noJurnal"`
+		Keterangan  string  `json:"keterangan"`
+		Debit       float64 `json:"debit"`
+		Kredit      float64 `json:"kredit"`
+		Saldo       float64 `json:"saldo"`
+	}
+
+	var details []TransactionDetail
+	var runningBalance float64
+
+	// Get starting balance (before tanggalMulai)
+	if tanggalMulai != "" {
+		runningBalance, _ = s.akunService.HitungSaldoAkun(idAkun, tanggalMulai)
+	}
+
+	// Query transaction lines
+	query := s.db.Table("jurnal_detail").
+		Select("jurnal.tanggal, jurnal.no_jurnal, jurnal.keterangan, jurnal_detail.debit, jurnal_detail.kredit").
+		Joins("JOIN jurnal ON jurnal_detail.id_jurnal = jurnal.id").
+		Where("jurnal_detail.id_akun = ? AND jurnal.id_koperasi = ?", idAkun, idKoperasi)
+
+	if tanggalMulai != "" {
+		query = query.Where("jurnal.tanggal >= ?", tanggalMulai)
+	}
+	if tanggalAkhir != "" {
+		query = query.Where("jurnal.tanggal <= ?", tanggalAkhir)
+	}
+
+	query = query.Order("jurnal.tanggal ASC, jurnal.created_at ASC")
+
+	var rows []struct {
+		Tanggal    string
+		NoJurnal   string
+		Keterangan string
+		Debit      float64
+		Kredit     float64
+	}
+
+	if err := query.Find(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	// Process each transaction
+	for _, row := range rows {
+		// Update running balance
+		if akun.NormalSaldo == "debit" {
+			runningBalance += row.Debit - row.Kredit
+		} else {
+			runningBalance += row.Kredit - row.Debit
+		}
+
+		details = append(details, TransactionDetail{
+			Tanggal:    row.Tanggal,
+			NoJurnal:   row.NoJurnal,
+			Keterangan: row.Keterangan,
+			Debit:      row.Debit,
+			Kredit:     row.Kredit,
+			Saldo:      runningBalance,
+		})
+	}
+
+	return map[string]interface{}{
+		"akun": map[string]interface{}{
+			"kode": akun.KodeAkun,
+			"nama": akun.NamaAkun,
+			"tipe": akun.TipeAkun,
+		},
+		"periode": map[string]string{
+			"tanggalMulai":  tanggalMulai,
+			"tanggalAkhir":  tanggalAkhir,
+		},
+		"transaksi": details,
+		"saldoAkhir": runningBalance,
+	}, nil
 }
 
 // GenerateNeracaSaldo generates trial balance

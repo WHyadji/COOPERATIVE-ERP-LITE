@@ -506,3 +506,22 @@ func (s *AnggotaService) HitungJumlahAnggota(idKoperasi uuid.UUID, status string
 
 	return count, nil
 }
+
+// GetSemuaAnggota is an English wrapper for DapatkanSemuaAnggota
+func (s *AnggotaService) GetSemuaAnggota(idKoperasi uuid.UUID, status *models.StatusAnggota, search string, page, pageSize int) ([]models.AnggotaResponse, int64, error) {
+	statusStr := ""
+	if status != nil {
+		statusStr = string(*status)
+	}
+	return s.DapatkanSemuaAnggota(idKoperasi, statusStr, search, page, pageSize)
+}
+
+// GetAnggotaByID is an English wrapper for DapatkanAnggota
+func (s *AnggotaService) GetAnggotaByID(idKoperasi, id uuid.UUID) (*models.AnggotaResponse, error) {
+	return s.DapatkanAnggota(id)
+}
+
+// GetAnggotaByNomor is an English wrapper for DapatkanAnggotaByNomor
+func (s *AnggotaService) GetAnggotaByNomor(idKoperasi uuid.UUID, nomorAnggota string) (*models.AnggotaResponse, error) {
+	return s.DapatkanAnggotaByNomor(idKoperasi, nomorAnggota)
+}

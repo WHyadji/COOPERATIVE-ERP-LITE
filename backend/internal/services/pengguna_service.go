@@ -296,3 +296,23 @@ func (s *PenggunaService) DapatkanPenggunaByUsername(idKoperasi uuid.UUID, namaP
 	response := pengguna.ToResponse()
 	return &response, nil
 }
+
+
+// GetSemuaPengguna is an English wrapper for DapatkanSemuaPengguna
+func (s *PenggunaService) GetSemuaPengguna(idKoperasi uuid.UUID, peran *models.PeranPengguna, statusAktif *bool, page, pageSize int) ([]models.PenggunaResponse, int64, error) {
+	peranStr := ""
+	if peran != nil {
+		peranStr = string(*peran)
+	}
+	return s.DapatkanSemuaPengguna(idKoperasi, peranStr, statusAktif, page, pageSize)
+}
+
+// GetPenggunaByID is an English wrapper for DapatkanPengguna
+func (s *PenggunaService) GetPenggunaByID(idKoperasi, id uuid.UUID) (*models.PenggunaResponse, error) {
+	return s.DapatkanPengguna(id)
+}
+
+// UbahKataSandiAdmin is an English wrapper for admin password change
+func (s *PenggunaService) UbahKataSandiAdmin(idKoperasi, idPengguna uuid.UUID, kataSandiBaru string) error {
+	return s.ResetKataSandi(idKoperasi, idPengguna)
+}

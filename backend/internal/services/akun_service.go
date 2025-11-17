@@ -368,3 +368,30 @@ func (s *AkunService) DapatkanHierarkiAkun(idKoperasi uuid.UUID) ([]models.AkunR
 
 	return responses, nil
 }
+
+// GetSemuaAkun is a wrapper for DapatkanSemuaAkun with type conversion
+func (s *AkunService) GetSemuaAkun(idKoperasi uuid.UUID, tipeAkun *models.TipeAkun, statusAktif *bool) ([]models.AkunResponse, error) {
+	tipeAkunStr := ""
+	if tipeAkun != nil {
+		tipeAkunStr = string(*tipeAkun)
+	}
+	return s.DapatkanSemuaAkun(idKoperasi, tipeAkunStr, statusAktif)
+}
+
+// GetAkunByID is a wrapper for DapatkanAkun with multi-tenant validation
+func (s *AkunService) GetAkunByID(idKoperasi, id uuid.UUID) (*models.AkunResponse, error) {
+	akun, err := s.DapatkanAkun(id)
+	if err != nil {
+		return nil, err
+	}
+	// Validate multi-tenancy
+	var akunModel models.Akun
+	err = s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&akunModel).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("akun tidak ditemukan atau tidak memiliki akses")
+		}
+		return nil, err
+	}
+	return akun, nil
+}

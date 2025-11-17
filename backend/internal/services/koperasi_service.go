@@ -164,3 +164,48 @@ func (s *KoperasiService) DapatkanStatistikKoperasi(idKoperasi uuid.UUID) (map[s
 
 	return statistik, nil
 }
+
+
+// GetSemuaKoperasi is an English wrapper for DapatkanSemuaKoperasi with pagination
+func (s *KoperasiService) GetSemuaKoperasi(page, pageSize int) ([]models.Koperasi, int64, error) {
+	// Get all koperasi
+	koperasiList, err := s.DapatkanSemuaKoperasi()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to response
+	responses := make([]models.Koperasi, len(koperasiList))
+	for i, koperasi := range koperasiList {
+		responses[i] = koperasi
+	}
+
+	total := int64(len(responses))
+	
+	// Apply pagination
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start > len(responses) {
+		return []models.Koperasi{}, total, nil
+	}
+	if end > len(responses) {
+		end = len(responses)
+	}
+
+	return responses[start:end], total, nil
+}
+
+// GetKoperasiByID is an English wrapper for DapatkanKoperasi
+func (s *KoperasiService) GetKoperasiByID(id uuid.UUID) (*models.Koperasi, error) {
+	koperasi, err := s.DapatkanKoperasi(id)
+	if err != nil {
+		return nil, err
+	}
+	response := *koperasi
+	return &response, nil
+}
+
+// GetStatistikKoperasi is an English wrapper for DapatkanStatistikKoperasi
+func (s *KoperasiService) GetStatistikKoperasi(idKoperasi uuid.UUID) (map[string]interface{}, error) {
+	return s.DapatkanStatistikKoperasi(idKoperasi)
+}

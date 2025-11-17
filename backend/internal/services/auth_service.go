@@ -5,6 +5,7 @@ import (
 	"cooperative-erp-lite/internal/utils"
 	"errors"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -165,4 +166,44 @@ func (s *AuthService) UbahKataSandi(idPengguna, kataSandiLama, kataSandiBaru str
 	}
 
 	return nil
+}
+
+// GetProfilPengguna is an English wrapper for DapatkanProfilPengguna
+func (s *AuthService) GetProfilPengguna(idPengguna uuid.UUID) (*models.PenggunaResponse, error) {
+	return s.DapatkanProfilPengguna(idPengguna.String())
+}
+
+// UbahKataSandiRequest is the request struct for changing password
+type UbahKataSandiRequest struct {
+	KataSandiLama string `json:"kataSandiLama" binding:"required"`
+	KataSandiBaru string `json:"kataSandiBaru" binding:"required,min=8"`
+}
+
+// UbahKataSandiByUUID is an English wrapper for UbahKataSandi using UUID
+func (s *AuthService) UbahKataSandiByUUID(idPengguna uuid.UUID, kataSandiLama, kataSandiBaru string) error {
+	return s.UbahKataSandi(idPengguna.String(), kataSandiLama, kataSandiBaru)
+}
+
+// RefreshTokenByUUID is an English wrapper for token refresh using UUID
+func (s *AuthService) RefreshTokenByUUID(idPengguna uuid.UUID) (*LoginResponse, error) {
+	// Get the pengguna from database
+	var pengguna models.Pengguna
+	err := s.db.Where("id = ? AND status_aktif = ?", idPengguna, true).First(&pengguna).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("pengguna tidak ditemukan")
+		}
+		return nil, err
+	}
+
+	// Generate new token
+	token, err := s.jwtUtil.GenerateToken(&pengguna)
+	if err != nil {
+		return nil, errors.New("gagal membuat token autentikasi")
+	}
+
+	return &LoginResponse{
+		Token:    token,
+		Pengguna: pengguna.ToResponse(),
+	}, nil
 }
