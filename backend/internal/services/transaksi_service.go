@@ -162,8 +162,8 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 		"koperasi_id":  idKoperasi.String(),
 	})
 
-	response := transaksi.ToResponse()
-	return &response, nil
+	respons := transaksi.ToResponse()
+	return &respons, nil
 }
 
 // ValidasiTransaksi memvalidasi bahwa total debit = total kredit
@@ -321,9 +321,9 @@ func (s *TransaksiService) DapatkanSemuaTransaksi(idKoperasi uuid.UUID, tanggalM
 	}
 
 	// Convert to response
-	responses := make([]models.TransaksiResponse, len(transaksiList))
+	responseDaftar := make([]models.TransaksiResponse, len(transaksiList))
 	for i, transaksi := range transaksiList {
-		responses[i] = transaksi.ToResponse()
+		responseDaftar[i] = transaksi.ToResponse()
 	}
 
 	s.logger.Debug(method, "Berhasil mengambil daftar transaksi", map[string]interface{}{
@@ -333,7 +333,7 @@ func (s *TransaksiService) DapatkanSemuaTransaksi(idKoperasi uuid.UUID, tanggalM
 		"page":        page,
 	})
 
-	return responses, total, nil
+	return responseDaftar, total, nil
 }
 
 // DapatkanTransaksi mengambil transaksi berdasarkan ID
@@ -365,8 +365,8 @@ func (s *TransaksiService) DapatkanTransaksi(idKoperasi, id uuid.UUID) (*models.
 		"jumlah_baris": len(transaksi.BarisTransaksi),
 	})
 
-	response := transaksi.ToResponse()
-	return &response, nil
+	respons := transaksi.ToResponse()
+	return &respons, nil
 }
 
 // PerbaruiTransaksi memperbarui transaksi yang sudah ada
@@ -496,8 +496,8 @@ func (s *TransaksiService) PerbaruiTransaksi(idKoperasi, id uuid.UUID, req *Buat
 		"jumlah_baris": len(req.BarisTransaksi),
 	})
 
-	response := transaksi.ToResponse()
-	return &response, nil
+	respons := transaksi.ToResponse()
+	return &respons, nil
 }
 
 // HapusTransaksi menghapus transaksi (soft delete) dengan validasi multi-tenant
@@ -660,8 +660,8 @@ func (s *TransaksiService) ReverseTransaksi(idKoperasi, idPengguna, id uuid.UUID
 		"koperasi_id":           idKoperasi.String(),
 	})
 
-	response := reversalTransaksi.ToResponse()
-	return &response, nil
+	respons := reversalTransaksi.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanBukuBesar mengambil buku besar (ledger) untuk akun tertentu

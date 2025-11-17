@@ -32,19 +32,19 @@ type BuatAkunRequest struct {
 // BuatAkun membuat akun baru
 func (s *AkunService) BuatAkun(idKoperasi uuid.UUID, req *BuatAkunRequest) (*models.AkunResponse, error) {
 	// Cek apakah kode akun sudah ada
-	var count int64
+	var jumlah int64
 	s.db.Model(&models.Akun{}).
 		Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, req.KodeAkun).
-		Count(&count)
+		Count(&jumlah)
 
-	if count > 0 {
+	if jumlah > 0 {
 		return nil, errors.New("kode akun sudah digunakan")
 	}
 
 	// Validasi parent jika ada
 	if req.IDInduk != nil {
-		var parentAkun models.Akun
-		err := s.db.Where("id = ? AND id_koperasi = ?", req.IDInduk, idKoperasi).First(&parentAkun).Error
+		var akunInduk models.Akun
+		err := s.db.Where("id = ? AND id_koperasi = ?", req.IDInduk, idKoperasi).First(&akunInduk).Error
 		if err != nil {
 			return nil, errors.New("akun induk tidak ditemukan")
 		}
@@ -68,8 +68,8 @@ func (s *AkunService) BuatAkun(idKoperasi uuid.UUID, req *BuatAkunRequest) (*mod
 		return nil, errors.New("gagal membuat akun")
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanSemuaAkun mengambil daftar akun dengan filter
@@ -92,12 +92,12 @@ func (s *AkunService) DapatkanSemuaAkun(idKoperasi uuid.UUID, tipeAkun string, s
 	}
 
 	// Convert to response
-	responses := make([]models.AkunResponse, len(akunList))
+	responseDaftar := make([]models.AkunResponse, len(akunList))
 	for i, akun := range akunList {
-		responses[i] = akun.ToResponse()
+		responseDaftar[i] = akun.ToResponse()
 	}
 
-	return responses, nil
+	return responseDaftar, nil
 }
 
 // DapatkanAkun mengambil akun berdasarkan ID
@@ -112,8 +112,8 @@ func (s *AkunService) DapatkanAkun(id uuid.UUID) (*models.AkunResponse, error) {
 		return nil, err
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanAkunByKode mengambil akun berdasarkan kode
@@ -130,8 +130,8 @@ func (s *AkunService) DapatkanAkunByKode(idKoperasi uuid.UUID, kodeAkun string) 
 		return nil, err
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // PerbaruiAkunRequest adalah struktur request untuk update akun
@@ -169,8 +169,8 @@ func (s *AkunService) PerbaruiAkun(idKoperasi, id uuid.UUID, req *PerbaruiAkunRe
 		return nil, errors.New("gagal memperbarui akun")
 	}
 
-	response := akun.ToResponse()
-	return &response, nil
+	respons := akun.ToResponse()
+	return &respons, nil
 }
 
 // HapusAkun menghapus akun (dengan validasi)
@@ -186,18 +186,18 @@ func (s *AkunService) HapusAkun(idKoperasi, id uuid.UUID) error {
 	}
 
 	// Cek apakah ada transaksi terkait
-	var countTransaksi int64
-	s.db.Model(&models.BarisTransaksi{}).Where("id_akun = ?", id).Count(&countTransaksi)
+	var jumlahTransaksi int64
+	s.db.Model(&models.BarisTransaksi{}).Where("id_akun = ?", id).Count(&jumlahTransaksi)
 
-	if countTransaksi > 0 {
+	if jumlahTransaksi > 0 {
 		return errors.New("tidak dapat menghapus akun yang sudah memiliki transaksi")
 	}
 
 	// Cek apakah ada sub-akun
-	var countSubAkun int64
-	s.db.Model(&models.Akun{}).Where("id_induk = ?", id).Count(&countSubAkun)
+	var jumlahSubAkun int64
+	s.db.Model(&models.Akun{}).Where("id_induk = ?", id).Count(&jumlahSubAkun)
 
-	if countSubAkun > 0 {
+	if jumlahSubAkun > 0 {
 		return errors.New("tidak dapat menghapus akun yang memiliki sub-akun")
 	}
 
@@ -225,7 +225,7 @@ func (s *AkunService) HitungSaldoAkun(idAkun uuid.UUID, tanggalAkhir string) (fl
 		TotalKredit float64
 	}
 
-	var result SaldoResult
+	var hasil SaldoResult
 	query := s.db.Model(&models.BarisTransaksi{}).
 		Select("COALESCE(SUM(jumlah_debit), 0) as total_debit, COALESCE(SUM(jumlah_kredit), 0) as total_kredit").
 		Joins("JOIN transaksi ON transaksi.id = baris_transaksi.id_transaksi").
@@ -235,7 +235,7 @@ func (s *AkunService) HitungSaldoAkun(idAkun uuid.UUID, tanggalAkhir string) (fl
 		query = query.Where("transaksi.tanggal_transaksi <= ?", tanggalAkhir)
 	}
 
-	err = query.Scan(&result).Error
+	err = query.Scan(&hasil).Error
 	if err != nil {
 		return 0, errors.New("gagal menghitung saldo")
 	}
@@ -243,9 +243,9 @@ func (s *AkunService) HitungSaldoAkun(idAkun uuid.UUID, tanggalAkhir string) (fl
 	// Hitung saldo berdasarkan normal saldo
 	var saldo float64
 	if akun.NormalSaldo == "debit" {
-		saldo = result.TotalDebit - result.TotalKredit
+		saldo = hasil.TotalDebit - hasil.TotalKredit
 	} else {
-		saldo = result.TotalKredit - result.TotalDebit
+		saldo = hasil.TotalKredit - hasil.TotalDebit
 	}
 
 	return saldo, nil
@@ -330,10 +330,10 @@ func (s *AkunService) DapatkanHierarkiAkun(idKoperasi uuid.UUID) ([]models.AkunR
 	}
 
 	// Convert to response
-	responses := make([]models.AkunResponse, len(akunList))
+	responseDaftar := make([]models.AkunResponse, len(akunList))
 	for i, akun := range akunList {
-		responses[i] = akun.ToResponse()
+		responseDaftar[i] = akun.ToResponse()
 	}
 
-	return responses, nil
+	return responseDaftar, nil
 }

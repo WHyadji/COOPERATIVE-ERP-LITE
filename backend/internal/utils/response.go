@@ -19,6 +19,14 @@ type ErrorDetail struct {
 	Details interface{} `json:"details,omitempty"`
 }
 
+// PaginationMeta adalah metadata pagination
+type PaginationMeta struct {
+	Page      int   `json:"page"`
+	PageSize  int   `json:"pageSize"`
+	Total     int64 `json:"total"`
+	TotalPage int   `json:"totalPage"`
+}
+
 // PaginatedResponse adalah response dengan pagination
 type PaginatedResponse struct {
 	Success    bool            `json:"success"`

@@ -30,11 +30,11 @@ func NewSimpananService(db *gorm.DB, transaksiService *TransaksiService) *Simpan
 
 // CatatSetoranRequest adalah struktur request untuk catat setoran
 type CatatSetoranRequest struct {
-	IDAnggota        uuid.UUID          `json:"idAnggota" binding:"required"`
+	IDAnggota        uuid.UUID           `json:"idAnggota" binding:"required"`
 	TipeSimpanan     models.TipeSimpanan `json:"tipeSimpanan" binding:"required"`
-	TanggalTransaksi time.Time          `json:"tanggalTransaksi" binding:"required"`
-	JumlahSetoran    float64            `json:"jumlahSetoran" binding:"required,gt=0"`
-	Keterangan       string             `json:"keterangan"`
+	TanggalTransaksi time.Time           `json:"tanggalTransaksi" binding:"required"`
+	JumlahSetoran    float64             `json:"jumlahSetoran" binding:"required,gt=0"`
+	Keterangan       string              `json:"keterangan"`
 }
 
 // CatatSetoran mencatat setoran simpanan anggota
@@ -93,11 +93,11 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 	err = s.db.Create(simpanan).Error
 	if err != nil {
 		s.logger.Error(method, "Failed to create simpanan record", err, map[string]interface{}{
-			"koperasi_id":      idKoperasi.String(),
-			"anggota_id":       req.IDAnggota.String(),
-			"tipe_simpanan":    req.TipeSimpanan,
-			"jumlah_setoran":   req.JumlahSetoran,
-			"nomor_referensi":  nomorReferensi,
+			"koperasi_id":       idKoperasi.String(),
+			"anggota_id":        req.IDAnggota.String(),
+			"tipe_simpanan":     req.TipeSimpanan,
+			"jumlah_setoran":    req.JumlahSetoran,
+			"nomor_referensi":   nomorReferensi,
 			"tanggal_transaksi": req.TanggalTransaksi.Format("2006-01-02"),
 		})
 		return nil, utils.WrapDatabaseError(err, "Gagal mencatat setoran simpanan")
@@ -120,17 +120,17 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 	s.db.Preload("Anggota").First(simpanan, simpanan.ID)
 
 	s.logger.Info(method, "Successfully created simpanan transaction", map[string]interface{}{
-		"simpanan_id":      simpanan.ID.String(),
-		"koperasi_id":      idKoperasi.String(),
-		"anggota_id":       req.IDAnggota.String(),
-		"tipe_simpanan":    req.TipeSimpanan,
-		"jumlah_setoran":   req.JumlahSetoran,
-		"nomor_referensi":  nomorReferensi,
+		"simpanan_id":       simpanan.ID.String(),
+		"koperasi_id":       idKoperasi.String(),
+		"anggota_id":        req.IDAnggota.String(),
+		"tipe_simpanan":     req.TipeSimpanan,
+		"jumlah_setoran":    req.JumlahSetoran,
+		"nomor_referensi":   nomorReferensi,
 		"tanggal_transaksi": req.TanggalTransaksi.Format("2006-01-02"),
 	})
 
-	response := simpanan.ToResponse()
-	return &response, nil
+	respons := simpanan.ToResponse()
+	return &respons, nil
 }
 
 // GenerateNomorReferensi menghasilkan nomor referensi setoran
@@ -165,7 +165,7 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 			}
 		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			s.logger.Error(method, "Failed to query last simpanan", err, map[string]interface{}{
-				"koperasi_id":      idKoperasi.String(),
+				"koperasi_id":       idKoperasi.String(),
 				"tanggal_transaksi": tanggalDate,
 			})
 			return err
@@ -177,15 +177,15 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 
 	if err != nil {
 		s.logger.Error(method, "Transaction failed while generating nomor referensi", err, map[string]interface{}{
-			"koperasi_id":      idKoperasi.String(),
+			"koperasi_id":       idKoperasi.String(),
 			"tanggal_transaksi": tanggalDate,
 		})
 		return "", utils.WrapGenerationError(err, "Generate nomor referensi")
 	}
 
 	s.logger.Debug(method, "Generated nomor referensi", map[string]interface{}{
-		"nomor_referensi":  nomorReferensi,
-		"koperasi_id":      idKoperasi.String(),
+		"nomor_referensi":   nomorReferensi,
+		"koperasi_id":       idKoperasi.String(),
 		"tanggal_transaksi": tanggalDate,
 	})
 
@@ -226,29 +226,29 @@ func (s *SimpananService) DapatkanSemuaTransaksiSimpanan(idKoperasi uuid.UUID, t
 
 	if err != nil {
 		s.logger.Error(method, "Failed to fetch simpanan transaction list", err, map[string]interface{}{
-			"koperasi_id":    idKoperasi.String(),
-			"tipe_simpanan":  tipeSimpanan,
-			"anggota_id":     idAnggota,
-			"tanggal_mulai":  tanggalMulai,
-			"tanggal_akhir":  tanggalAkhir,
-			"page":           page,
-			"page_size":      pageSize,
+			"koperasi_id":   idKoperasi.String(),
+			"tipe_simpanan": tipeSimpanan,
+			"anggota_id":    idAnggota,
+			"tanggal_mulai": tanggalMulai,
+			"tanggal_akhir": tanggalAkhir,
+			"page":          page,
+			"page_size":     pageSize,
 		})
 		return nil, 0, utils.WrapDatabaseError(err, "Gagal mengambil daftar transaksi simpanan")
 	}
 
 	// Convert to response
-	responses := make([]models.SimpananResponse, len(simpananList))
+	responseDaftar := make([]models.SimpananResponse, len(simpananList))
 	for i, simpanan := range simpananList {
-		responses[i] = simpanan.ToResponse()
+		responseDaftar[i] = simpanan.ToResponse()
 	}
 
 	s.logger.Debug(method, "Successfully fetched simpanan transaction list", map[string]interface{}{
-		"count": len(responses),
+		"count": len(responseDaftar),
 		"total": total,
 	})
 
-	return responses, total, nil
+	return responseDaftar, total, nil
 }
 
 // DapatkanSaldoAnggota mengambil saldo simpanan per anggota dengan validasi multi-tenant
@@ -347,27 +347,120 @@ func (s *SimpananService) DapatkanRingkasanSimpanan(idKoperasi uuid.UUID) (*mode
 }
 
 // DapatkanLaporanSaldoAnggota mengambil laporan saldo semua anggota
+// Optimized version using single query with GROUP BY to eliminate N+1 query problem
 func (s *SimpananService) DapatkanLaporanSaldoAnggota(idKoperasi uuid.UUID) ([]models.SaldoSimpananAnggota, error) {
-	// Dapatkan semua anggota aktif
-	var anggotaList []models.Anggota
-	err := s.db.Where("id_koperasi = ? AND status = ?", idKoperasi, models.StatusAktif).
-		Order("nomor_anggota ASC").
-		Find(&anggotaList).Error
+	const method = "DapatkanLaporanSaldoAnggota"
+
+	// Structure to hold aggregated data from database
+	type SaldoResult struct {
+		IDAnggota    uuid.UUID
+		NomorAnggota string
+		NamaLengkap  string
+		TipeSimpanan models.TipeSimpanan
+		TotalSaldo   float64
+	}
+
+	var results []SaldoResult
+
+	// Single optimized query with JOIN and GROUP BY
+	// This replaces the N+1 pattern (1 query for members + N queries for balances)
+	err := s.db.Table("simpanan").
+		Select(`
+			anggota.id as id_anggota,
+			anggota.nomor_anggota,
+			anggota.nama_lengkap,
+			simpanan.tipe_simpanan,
+			COALESCE(SUM(simpanan.jumlah_setoran), 0) as total_saldo
+		`).
+		Joins("JOIN anggota ON anggota.id = simpanan.id_anggota").
+		Where("anggota.id_koperasi = ? AND anggota.status = ?", idKoperasi, models.StatusAktif).
+		Group("anggota.id, anggota.nomor_anggota, anggota.nama_lengkap, simpanan.tipe_simpanan").
+		Order("anggota.nomor_anggota ASC, simpanan.tipe_simpanan").
+		Scan(&results).Error
 
 	if err != nil {
-		return nil, errors.New("gagal mengambil daftar anggota")
+		s.logger.Error(method, "Failed to fetch member balance report", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+		})
+		return nil, errors.New("gagal mengambil laporan saldo anggota")
 	}
 
-	// Hitung saldo untuk setiap anggota
-	var laporan []models.SaldoSimpananAnggota
+	// Process results and aggregate by member
+	// Use map for efficient member lookup and aggregation
+	memberMap := make(map[uuid.UUID]*models.SaldoSimpananAnggota)
 
-	for _, anggota := range anggotaList {
-		saldo, err := s.DapatkanSaldoAnggota(idKoperasi, anggota.ID)
-		if err != nil {
-			continue // Skip jika error
+	for _, result := range results {
+		member, exists := memberMap[result.IDAnggota]
+		if !exists {
+			// Create new member entry
+			member = &models.SaldoSimpananAnggota{
+				IDAnggota:    result.IDAnggota,
+				NomorAnggota: result.NomorAnggota,
+				NamaAnggota:  result.NamaLengkap,
+			}
+			memberMap[result.IDAnggota] = member
 		}
-		laporan = append(laporan, *saldo)
+
+		// Aggregate balances by type
+		switch result.TipeSimpanan {
+		case models.SimpananPokok:
+			member.SimpananPokok = result.TotalSaldo
+		case models.SimpananWajib:
+			member.SimpananWajib = result.TotalSaldo
+		case models.SimpananSukarela:
+			member.SimpananSukarela = result.TotalSaldo
+		}
 	}
+
+	// Also get members with no deposits to include them with zero balances
+	var membersWithoutDeposits []models.Anggota
+	err = s.db.Where(`
+		id_koperasi = ? AND status = ? AND id NOT IN (
+			SELECT DISTINCT id_anggota FROM simpanan WHERE id_koperasi = ?
+		)
+	`, idKoperasi, models.StatusAktif, idKoperasi).Find(&membersWithoutDeposits).Error
+
+	if err != nil {
+		s.logger.Error(method, "Failed to fetch members without deposits", err, map[string]interface{}{
+			"koperasi_id": idKoperasi.String(),
+		})
+		// Continue with existing results even if this query fails
+	} else {
+		// Add members with zero balances
+		for _, member := range membersWithoutDeposits {
+			if _, exists := memberMap[member.ID]; !exists {
+				memberMap[member.ID] = &models.SaldoSimpananAnggota{
+					IDAnggota:    member.ID,
+					NomorAnggota: member.NomorAnggota,
+					NamaAnggota:  member.NamaLengkap,
+				}
+			}
+		}
+	}
+
+	// Convert map to sorted slice
+	laporan := make([]models.SaldoSimpananAnggota, 0, len(memberMap))
+	for _, member := range memberMap {
+		// Calculate total
+		member.TotalSimpanan = member.SimpananPokok + member.SimpananWajib + member.SimpananSukarela
+		laporan = append(laporan, *member)
+	}
+
+	// Sort by member number
+	// Note: In production, consider using database ORDER BY on the member number
+	// This in-memory sort is acceptable since member lists are typically small (<10k)
+	for i := 0; i < len(laporan)-1; i++ {
+		for j := i + 1; j < len(laporan); j++ {
+			if laporan[i].NomorAnggota > laporan[j].NomorAnggota {
+				laporan[i], laporan[j] = laporan[j], laporan[i]
+			}
+		}
+	}
+
+	s.logger.Info(method, "Successfully generated member balance report", map[string]interface{}{
+		"koperasi_id":   idKoperasi.String(),
+		"total_members": len(laporan),
+	})
 
 	return laporan, nil
 }

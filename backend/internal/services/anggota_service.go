@@ -87,8 +87,8 @@ func (s *AnggotaService) BuatAnggota(idKoperasi uuid.UUID, req *BuatAnggotaReque
 		return nil, errors.New("gagal membuat anggota")
 	}
 
-	response := anggota.ToResponse()
-	return &response, nil
+	respons := anggota.ToResponse()
+	return &respons, nil
 }
 
 // GenerateNomorAnggota menghasilkan nomor anggota otomatis
@@ -162,12 +162,12 @@ func (s *AnggotaService) DapatkanSemuaAnggota(idKoperasi uuid.UUID, status strin
 	}
 
 	// Convert to response
-	responses := make([]models.AnggotaResponse, len(anggotaList))
+	responseDaftar := make([]models.AnggotaResponse, len(anggotaList))
 	for i, anggota := range anggotaList {
-		responses[i] = anggota.ToResponse()
+		responseDaftar[i] = anggota.ToResponse()
 	}
 
-	return responses, total, nil
+	return responseDaftar, total, nil
 }
 
 // DapatkanAnggota mengambil data anggota berdasarkan ID
@@ -182,8 +182,8 @@ func (s *AnggotaService) DapatkanAnggota(id uuid.UUID) (*models.AnggotaResponse,
 		return nil, err
 	}
 
-	response := anggota.ToResponse()
-	return &response, nil
+	respons := anggota.ToResponse()
+	return &respons, nil
 }
 
 // DapatkanAnggotaByNomor mengambil anggota berdasarkan nomor anggota
@@ -198,8 +198,8 @@ func (s *AnggotaService) DapatkanAnggotaByNomor(idKoperasi uuid.UUID, nomorAnggo
 		return nil, err
 	}
 
-	response := anggota.ToResponse()
-	return &response, nil
+	respons := anggota.ToResponse()
+	return &respons, nil
 }
 
 // PerbaruiAnggotaRequest adalah struktur request untuk update anggota
@@ -302,8 +302,8 @@ func (s *AnggotaService) PerbaruiAnggota(idKoperasi, id uuid.UUID, req *Perbarui
 		return nil, errors.New("gagal memperbarui anggota")
 	}
 
-	response := anggota.ToResponse()
-	return &response, nil
+	respons := anggota.ToResponse()
+	return &respons, nil
 }
 
 // HapusAnggota menghapus anggota (soft delete)
@@ -386,23 +386,23 @@ func (s *AnggotaService) ValidasiPINPortal(idKoperasi uuid.UUID, nomorAnggota, p
 		return nil, errors.New("nomor anggota atau PIN salah")
 	}
 
-	response := anggota.ToResponse()
-	return &response, nil
+	respons := anggota.ToResponse()
+	return &respons, nil
 }
 
 // HitungJumlahAnggota menghitung jumlah anggota berdasarkan status
 func (s *AnggotaService) HitungJumlahAnggota(idKoperasi uuid.UUID, status string) (int64, error) {
-	var count int64
+	var jumlah int64
 	query := s.db.Model(&models.Anggota{}).Where("id_koperasi = ?", idKoperasi)
 
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}
 
-	err := query.Count(&count).Error
+	err := query.Count(&jumlah).Error
 	if err != nil {
 		return 0, errors.New("gagal menghitung jumlah anggota")
 	}
 
-	return count, nil
+	return jumlah, nil
 }

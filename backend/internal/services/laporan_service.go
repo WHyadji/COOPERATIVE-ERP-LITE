@@ -29,13 +29,13 @@ func NewLaporanService(db *gorm.DB, akunService *AkunService, simpananService *S
 
 // LaporanPosisiKeuangan adalah struktur untuk Balance Sheet
 type LaporanPosisiKeuangan struct {
-	TanggalLaporan time.Time                  `json:"tanggalLaporan"`
-	Aset           []ItemLaporanKeuangan      `json:"aset"`
-	TotalAset      float64                    `json:"totalAset"`
-	Kewajiban      []ItemLaporanKeuangan      `json:"kewajiban"`
-	TotalKewajiban float64                    `json:"totalKewajiban"`
-	Modal          []ItemLaporanKeuangan      `json:"modal"`
-	TotalModal     float64                    `json:"totalModal"`
+	TanggalLaporan time.Time             `json:"tanggalLaporan"`
+	Aset           []ItemLaporanKeuangan `json:"aset"`
+	TotalAset      float64               `json:"totalAset"`
+	Kewajiban      []ItemLaporanKeuangan `json:"kewajiban"`
+	TotalKewajiban float64               `json:"totalKewajiban"`
+	Modal          []ItemLaporanKeuangan `json:"modal"`
+	TotalModal     float64               `json:"totalModal"`
 }
 
 // ItemLaporanKeuangan adalah struktur untuk item dalam laporan
@@ -46,6 +46,7 @@ type ItemLaporanKeuangan struct {
 }
 
 // GenerateLaporanPosisiKeuangan membuat laporan neraca/balance sheet
+// Optimized version using single query with aggregation to eliminate N+1 query problem
 func (s *LaporanService) GenerateLaporanPosisiKeuangan(idKoperasi uuid.UUID, tanggalPer string) (*LaporanPosisiKeuangan, error) {
 	// Parse tanggal
 	var tanggalLaporan time.Time
@@ -66,32 +67,69 @@ func (s *LaporanService) GenerateLaporanPosisiKeuangan(idKoperasi uuid.UUID, tan
 		Modal:          []ItemLaporanKeuangan{},
 	}
 
-	// Dapatkan semua akun
-	akunList, err := s.akunService.DapatkanSemuaAkun(idKoperasi, "", nil)
-	if err != nil {
-		return nil, err
+	// Structure to hold aggregated account balances
+	type AccountBalance struct {
+		KodeAkun    string
+		NamaAkun    string
+		TipeAkun    models.TipeAkun
+		NormalSaldo string
+		TotalDebit  float64
+		TotalKredit float64
 	}
 
-	// Hitung saldo untuk setiap akun
-	for _, akunResp := range akunList {
-		saldo, err := s.akunService.HitungSaldoAkun(akunResp.ID, tanggalPer)
-		if err != nil {
-			continue
+	var balances []AccountBalance
+
+	// Single optimized query with JOIN and aggregation
+	// This replaces the N+1 pattern (1 query for accounts + N queries for balances)
+	query := s.db.Table("akun").
+		Select(`
+			akun.kode_akun,
+			akun.nama_akun,
+			akun.tipe_akun,
+			akun.normal_saldo,
+			COALESCE(SUM(baris_transaksi.jumlah_debit), 0) as total_debit,
+			COALESCE(SUM(baris_transaksi.jumlah_kredit), 0) as total_kredit
+		`).
+		Joins("LEFT JOIN baris_transaksi ON baris_transaksi.id_akun = akun.id").
+		Joins("LEFT JOIN transaksi ON transaksi.id = baris_transaksi.id_transaksi").
+		Where("akun.id_koperasi = ?", idKoperasi)
+
+	// Apply date filter if provided
+	if tanggalPer != "" {
+		query = query.Where("transaksi.tanggal_transaksi <= ? OR transaksi.id IS NULL", tanggalPer)
+	}
+
+	query = query.Group("akun.id, akun.kode_akun, akun.nama_akun, akun.tipe_akun, akun.normal_saldo").
+		Order("akun.kode_akun ASC")
+
+	err := query.Scan(&balances).Error
+	if err != nil {
+		return nil, errors.New("gagal mengambil data laporan posisi keuangan")
+	}
+
+	// Process balances and categorize by account type
+	for _, balance := range balances {
+		// Calculate balance based on normal balance
+		var saldo float64
+		if balance.NormalSaldo == "debit" {
+			saldo = balance.TotalDebit - balance.TotalKredit
+		} else {
+			saldo = balance.TotalKredit - balance.TotalDebit
 		}
 
-		// Skip akun dengan saldo 0
+		// Skip accounts with zero balance
 		if saldo == 0 {
 			continue
 		}
 
 		item := ItemLaporanKeuangan{
-			KodeAkun: akunResp.KodeAkun,
-			NamaAkun: akunResp.NamaAkun,
+			KodeAkun: balance.KodeAkun,
+			NamaAkun: balance.NamaAkun,
 			Saldo:    saldo,
 		}
 
-		// Kategorikan berdasarkan tipe akun
-		switch akunResp.TipeAkun {
+		// Categorize by account type (Aset, Kewajiban, Modal only for Balance Sheet)
+		switch balance.TipeAkun {
 		case models.AkunAset:
 			laporan.Aset = append(laporan.Aset, item)
 			laporan.TotalAset += saldo
@@ -109,16 +147,17 @@ func (s *LaporanService) GenerateLaporanPosisiKeuangan(idKoperasi uuid.UUID, tan
 
 // LaporanLabaRugi adalah struktur untuk Income Statement
 type LaporanLabaRugi struct {
-	PeriodeMulai     time.Time             `json:"periodeMulai"`
-	PeriodeAkhir     time.Time             `json:"periodeAkhir"`
-	Pendapatan       []ItemLaporanKeuangan `json:"pendapatan"`
-	TotalPendapatan  float64               `json:"totalPendapatan"`
-	Beban            []ItemLaporanKeuangan `json:"beban"`
-	TotalBeban       float64               `json:"totalBeban"`
-	LabaRugiBersih   float64               `json:"labaRugiBersih"`
+	PeriodeMulai    time.Time             `json:"periodeMulai"`
+	PeriodeAkhir    time.Time             `json:"periodeAkhir"`
+	Pendapatan      []ItemLaporanKeuangan `json:"pendapatan"`
+	TotalPendapatan float64               `json:"totalPendapatan"`
+	Beban           []ItemLaporanKeuangan `json:"beban"`
+	TotalBeban      float64               `json:"totalBeban"`
+	LabaRugiBersih  float64               `json:"labaRugiBersih"`
 }
 
 // GenerateLaporanLabaRugi membuat laporan laba rugi
+// Optimized version using single query with date filtering to eliminate N+1 query problem
 func (s *LaporanService) GenerateLaporanLabaRugi(idKoperasi uuid.UUID, tanggalMulai, tanggalAkhir string) (*LaporanLabaRugi, error) {
 	// Parse tanggal
 	periodeMulai, err := time.Parse("2006-01-02", tanggalMulai)
@@ -138,43 +177,66 @@ func (s *LaporanService) GenerateLaporanLabaRugi(idKoperasi uuid.UUID, tanggalMu
 		Beban:        []ItemLaporanKeuangan{},
 	}
 
-	// Dapatkan akun pendapatan dan beban
-	akunList, err := s.akunService.DapatkanSemuaAkun(idKoperasi, "", nil)
-	if err != nil {
-		return nil, err
+	// Structure to hold aggregated income and expense data
+	type IncomeExpenseBalance struct {
+		KodeAkun    string
+		NamaAkun    string
+		TipeAkun    models.TipeAkun
+		NormalSaldo string
+		TotalDebit  float64
+		TotalKredit float64
 	}
 
-	// Hitung saldo untuk periode
-	for _, akunResp := range akunList {
-		if akunResp.TipeAkun != models.AkunPendapatan && akunResp.TipeAkun != models.AkunBeban {
-			continue
+	var balances []IncomeExpenseBalance
+
+	// Single optimized query for period-specific balances
+	// This replaces the N+1 pattern (fetching accounts + calculating balance for each)
+	err = s.db.Table("akun").
+		Select(`
+			akun.kode_akun,
+			akun.nama_akun,
+			akun.tipe_akun,
+			akun.normal_saldo,
+			COALESCE(SUM(baris_transaksi.jumlah_debit), 0) as total_debit,
+			COALESCE(SUM(baris_transaksi.jumlah_kredit), 0) as total_kredit
+		`).
+		Joins("LEFT JOIN baris_transaksi ON baris_transaksi.id_akun = akun.id").
+		Joins("LEFT JOIN transaksi ON transaksi.id = baris_transaksi.id_transaksi AND transaksi.tanggal_transaksi BETWEEN ? AND ?", tanggalMulai, tanggalAkhir).
+		Where("akun.id_koperasi = ? AND akun.tipe_akun IN (?)", idKoperasi, []models.TipeAkun{models.AkunPendapatan, models.AkunBeban}).
+		Group("akun.id, akun.kode_akun, akun.nama_akun, akun.tipe_akun, akun.normal_saldo").
+		Order("akun.kode_akun ASC").
+		Scan(&balances).Error
+
+	if err != nil {
+		return nil, errors.New("gagal mengambil data laporan laba rugi")
+	}
+
+	// Process balances and categorize
+	for _, balance := range balances {
+		// Calculate balance based on normal balance
+		var saldoPeriode float64
+		if balance.NormalSaldo == "debit" {
+			saldoPeriode = balance.TotalDebit - balance.TotalKredit
+		} else {
+			saldoPeriode = balance.TotalKredit - balance.TotalDebit
 		}
 
-		// Hitung saldo akhir periode
-		saldoAkhir, _ := s.akunService.HitungSaldoAkun(akunResp.ID, tanggalAkhir)
-
-		// Hitung saldo awal periode (sehari sebelum tanggal mulai)
-		tanggalSebelum := periodeMulai.AddDate(0, 0, -1).Format("2006-01-02")
-		saldoAwal, _ := s.akunService.HitungSaldoAkun(akunResp.ID, tanggalSebelum)
-
-		// Saldo periode = saldo akhir - saldo awal
-		saldoPeriode := saldoAkhir - saldoAwal
-
+		// Skip accounts with zero balance
 		if saldoPeriode == 0 {
 			continue
 		}
 
 		item := ItemLaporanKeuangan{
-			KodeAkun: akunResp.KodeAkun,
-			NamaAkun: akunResp.NamaAkun,
+			KodeAkun: balance.KodeAkun,
+			NamaAkun: balance.NamaAkun,
 			Saldo:    saldoPeriode,
 		}
 
-		// Kategorikan
-		if akunResp.TipeAkun == models.AkunPendapatan {
+		// Categorize by account type
+		if balance.TipeAkun == models.AkunPendapatan {
 			laporan.Pendapatan = append(laporan.Pendapatan, item)
 			laporan.TotalPendapatan += saldoPeriode
-		} else if akunResp.TipeAkun == models.AkunBeban {
+		} else if balance.TipeAkun == models.AkunBeban {
 			laporan.Beban = append(laporan.Beban, item)
 			laporan.TotalBeban += saldoPeriode
 		}
@@ -188,17 +250,17 @@ func (s *LaporanService) GenerateLaporanLabaRugi(idKoperasi uuid.UUID, tanggalMu
 
 // LaporanArusKas adalah struktur untuk Cash Flow Statement
 type LaporanArusKas struct {
-	PeriodeMulai        time.Time             `json:"periodeMulai"`
-	PeriodeAkhir        time.Time             `json:"periodeAkhir"`
-	ArusKasOperasional  []ItemLaporanKeuangan `json:"arusKasOperasional"`
-	TotalOperasional    float64               `json:"totalOperasional"`
-	ArusKasInvestasi    []ItemLaporanKeuangan `json:"arusKasInvestasi"`
-	TotalInvestasi      float64               `json:"totalInvestasi"`
-	ArusKasPendanaan    []ItemLaporanKeuangan `json:"arusKasPendanaan"`
-	TotalPendanaan      float64               `json:"totalPendanaan"`
-	KenaikanKasBersih   float64               `json:"kenaikanKasBersih"`
-	SaldoKasAwal        float64               `json:"saldoKasAwal"`
-	SaldoKasAkhir       float64               `json:"saldoKasAkhir"`
+	PeriodeMulai       time.Time             `json:"periodeMulai"`
+	PeriodeAkhir       time.Time             `json:"periodeAkhir"`
+	ArusKasOperasional []ItemLaporanKeuangan `json:"arusKasOperasional"`
+	TotalOperasional   float64               `json:"totalOperasional"`
+	ArusKasInvestasi   []ItemLaporanKeuangan `json:"arusKasInvestasi"`
+	TotalInvestasi     float64               `json:"totalInvestasi"`
+	ArusKasPendanaan   []ItemLaporanKeuangan `json:"arusKasPendanaan"`
+	TotalPendanaan     float64               `json:"totalPendanaan"`
+	KenaikanKasBersih  float64               `json:"kenaikanKasBersih"`
+	SaldoKasAwal       float64               `json:"saldoKasAwal"`
+	SaldoKasAkhir      float64               `json:"saldoKasAkhir"`
 }
 
 // GenerateLaporanArusKas membuat laporan arus kas
@@ -252,12 +314,12 @@ func (s *LaporanService) GenerateLaporanSaldoAnggota(idKoperasi uuid.UUID) ([]mo
 
 // LaporanPenjualan adalah struktur untuk sales report
 type LaporanPenjualan struct {
-	PeriodeMulai     time.Time `json:"periodeMulai"`
-	PeriodeAkhir     time.Time `json:"periodeAkhir"`
-	TotalPenjualan   float64   `json:"totalPenjualan"`
-	JumlahTransaksi  int64     `json:"jumlahTransaksi"`
-	RataRataTransaksi float64   `json:"rataRataTransaksi"`
-	TopProduk        []map[string]interface{} `json:"topProduk"`
+	PeriodeMulai      time.Time                `json:"periodeMulai"`
+	PeriodeAkhir      time.Time                `json:"periodeAkhir"`
+	TotalPenjualan    float64                  `json:"totalPenjualan"`
+	JumlahTransaksi   int64                    `json:"jumlahTransaksi"`
+	RataRataTransaksi float64                  `json:"rataRataTransaksi"`
+	TopProduk         []map[string]interface{} `json:"topProduk"`
 }
 
 // GenerateLaporanPenjualan membuat laporan penjualan
@@ -298,12 +360,12 @@ func (s *LaporanService) GenerateLaporanPenjualan(idKoperasi uuid.UUID, tanggalM
 
 // LaporanTransaksiHarian adalah struktur untuk daily transaction report
 type LaporanTransaksiHarian struct {
-	Tanggal           time.Time `json:"tanggal"`
-	TotalKasMasuk     float64   `json:"totalKasMasuk"`
-	TotalKasKeluar    float64   `json:"totalKasKeluar"`
-	SaldoKasAkhir     float64   `json:"saldoKasAkhir"`
-	JumlahPenjualan   int64     `json:"jumlahPenjualan"`
-	JumlahSimpanan    int64     `json:"jumlahSimpanan"`
+	Tanggal         time.Time `json:"tanggal"`
+	TotalKasMasuk   float64   `json:"totalKasMasuk"`
+	TotalKasKeluar  float64   `json:"totalKasKeluar"`
+	SaldoKasAkhir   float64   `json:"saldoKasAkhir"`
+	JumlahPenjualan int64     `json:"jumlahPenjualan"`
+	JumlahSimpanan  int64     `json:"jumlahSimpanan"`
 }
 
 // GenerateLaporanTransaksiHarian membuat laporan transaksi harian

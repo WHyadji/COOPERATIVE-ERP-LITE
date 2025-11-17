@@ -60,12 +60,12 @@ func (s *AuthService) Login(namaPengguna, kataSandi string) (*LoginResponse, err
 	}
 
 	// Buat response
-	response := &LoginResponse{
+	respons := &LoginResponse{
 		Token:    token,
 		Pengguna: pengguna.ToResponse(),
 	}
 
-	return response, nil
+	return respons, nil
 }
 
 // ValidasiToken memvalidasi JWT token dan mengembalikan claims
@@ -106,12 +106,12 @@ func (s *AuthService) RefreshToken(tokenString string) (string, error) {
 	}
 
 	// Generate token baru
-	newToken, err := s.jwtUtil.GenerateToken(&pengguna)
+	tokenBaru, err := s.jwtUtil.GenerateToken(&pengguna)
 	if err != nil {
 		return "", errors.New("gagal membuat token baru")
 	}
 
-	return newToken, nil
+	return tokenBaru, nil
 }
 
 // DapatkanProfilPengguna mengambil profil pengguna berdasarkan ID dari token
@@ -126,8 +126,8 @@ func (s *AuthService) DapatkanProfilPengguna(idPengguna string) (*models.Penggun
 		return nil, err
 	}
 
-	response := pengguna.ToResponse()
-	return &response, nil
+	respons := pengguna.ToResponse()
+	return &respons, nil
 }
 
 // UbahKataSandi mengubah password pengguna
