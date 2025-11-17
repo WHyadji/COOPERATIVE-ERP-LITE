@@ -249,25 +249,25 @@ func (s *AnggotaService) DapatkanAnggotaByNomor(idKoperasi uuid.UUID, nomorAnggo
 
 // PerbaruiAnggotaRequest adalah struktur request untuk update anggota
 type PerbaruiAnggotaRequest struct {
-	NamaLengkap   string              `json:"namaLengkap"`
-	NIK           string              `json:"nik"`
-	TanggalLahir  *time.Time          `json:"tanggalLahir"`
-	TempatLahir   string              `json:"tempatLahir"`
-	JenisKelamin  string              `json:"jenisKelamin"`
-	Alamat        string              `json:"alamat"`
-	RT            string              `json:"rt"`
-	RW            string              `json:"rw"`
-	Kelurahan     string              `json:"kelurahan"`
-	Kecamatan     string              `json:"kecamatan"`
-	KotaKabupaten string              `json:"kotaKabupaten"`
-	Provinsi      string              `json:"provinsi"`
-	KodePos       string              `json:"kodePos"`
-	NoTelepon     string              `json:"noTelepon"`
-	Email         string              `json:"email"`
-	Pekerjaan     string              `json:"pekerjaan"`
+	NamaLengkap   string               `json:"namaLengkap"`
+	NIK           string               `json:"nik"`
+	TanggalLahir  *time.Time           `json:"tanggalLahir"`
+	TempatLahir   string               `json:"tempatLahir"`
+	JenisKelamin  string               `json:"jenisKelamin"`
+	Alamat        string               `json:"alamat"`
+	RT            string               `json:"rt"`
+	RW            string               `json:"rw"`
+	Kelurahan     string               `json:"kelurahan"`
+	Kecamatan     string               `json:"kecamatan"`
+	KotaKabupaten string               `json:"kotaKabupaten"`
+	Provinsi      string               `json:"provinsi"`
+	KodePos       string               `json:"kodePos"`
+	NoTelepon     string               `json:"noTelepon"`
+	Email         string               `json:"email"`
+	Pekerjaan     string               `json:"pekerjaan"`
 	Status        models.StatusAnggota `json:"status"`
-	FotoURL       string              `json:"fotoUrl"`
-	Catatan       string              `json:"catatan"`
+	FotoURL       string               `json:"fotoUrl"`
+	Catatan       string               `json:"catatan"`
 }
 
 // PerbaruiAnggota mengupdate data anggota
@@ -416,6 +416,20 @@ func (s *AnggotaService) HapusAnggota(idKoperasi, id uuid.UUID) error {
 			return errors.New("anggota tidak ditemukan atau tidak memiliki akses")
 		}
 		return err
+	}
+
+	// Validasi: tidak boleh menghapus anggota yang memiliki transaksi simpanan
+	var jumlahSimpanan int64
+	s.db.Model(&models.Simpanan{}).Where("id_anggota = ?", id).Count(&jumlahSimpanan)
+	if jumlahSimpanan > 0 {
+		return errors.New("tidak dapat menghapus anggota yang memiliki transaksi simpanan")
+	}
+
+	// Validasi: tidak boleh menghapus anggota yang memiliki transaksi penjualan
+	var jumlahPenjualan int64
+	s.db.Model(&models.Penjualan{}).Where("id_anggota = ?", id).Count(&jumlahPenjualan)
+	if jumlahPenjualan > 0 {
+		return errors.New("tidak dapat menghapus anggota yang memiliki transaksi penjualan")
 	}
 
 	// Soft delete
