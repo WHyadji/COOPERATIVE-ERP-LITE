@@ -2,8 +2,8 @@ package services
 
 import (
 	"cooperative-erp-lite/internal/models"
+	"cooperative-erp-lite/internal/utils"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -216,7 +216,7 @@ func (s *PenggunaService) UbahKataSandiPengguna(idKoperasi, id uuid.UUID, kataSa
 
 // ResetKataSandi mereset password pengguna ke default (admin only)
 func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, error) {
-	// Generate password default (menggunakan username)
+	// Cari pengguna
 	var pengguna models.Pengguna
 	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&pengguna).Error
 	if err != nil {
@@ -226,14 +226,20 @@ func (s *PenggunaService) ResetKataSandi(idKoperasi, id uuid.UUID) (string, erro
 		return "", err
 	}
 
-	// Password default: username + "123"
-	passwordDefault := fmt.Sprintf("%s123", pengguna.NamaPengguna)
+	// Generate random password (12 characters, cryptographically secure)
+	passwordDefault, err := utils.GenerateRandomPassword(12)
+	if err != nil {
+		return "", errors.New("gagal membuat kata sandi acak")
+	}
 
 	// Set password
 	err = pengguna.SetKataSandi(passwordDefault)
 	if err != nil {
 		return "", errors.New("gagal mengenkripsi kata sandi")
 	}
+
+	// Force user to change password on next login
+	pengguna.RequirePasswordChange = true
 
 	// Simpan
 	err = s.db.Save(&pengguna).Error
