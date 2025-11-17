@@ -40,7 +40,7 @@ func (h *PenggunaHandler) Create(c *gin.Context) {
 			utils.ConflictResponse(c, err.Error())
 			return
 		}
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *PenggunaHandler) List(c *gin.Context) {
 
 	penggunaList, total, err := h.penggunaService.GetSemuaPengguna(koperasiUUID, peranPtr, statusAktifPtr, page, pageSize)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *PenggunaHandler) Update(c *gin.Context) {
 
 	pengguna, err := h.penggunaService.PerbaruiPengguna(koperasiUUID, id, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -142,7 +142,7 @@ func (h *PenggunaHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.penggunaService.HapusPengguna(koperasiUUID, id); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -171,7 +171,7 @@ func (h *PenggunaHandler) ResetPassword(c *gin.Context) {
 	}
 
 	if err := h.penggunaService.ResetKataSandi(koperasiUUID, id, req.KataSandiBaru); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

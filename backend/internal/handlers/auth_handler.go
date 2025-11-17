@@ -109,14 +109,14 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	}
 
 	// Ubah password
-	err := h.authService.UbahKataSandi(penggunaUUID, req.KataSandiLama, req.KataSandiBaru)
+	err := h.authService.UbahKataSandiByUUID(penggunaUUID, req.KataSandiLama, req.KataSandiBaru)
 	if err != nil {
 		// Check jenis error
 		if err.Error() == "kata sandi lama tidak sesuai" {
 			utils.BadRequestResponse(c, err.Error())
 			return
 		}
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	penggunaUUID := idPengguna.(uuid.UUID)
 
 	// Generate token baru
-	response, err := h.authService.RefreshToken(penggunaUUID)
+	response, err := h.authService.RefreshTokenByUUID(penggunaUUID)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, "Gagal generate token baru", nil)
 		return

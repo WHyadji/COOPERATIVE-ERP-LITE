@@ -38,7 +38,7 @@ func (h *PenjualanHandler) ProsesPenjualan(c *gin.Context) {
 
 	penjualan, err := h.penjualanService.ProsesPenjualan(koperasiUUID, kasirUUID, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *PenjualanHandler) List(c *gin.Context) {
 		koperasiUUID, tanggalMulai, tanggalAkhir, idKasirPtr, page, pageSize,
 	)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (h *PenjualanHandler) GetStruk(c *gin.Context) {
 
 	struk, err := h.penjualanService.GenerateStrukDigital(koperasiUUID, id)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -126,7 +126,7 @@ func (h *PenjualanHandler) GetHariIni(c *gin.Context) {
 
 	summary, err := h.penjualanService.GetSummaryHariIni(koperasiUUID)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (h *PenjualanHandler) GetTopProduk(c *gin.Context) {
 
 	topProduk, err := h.penjualanService.GetTopSellingProducts(koperasiUUID, periode, limit)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

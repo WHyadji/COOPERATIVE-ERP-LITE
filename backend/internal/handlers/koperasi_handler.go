@@ -46,7 +46,7 @@ func (h *KoperasiHandler) Create(c *gin.Context) {
 	// Buat koperasi
 	koperasi, err := h.koperasiService.BuatKoperasi(&req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h *KoperasiHandler) List(c *gin.Context) {
 	// Get list koperasi
 	koperasiList, total, err := h.koperasiService.GetSemuaKoperasi(page, pageSize)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (h *KoperasiHandler) Update(c *gin.Context) {
 	// Update koperasi
 	koperasi, err := h.koperasiService.PerbaruiKoperasi(id, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -172,7 +172,7 @@ func (h *KoperasiHandler) Delete(c *gin.Context) {
 
 	// Delete koperasi
 	if err := h.koperasiService.HapusKoperasi(id); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -202,7 +202,7 @@ func (h *KoperasiHandler) GetStatistik(c *gin.Context) {
 	// Get statistik
 	statistik, err := h.koperasiService.GetStatistikKoperasi(id)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

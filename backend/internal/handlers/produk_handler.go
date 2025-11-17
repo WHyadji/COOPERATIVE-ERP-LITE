@@ -35,7 +35,7 @@ func (h *ProdukHandler) Create(c *gin.Context) {
 
 	produk, err := h.produkService.BuatProduk(koperasiUUID, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (h *ProdukHandler) List(c *gin.Context) {
 
 	produkList, total, err := h.produkService.GetSemuaProduk(koperasiUUID, kategori, search, statusAktifPtr, page, pageSize)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -127,7 +127,7 @@ func (h *ProdukHandler) Update(c *gin.Context) {
 
 	produk, err := h.produkService.PerbaruiProduk(koperasiUUID, id, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h *ProdukHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.produkService.HapusProduk(koperasiUUID, id); err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -178,7 +178,7 @@ func (h *ProdukHandler) AdjustStok(c *gin.Context) {
 
 	produk, err := h.produkService.AdjustStok(koperasiUUID, id, req.Jumlah, req.Keterangan)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -192,7 +192,7 @@ func (h *ProdukHandler) GetStokRendah(c *gin.Context) {
 
 	produkList, err := h.produkService.GetProdukStokRendah(koperasiUUID)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

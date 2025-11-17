@@ -44,7 +44,7 @@ func (h *TransaksiHandler) Create(c *gin.Context) {
 			utils.BadRequestResponse(c, err.Error())
 			return
 		}
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (h *TransaksiHandler) List(c *gin.Context) {
 		koperasiUUID, tanggalMulai, tanggalAkhir, tipeTransaksi, page, pageSize,
 	)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (h *TransaksiHandler) Update(c *gin.Context) {
 			utils.BadRequestResponse(c, err.Error())
 			return
 		}
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (h *TransaksiHandler) Delete(c *gin.Context) {
 			utils.BadRequestResponse(c, err.Error())
 			return
 		}
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (h *TransaksiHandler) Reverse(c *gin.Context) {
 
 	reversedTransaksi, err := h.transaksiService.ReverseTransaksi(koperasiUUID, penggunaUUID, id, req.Keterangan)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 

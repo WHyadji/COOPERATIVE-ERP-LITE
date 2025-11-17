@@ -68,8 +68,21 @@ func PaginatedSuccessResponse(c *gin.Context, statusCode int, message string, da
 }
 
 // ValidationErrorResponse mengirim response untuk validation error
+// DEPRECATED: Use SafeValidationErrorResponse for error objects to prevent information disclosure
 func ValidationErrorResponse(c *gin.Context, errors interface{}) {
 	ErrorResponse(c, 400, "VALIDATION_ERROR", "Validasi gagal", errors)
+}
+
+// SafeValidationErrorResponse mengirim response untuk validation error dengan sanitasi otomatis
+// Gunakan fungsi ini ketika menerima error object untuk mencegah information disclosure
+func SafeValidationErrorResponse(c *gin.Context, err error) {
+	sanitizedMsg := SanitizeError(err)
+	ErrorResponse(c, 400, "VALIDATION_ERROR", sanitizedMsg, nil)
+}
+
+// BadRequestResponse mengirim response untuk bad request
+func BadRequestResponse(c *gin.Context, message string) {
+	ErrorResponse(c, 400, "BAD_REQUEST", message, nil)
 }
 
 // UnauthorizedResponse mengirim response untuk unauthorized access
@@ -93,8 +106,21 @@ func ConflictResponse(c *gin.Context, message string) {
 }
 
 // InternalServerErrorResponse mengirim response untuk internal server error
+// DEPRECATED: Use SafeInternalServerErrorResponse for error objects to prevent information disclosure
 func InternalServerErrorResponse(c *gin.Context, message string, details interface{}) {
 	ErrorResponse(c, 500, "INTERNAL_SERVER_ERROR", message, details)
+}
+
+// SafeInternalServerErrorResponse mengirim response untuk internal server error dengan sanitasi otomatis
+// Gunakan fungsi ini ketika menerima error object untuk mencegah information disclosure
+// Error details akan di-log secara internal tetapi tidak dikirim ke client
+func SafeInternalServerErrorResponse(c *gin.Context, err error) {
+	// TODO: Log the actual error internally for debugging when logger is implemented
+	// For now, error details are sanitized and only safe messages are sent to client
+
+	// Send sanitized message to client
+	sanitizedMsg := SanitizeError(err)
+	ErrorResponse(c, 500, "INTERNAL_SERVER_ERROR", sanitizedMsg, nil)
 }
 
 // CalculatePaginationMeta menghitung metadata pagination

@@ -38,7 +38,7 @@ func (h *SimpananHandler) CatatSetoran(c *gin.Context) {
 
 	simpanan, err := h.simpananService.CatatSetoran(koperasiUUID, penggunaUUID, &req)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *SimpananHandler) List(c *gin.Context) {
 		koperasiUUID, tipeSimpanan, idAnggotaPtr, tanggalMulai, tanggalAkhir, page, pageSize,
 	)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *SimpananHandler) GetSaldoAnggota(c *gin.Context) {
 
 	saldo, err := h.simpananService.GetSaldoSimpanan(koperasiUUID, idAnggota)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (h *SimpananHandler) GetRingkasan(c *gin.Context) {
 
 	ringkasan, err := h.simpananService.GetRingkasanSimpanan(koperasiUUID)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
@@ -120,7 +120,7 @@ func (h *SimpananHandler) GetLaporanSaldo(c *gin.Context) {
 
 	laporanSaldo, err := h.simpananService.GetLaporanSaldoSemuaAnggota(koperasiUUID)
 	if err != nil {
-		utils.InternalServerErrorResponse(c, err.Error(), nil)
+		utils.SafeInternalServerErrorResponse(c, err)
 		return
 	}
 
