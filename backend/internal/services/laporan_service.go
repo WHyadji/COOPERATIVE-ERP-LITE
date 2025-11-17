@@ -284,10 +284,10 @@ func (s *LaporanService) GenerateLaporanArusKas(idKoperasi uuid.UUID, tanggalMul
 
 	// Saldo kas awal periode
 	tanggalSebelum := periodeMulai.AddDate(0, 0, -1).Format("2006-01-02")
-	saldoKasAwal, _ := s.akunService.HitungSaldoAkun(akunKas.ID, tanggalSebelum)
+	saldoKasAwal, _ := s.akunService.HitungSaldoAkun(idKoperasi, akunKas.ID, tanggalSebelum)
 
 	// Saldo kas akhir periode
-	saldoKasAkhir, _ := s.akunService.HitungSaldoAkun(akunKas.ID, tanggalAkhir)
+	saldoKasAkhir, _ := s.akunService.HitungSaldoAkun(idKoperasi, akunKas.ID, tanggalAkhir)
 
 	// Untuk MVP, simplified cash flow (langsung dari mutasi kas)
 	laporan := &LaporanArusKas{
@@ -382,7 +382,7 @@ func (s *LaporanService) GenerateLaporanTransaksiHarian(idKoperasi uuid.UUID, ta
 	}
 
 	// Hitung saldo kas akhir hari
-	saldoKas, _ := s.akunService.HitungSaldoAkun(akunKas.ID, tanggal)
+	saldoKas, _ := s.akunService.HitungSaldoAkun(idKoperasi, akunKas.ID, tanggal)
 
 	// Hitung total kas masuk (debit ke kas)
 	type KasResult struct {
@@ -452,7 +452,7 @@ func (s *LaporanService) GetDashboardStats(idKoperasi uuid.UUID) (map[string]int
 	// Saldo kas
 	akunKas, err := s.akunService.DapatkanAkunByKode(idKoperasi, "1101")
 	if err == nil {
-		saldoKas, _ := s.akunService.HitungSaldoAkun(akunKas.ID, "")
+		saldoKas, _ := s.akunService.HitungSaldoAkun(idKoperasi, akunKas.ID, "")
 		stats["saldoKas"] = saldoKas
 	}
 
@@ -504,7 +504,7 @@ func (s *LaporanService) GenerateNeracaSaldo(idKoperasi uuid.UUID, tanggalPer st
 	var totalDebit, totalKredit float64
 
 	for _, akun := range akunList {
-		saldo, _ := s.akunService.HitungSaldoAkun(akun.ID, tanggalPer)
+		saldo, _ := s.akunService.HitungSaldoAkun(idKoperasi, akun.ID, tanggalPer)
 
 		item := NeracaSaldoItem{
 			KodeAkun: akun.KodeAkun,
