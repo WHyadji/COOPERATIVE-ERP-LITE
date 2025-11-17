@@ -24,7 +24,8 @@ func TestAmbilIDKoperasiDariContext(t *testing.T) {
 		id, ok := handlers.AmbilIDKoperasiDariContext(c)
 		assert.True(t, ok, "Should successfully get koperasi ID")
 		assert.Equal(t, expectedID, id, "Should return correct koperasi ID")
-		assert.Equal(t, 0, w.Code, "Should not write any response")
+		// When successful, no response is written, so body should be empty
+		assert.Empty(t, w.Body.String(), "Should not write any response body")
 	})
 
 	t.Run("Fail when koperasi ID not in context", func(t *testing.T) {
@@ -51,7 +52,8 @@ func TestAmbilIDPenggunaDariContext(t *testing.T) {
 		id, ok := handlers.AmbilIDPenggunaDariContext(c)
 		assert.True(t, ok, "Should successfully get pengguna ID")
 		assert.Equal(t, expectedID, id, "Should return correct pengguna ID")
-		assert.Equal(t, 0, w.Code, "Should not write any response")
+		// When successful, no response is written, so body should be empty
+		assert.Empty(t, w.Body.String(), "Should not write any response body")
 	})
 
 	t.Run("Fail when pengguna ID not in context", func(t *testing.T) {
@@ -61,7 +63,7 @@ func TestAmbilIDPenggunaDariContext(t *testing.T) {
 		id, ok := handlers.AmbilIDPenggunaDariContext(c)
 		assert.False(t, ok, "Should fail when ID not in context")
 		assert.Equal(t, uuid.Nil, id, "Should return nil UUID")
-		assert.Equal(t, 500, w.Code, "Should return 500 status code")
+		assert.Equal(t, 401, w.Code, "Should return 401 Unauthorized status code")
 	})
 }
 
@@ -80,7 +82,8 @@ func TestParseUUIDDariParameter(t *testing.T) {
 		id, ok := handlers.ParseUUIDDariParameter(c, "id")
 		assert.True(t, ok, "Should successfully parse UUID")
 		assert.Equal(t, validID, id, "Should return correct UUID")
-		assert.Equal(t, 0, w.Code, "Should not write any response")
+		// When successful, no response is written, so body should be empty
+		assert.Empty(t, w.Body.String(), "Should not write any response body")
 	})
 
 	t.Run("Fail when UUID is invalid", func(t *testing.T) {

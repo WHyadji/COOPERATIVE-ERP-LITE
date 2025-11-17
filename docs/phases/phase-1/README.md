@@ -10,9 +10,27 @@
 
 ## 📋 What's in This Folder
 
-| Document | Description | Use When |
-|----------|-------------|----------|
-| [implementation-guide.md](implementation-guide.md) | Complete week-by-week plan with code examples | Daily reference during MVP |
+This folder contains **three main documents** for Phase 1 MVP:
+
+| Document | Purpose | Update Frequency | Owner |
+|----------|---------|------------------|-------|
+| **[📚 Implementation Guide](./implementation-guide.md)** | Technical reference with code examples, architecture, and patterns | As needed | Tech Lead |
+| **[📈 Progress Tracking](./progress-tracking.md)** | Current status, completed work, metrics, and blockers | Weekly (Monday) | Tech Lead / PM |
+| **[✅ Todolist](./todolist.md)** | All tasks by week with checkboxes and priorities | Daily | Product Manager |
+
+### Quick Guide to Using These Documents
+
+**🆕 Starting Development?**
+- Read → [Implementation Guide](./implementation-guide.md)
+- Reference code examples and technical patterns
+
+**📊 Need Current Status?**
+- Check → [Progress Tracking](./progress-tracking.md)
+- See what's done, what's blocked, metrics
+
+**✅ Planning Your Week?**
+- Review → [Todolist](./todolist.md)
+- See all tasks, mark completed items
 
 ---
 
@@ -242,22 +260,30 @@ Deferred to Phase 2:
 
 ---
 
-## 📈 Weekly Progress Tracking
+## 📈 Current Progress (Quick View)
+
+**Last Updated:** November 17, 2025
 
 ```
-Week 1:  [ ] Backend foundation
-Week 2:  [ ] Frontend + Members
-Week 3:  [ ] Share capital
-Week 4:  [ ] Accounting
-Week 5:  [ ] Products & POS backend
-Week 6:  [ ] POS frontend
-Week 7:  [ ] Reports
-Week 8:  [ ] Member portal
-Week 9:  [ ] Testing complete
-Week 10: [ ] Deployed to production
-Week 11: [ ] 6 cooperatives live
-Week 12: [ ] 10 cooperatives live ✅
+Week 1:  [✅] Backend foundation (100%)
+Week 2:  [🔄] Frontend + Members (80% - backend done)
+Week 3:  [✅] Share capital (100%)
+Week 4:  [✅] Accounting (100%)
+Week 5:  [⏳] Products & POS backend (0%)
+Week 6:  [⏳] POS frontend (0%)
+Week 7:  [⏳] Reports (0%)
+Week 8:  [⏳] Member portal (0%)
+Week 9:  [⏳] Testing complete (0%)
+Week 10: [⏳] Deployed to production (0%)
+Week 11: [⏳] 6 cooperatives live (0%)
+Week 12: [⏳] 10 cooperatives live (0%)
+
+Overall Progress: 35% Complete
 ```
+
+**📊 For detailed progress and metrics:**
+- See [Progress Tracking](./progress-tracking.md)
+- See [Todolist](./todolist.md) for task breakdown
 
 ---
 
