@@ -53,7 +53,7 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 		}
 
 		// 3. Generate nomor referensi using transaction
-		nomorReferensi, err := s.GenerateNomorReferensiWithTx(tx, idKoperasi, req.TanggalTransaksi)
+		nomorReferensi, err := s.GenerateNomorReferensiDenganTransaksi(tx, idKoperasi, req.TanggalTransaksi)
 		if err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 		}
 
 		// 5. Auto-posting ke jurnal akuntansi within same transaction
-		if err := s.postingSimpananWithTx(tx, idKoperasi, idPengguna, simpanan.ID); err != nil {
+		if err := s.postingSimpananDenganTransaksi(tx, idKoperasi, idPengguna, simpanan.ID); err != nil {
 			return fmt.Errorf("gagal posting ke jurnal: %w", err)
 		}
 
@@ -102,7 +102,7 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 	// Use transaction with row-level locking to prevent race conditions
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		var err error
-		nomorReferensi, err = s.GenerateNomorReferensiWithTx(tx, idKoperasi, tanggal)
+		nomorReferensi, err = s.GenerateNomorReferensiDenganTransaksi(tx, idKoperasi, tanggal)
 		return err
 	})
 
@@ -113,9 +113,9 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 	return nomorReferensi, nil
 }
 
-// GenerateNomorReferensiWithTx menghasilkan nomor referensi menggunakan existing transaction
+// GenerateNomorReferensiDenganTransaksi menghasilkan nomor referensi menggunakan existing transaction
 // Format: SMP-YYYYMMDD-NNNN
-func (s *SimpananService) GenerateNomorReferensiWithTx(tx *gorm.DB, idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
+func (s *SimpananService) GenerateNomorReferensiDenganTransaksi(tx *gorm.DB, idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
 	tanggalStr := tanggal.Format("20060102")
 	tanggalDate := tanggal.Format("2006-01-02")
 
@@ -326,9 +326,9 @@ func (s *SimpananService) HitungTotalSimpananByTipe(idKoperasi uuid.UUID, tipeSi
 	return total, nil
 }
 
-// postingSimpananWithTx creates journal entry for simpanan within an existing transaction
+// postingSimpananDenganTransaksi creates journal entry for simpanan within an existing transaction
 // This ensures atomicity - if posting fails, simpanan record is also rolled back
-func (s *SimpananService) postingSimpananWithTx(tx *gorm.DB, idKoperasi, idPengguna, idSimpanan uuid.UUID) error {
+func (s *SimpananService) postingSimpananDenganTransaksi(tx *gorm.DB, idKoperasi, idPengguna, idSimpanan uuid.UUID) error {
 	// Get simpanan data
 	var simpanan models.Simpanan
 	if err := tx.First(&simpanan, idSimpanan).Error; err != nil {

@@ -113,13 +113,13 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 			}
 
 			// Kurangi stok produk within transaction
-			if err := s.produkService.KurangiStokWithTx(tx, itemReq.IDProduk, itemReq.Kuantitas); err != nil {
+			if err := s.produkService.KurangiStokDenganTransaksi(tx, itemReq.IDProduk, itemReq.Kuantitas); err != nil {
 				return fmt.Errorf("gagal mengurangi stok: %w", err)
 			}
 		}
 
 		// 3. Auto-posting ke jurnal akuntansi within same transaction
-		if err := s.postingPenjualanWithTx(tx, idKoperasi, idKasir, penjualan.ID); err != nil {
+		if err := s.postingPenjualanDenganTransaksi(tx, idKoperasi, idKasir, penjualan.ID); err != nil {
 			return fmt.Errorf("gagal posting ke jurnal: %w", err)
 		}
 
@@ -353,9 +353,9 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 	return topProduk, nil
 }
 
-// postingPenjualanWithTx creates journal entry for penjualan within an existing transaction
+// postingPenjualanDenganTransaksi creates journal entry for penjualan within an existing transaction
 // This ensures atomicity - if posting fails, penjualan and stock changes are also rolled back
-func (s *PenjualanService) postingPenjualanWithTx(tx *gorm.DB, idKoperasi, idPengguna, idPenjualan uuid.UUID) error {
+func (s *PenjualanService) postingPenjualanDenganTransaksi(tx *gorm.DB, idKoperasi, idPengguna, idPenjualan uuid.UUID) error {
 	// Get penjualan data with items
 	var penjualan models.Penjualan
 	if err := tx.Preload("ItemPenjualan.Produk").Where("id = ?", idPenjualan).First(&penjualan).Error; err != nil {
