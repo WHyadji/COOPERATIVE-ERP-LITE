@@ -69,7 +69,7 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 	// Hitung kembalian
 	kembalian := req.JumlahBayar - totalBelanja
 
-	// Proses dalam transaction
+	// Proses dalam transaction - includes auto-posting for data consistency
 	var penjualan models.Penjualan
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
@@ -112,25 +112,22 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 				return errors.New("gagal membuat item penjualan")
 			}
 
-			// Kurangi stok produk
-			if err := s.produkService.KurangiStok(itemReq.IDProduk, itemReq.Kuantitas); err != nil {
+			// Kurangi stok produk within transaction
+			if err := s.produkService.KurangiStokWithTx(tx, itemReq.IDProduk, itemReq.Kuantitas); err != nil {
 				return fmt.Errorf("gagal mengurangi stok: %w", err)
 			}
+		}
+
+		// 3. Auto-posting ke jurnal akuntansi within same transaction
+		if err := s.postingPenjualanWithTx(tx, idKoperasi, idKasir, penjualan.ID); err != nil {
+			return fmt.Errorf("gagal posting ke jurnal: %w", err)
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, err
-	}
-
-	// 3. Auto-posting ke jurnal akuntansi
-	err = s.transaksiService.PostingOtomatisPenjualan(idKoperasi, idKasir, penjualan.ID)
-	if err != nil {
-		// Warning: penjualan sudah tersimpan tapi posting gagal
-		// Bisa di-handle dengan background job untuk retry
-		return nil, fmt.Errorf("penjualan berhasil, tetapi posting gagal: %w", err)
+		return nil, err // Automatic rollback on any error
 	}
 
 	// Reload dengan relasi
@@ -354,4 +351,140 @@ func (s *PenjualanService) DapatkanTopProduk(idKoperasi uuid.UUID, limit int) ([
 	}
 
 	return topProduk, nil
+}
+
+// postingPenjualanWithTx creates journal entry for penjualan within an existing transaction
+// This ensures atomicity - if posting fails, penjualan and stock changes are also rolled back
+func (s *PenjualanService) postingPenjualanWithTx(tx *gorm.DB, idKoperasi, idPengguna, idPenjualan uuid.UUID) error {
+	// Get penjualan data with items
+	var penjualan models.Penjualan
+	if err := tx.Preload("ItemPenjualan.Produk").Where("id = ?", idPenjualan).First(&penjualan).Error; err != nil {
+		return errors.New("penjualan tidak ditemukan")
+	}
+
+	// Get required accounts
+	var akunKas, akunPenjualan, akunHPP, akunPersediaan models.Akun
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; err != nil {
+		return errors.New("akun kas tidak ditemukan")
+	}
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "4101").First(&akunPenjualan).Error; err != nil {
+		return errors.New("akun penjualan tidak ditemukan")
+	}
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "5201").First(&akunHPP).Error; err != nil {
+		return errors.New("akun HPP tidak ditemukan")
+	}
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1301").First(&akunPersediaan).Error; err != nil {
+		return errors.New("akun persediaan tidak ditemukan")
+	}
+
+	// Calculate total HPP
+	var totalHPP float64
+	for _, item := range penjualan.ItemPenjualan {
+		totalHPP += item.Produk.HargaBeli * float64(item.Kuantitas)
+	}
+
+	// Generate journal number within the same transaction
+	tanggalStr := penjualan.TanggalPenjualan.Format("20060102")
+	tanggalDate := penjualan.TanggalPenjualan.Format("2006-01-02")
+
+	var lastTransaksi models.Transaksi
+	err := tx.Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggalDate).
+		Order("nomor_jurnal DESC").
+		Limit(1).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		First(&lastTransaksi).Error
+
+	nomorUrut := 1
+	if err == nil && lastTransaksi.NomorJurnal != "" {
+		var parsedTanggal string
+		var parsedUrut int
+		_, scanErr := fmt.Sscanf(lastTransaksi.NomorJurnal, "JRN-%s-%04d", &parsedTanggal, &parsedUrut)
+		if scanErr == nil && parsedTanggal == tanggalStr {
+			nomorUrut = parsedUrut + 1
+		}
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	nomorJurnal := fmt.Sprintf("JRN-%s-%04d", tanggalStr, nomorUrut)
+
+	// Calculate totals for journal
+	totalDebit := penjualan.TotalBelanja
+	totalKredit := penjualan.TotalBelanja
+	if totalHPP > 0 {
+		totalDebit += totalHPP
+		totalKredit += totalHPP
+	}
+
+	// Create journal entry
+	transaksi := &models.Transaksi{
+		IDKoperasi:       idKoperasi,
+		NomorJurnal:      nomorJurnal,
+		TanggalTransaksi: penjualan.TanggalPenjualan,
+		Deskripsi:        fmt.Sprintf("Penjualan %s", penjualan.NomorPenjualan),
+		NomorReferensi:   penjualan.NomorPenjualan,
+		TipeTransaksi:    "penjualan",
+		TotalDebit:       totalDebit,
+		TotalKredit:      totalKredit,
+		StatusBalanced:   true,
+		DibuatOleh:       idPengguna,
+	}
+
+	if err := tx.Create(transaksi).Error; err != nil {
+		return fmt.Errorf("gagal membuat jurnal: %w", err)
+	}
+
+	// Create journal lines
+	barisTransaksi := []models.BarisTransaksi{
+		// Kas bertambah (debit)
+		{
+			IDTransaksi:  transaksi.ID,
+			IDAkun:       akunKas.ID,
+			JumlahDebit:  penjualan.TotalBelanja,
+			JumlahKredit: 0,
+			Keterangan:   "Penerimaan kas dari penjualan",
+		},
+		// Penjualan bertambah (kredit)
+		{
+			IDTransaksi:  transaksi.ID,
+			IDAkun:       akunPenjualan.ID,
+			JumlahDebit:  0,
+			JumlahKredit: penjualan.TotalBelanja,
+			Keterangan:   "Pendapatan penjualan",
+		},
+	}
+
+	// Add HPP entries if applicable
+	if totalHPP > 0 {
+		barisTransaksi = append(barisTransaksi,
+			models.BarisTransaksi{
+				IDTransaksi:  transaksi.ID,
+				IDAkun:       akunHPP.ID,
+				JumlahDebit:  totalHPP,
+				JumlahKredit: 0,
+				Keterangan:   "Harga Pokok Penjualan",
+			},
+			models.BarisTransaksi{
+				IDTransaksi:  transaksi.ID,
+				IDAkun:       akunPersediaan.ID,
+				JumlahDebit:  0,
+				JumlahKredit: totalHPP,
+				Keterangan:   "Pengurangan persediaan",
+			},
+		)
+	}
+
+	for _, baris := range barisTransaksi {
+		if err := tx.Create(&baris).Error; err != nil {
+			return fmt.Errorf("gagal membuat baris jurnal: %w", err)
+		}
+	}
+
+	// Update penjualan with transaction ID
+	penjualan.IDTransaksi = &transaksi.ID
+	if err := tx.Save(&penjualan).Error; err != nil {
+		return fmt.Errorf("gagal update penjualan dengan ID transaksi: %w", err)
+	}
+
+	return nil
 }

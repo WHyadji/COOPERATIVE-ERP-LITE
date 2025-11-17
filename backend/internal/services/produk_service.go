@@ -255,8 +255,13 @@ func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
 
 // KurangiStok mengurangi stok produk
 func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
+	return s.KurangiStokWithTx(s.db, id, jumlah)
+}
+
+// KurangiStokWithTx mengurangi stok produk within an existing transaction
+func (s *ProdukService) KurangiStokWithTx(tx *gorm.DB, id uuid.UUID, jumlah int) error {
 	var produk models.Produk
-	err := s.db.Where("id = ?", id).First(&produk).Error
+	err := tx.Where("id = ?", id).First(&produk).Error
 	if err != nil {
 		return errors.New("produk tidak ditemukan")
 	}
@@ -268,7 +273,7 @@ func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
 
 	// Kurangi stok
 	produk.Stok -= jumlah
-	err = s.db.Save(&produk).Error
+	err = tx.Save(&produk).Error
 	if err != nil {
 		return errors.New("gagal mengurangi stok")
 	}
