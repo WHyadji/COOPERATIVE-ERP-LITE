@@ -11,11 +11,11 @@ import (
 
 // JWTClaims mendefinisikan claims untuk JWT token
 type JWTClaims struct {
-	IDPengguna     uuid.UUID            `json:"idPengguna"`
-	IDKoperasi     uuid.UUID            `json:"idKoperasi"`
-	NamaPengguna   string               `json:"namaPengguna"`
-	NamaLengkap    string               `json:"namaLengkap"`
-	Peran          models.PeranPengguna `json:"peran"`
+	IDPengguna   uuid.UUID            `json:"idPengguna"`
+	IDKoperasi   uuid.UUID            `json:"idKoperasi"`
+	NamaPengguna string               `json:"namaPengguna"`
+	NamaLengkap  string               `json:"namaLengkap"`
+	Peran        models.PeranPengguna `json:"peran"`
 	jwt.RegisteredClaims
 }
 
