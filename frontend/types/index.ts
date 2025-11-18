@@ -439,6 +439,131 @@ export interface ProdukFormData {
 }
 
 // ----------------------------------------------------------------------------
+// POS / Sales (Penjualan) Types
+// ----------------------------------------------------------------------------
+
+export type MetodePembayaran = "tunai"; // MVP: cash only
+
+export interface ItemPenjualan {
+  id?: string;
+  idProduk: string;
+  kodeProduk?: string;
+  namaProduk: string;
+  kuantitas: number;
+  hargaSatuan: number;
+  subtotal: number;
+}
+
+export interface Penjualan {
+  id: string;
+  idKoperasi: string;
+  nomorPenjualan: string;         // Auto-generated: POS-YYYYMMDD-NNNN
+  tanggalPenjualan: string;
+  idAnggota?: string;
+  namaAnggota?: string;
+  nomorAnggota?: string;
+  totalBelanja: number;
+  metodePembayaran: MetodePembayaran;
+  jumlahBayar: number;
+  kembalian: number;
+  idKasir: string;
+  namaKasir: string;
+  idTransaksi?: string;           // Link to accounting journal entry
+  catatan?: string;
+  itemPenjualan: ItemPenjualan[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreatePenjualanRequest {
+  idAnggota?: string;
+  items: {
+    idProduk: string;
+    kuantitas: number;
+    hargaSatuan: number;
+  }[];
+  jumlahBayar: number;
+  catatan?: string;
+}
+
+export interface PenjualanResponse {
+  id: string;
+  nomorPenjualan: string;
+  tanggalPenjualan: string;
+  idAnggota?: string;
+  namaAnggota?: string;
+  nomorAnggota?: string;
+  totalBelanja: number;
+  metodePembayaran: MetodePembayaran;
+  jumlahBayar: number;
+  kembalian: number;
+  namaKasir: string;
+  catatan?: string;
+  itemPenjualan: {
+    id: string;
+    idProduk: string;
+    kodeProduk: string;
+    namaProduk: string;
+    kuantitas: number;
+    hargaSatuan: number;
+    subtotal: number;
+  }[];
+}
+
+export interface PenjualanListFilters {
+  tanggalMulai?: string;
+  tanggalAkhir?: string;
+  idAnggota?: string;
+  idKasir?: string;
+  search?: string;              // Search by sale number
+  page?: number;
+  pageSize?: number;
+}
+
+export interface StrukPenjualan {
+  nomorPenjualan: string;
+  tanggalPenjualan: string;
+  namaKoperasi: string;
+  alamatKoperasi?: string;
+  namaAnggota?: string;
+  nomorAnggota?: string;
+  itemPenjualan: {
+    namaProduk: string;
+    kuantitas: number;
+    hargaSatuan: number;
+    subtotal: number;
+  }[];
+  totalBelanja: number;
+  jumlahBayar: number;
+  kembalian: number;
+  namaKasir: string;
+  catatan?: string;
+}
+
+export interface RingkasanPenjualanHariIni {
+  tanggal: string;
+  jumlahTransaksi: number;
+  totalPenjualan: number;
+  totalKembalian: number;
+  totalPenerimaan: number;       // jumlahBayar total
+}
+
+export interface TopProduk {
+  idProduk: string;
+  kodeProduk: string;
+  namaProduk: string;
+  jumlahTerjual: number;
+  totalNilaiPenjualan: number;
+}
+
+// Frontend-only type for shopping cart
+export interface CartItem {
+  product: Produk;
+  quantity: number;
+  subtotal: number;
+}
+
+// ----------------------------------------------------------------------------
 // Utility Types
 // ----------------------------------------------------------------------------
 
