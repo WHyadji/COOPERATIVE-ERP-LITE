@@ -41,6 +41,11 @@ func (k *Koperasi) BeforeCreate(tx *gorm.DB) error {
 	if k.TahunBukuMulai == 0 {
 		k.TahunBukuMulai = 1
 	}
+	// Set default Pengaturan ke empty JSON object jika kosong
+	// PostgreSQL jsonb tidak menerima empty string
+	if k.Pengaturan == "" {
+		k.Pengaturan = "{}"
+	}
 	return nil
 }
 
