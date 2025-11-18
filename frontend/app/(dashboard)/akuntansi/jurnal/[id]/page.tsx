@@ -29,6 +29,7 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
   Print as PrintIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
@@ -39,6 +40,7 @@ import accountingApi from '@/lib/api/accountingApi';
 import type { Transaksi } from '@/types';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/lib/context/ToastContext';
+import TransactionForm from '@/components/accounting/TransactionForm';
 
 // ============================================================================
 // Transaction Detail Page Component
@@ -53,6 +55,8 @@ export default function TransactionDetailPage() {
   const [transaction, setTransaction] = useState<Transaksi | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // ============================================================================
   // Fetch Transaction Detail
@@ -88,7 +92,7 @@ export default function TransactionDetailPage() {
     return () => {
       ignore = true;
     };
-  }, [transactionId]);
+  }, [transactionId, refreshKey]);
 
   // ============================================================================
   // Handlers
@@ -96,6 +100,19 @@ export default function TransactionDetailPage() {
 
   const handleBack = () => {
     router.push('/akuntansi/jurnal');
+  };
+
+  const handleEdit = () => {
+    setFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setFormOpen(false);
+  };
+
+  const handleFormSuccess = () => {
+    setFormOpen(false);
+    setRefreshKey((prev) => prev + 1);
   };
 
   const handleDelete = async () => {
@@ -210,6 +227,9 @@ export default function TransactionDetailPage() {
         <Box sx={{ display: 'flex', gap: 1 }} className="no-print">
           <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleBack}>
             Kembali
+          </Button>
+          <Button variant="outlined" color="primary" startIcon={<EditIcon />} onClick={handleEdit}>
+            Edit
           </Button>
           <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleDelete}>
             Hapus
@@ -446,17 +466,38 @@ export default function TransactionDetailPage() {
         )}
       </Paper>
 
-      {/* Metadata */}
-      <Box sx={{ mt: 3, p: 2, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
-        <Typography variant="caption" color="text.secondary">
+      {/* Metadata & Audit Trail */}
+      <Box sx={{ mt: 3, p: 3, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+          Informasi Audit Trail
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
           ID Transaksi: {transaction.id}
         </Typography>
-        {transaction.tanggalDibuat && (
+
+        {transaction.namaDibuatOleh && transaction.tanggalDibuat && (
+          <Typography variant="body2" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            Dibuat oleh <strong>{transaction.namaDibuatOleh}</strong> pada{' '}
+            {formatDate(transaction.tanggalDibuat)}
+          </Typography>
+        )}
+
+        {transaction.namaDiperbaruiOleh && transaction.tanggalDiperbarui && (
+          <Typography variant="body2" color="text.secondary" display="block">
+            Terakhir diperbarui oleh <strong>{transaction.namaDiperbaruiOleh}</strong> pada{' '}
+            {formatDate(transaction.tanggalDiperbarui)}
+          </Typography>
+        )}
+
+        {!transaction.namaDibuatOleh && transaction.tanggalDibuat && (
           <Typography variant="caption" color="text.secondary" display="block">
             Dibuat: {formatDate(transaction.tanggalDibuat)}
           </Typography>
         )}
-        {transaction.tanggalDiperbarui && (
+
+        {!transaction.namaDiperbaruiOleh && transaction.tanggalDiperbarui && (
           <Typography variant="caption" color="text.secondary" display="block">
             Diperbarui: {formatDate(transaction.tanggalDiperbarui)}
           </Typography>
@@ -474,6 +515,14 @@ export default function TransactionDetailPage() {
           }
         }
       `}</style>
+
+      {/* Transaction Form Dialog */}
+      <TransactionForm
+        open={formOpen}
+        onClose={handleCloseForm}
+        onSuccess={handleFormSuccess}
+        transaction={transaction}
+      />
     </Box>
   );
 }

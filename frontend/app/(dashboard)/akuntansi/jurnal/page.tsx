@@ -29,6 +29,7 @@ import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -59,6 +60,7 @@ export default function JournalEntryPage() {
 
   // Transaction form dialog
   const [formOpen, setFormOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaksi | null>(null);
 
   // ============================================================================
   // Fetch Transactions
@@ -109,7 +111,19 @@ export default function JournalEntryPage() {
   // ============================================================================
 
   const handleCreate = () => {
+    setSelectedTransaction(null);
     setFormOpen(true);
+  };
+
+  const handleEdit = async (id: string) => {
+    try {
+      const transaction = await accountingApi.getTransactionById(id);
+      setSelectedTransaction(transaction);
+      setFormOpen(true);
+    } catch (err) {
+      console.error('Failed to fetch transaction:', err);
+      showError('Gagal memuat data transaksi. Silakan coba lagi.');
+    }
   };
 
   const handleView = (id: string) => {
@@ -311,6 +325,14 @@ export default function JournalEntryPage() {
                       </IconButton>
                       <IconButton
                         size="small"
+                        onClick={() => handleEdit(transaction.id)}
+                        title="Edit"
+                        color="primary"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
                         onClick={() =>
                           handleDelete(transaction.id, transaction.nomorJurnal)
                         }
@@ -348,6 +370,7 @@ export default function JournalEntryPage() {
         open={formOpen}
         onClose={handleCloseForm}
         onSuccess={handleFormSuccess}
+        transaction={selectedTransaction}
       />
     </Box>
   );

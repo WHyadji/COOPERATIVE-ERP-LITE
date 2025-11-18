@@ -39,7 +39,7 @@ import {
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import accountingApi from '@/lib/api/accountingApi';
-import type { Akun, CreateTransaksiRequest } from '@/types';
+import type { Akun, CreateTransaksiRequest, Transaksi } from '@/types';
 import { format } from 'date-fns';
 import { useToast } from '@/lib/context/ToastContext';
 
@@ -51,6 +51,7 @@ interface TransactionFormProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  transaction?: Transaksi | null;
 }
 
 interface LineItem {
@@ -68,8 +69,10 @@ export default function TransactionForm({
   open,
   onClose,
   onSuccess,
+  transaction = null,
 }: TransactionFormProps) {
   const { showSuccess } = useToast();
+  const isEditMode = !!transaction;
 
   // Form state
   const [nomorJurnal, setNomorJurnal] = useState('');
@@ -95,18 +98,40 @@ export default function TransactionForm({
   useEffect(() => {
     if (open) {
       fetchAccounts();
-      // Reset form when dialog opens
-      setNomorJurnal('');
-      setTanggalTransaksi(format(new Date(), 'yyyy-MM-dd'));
-      setDeskripsi('');
-      setNomorReferensi('');
-      setLineItems([
-        { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
+
+      // Pre-populate form if editing, otherwise reset
+      if (isEditMode && transaction) {
+        setNomorJurnal(transaction.nomorJurnal);
+        setTanggalTransaksi(transaction.tanggalTransaksi.split('T')[0]); // Extract date part
+        setDeskripsi(transaction.deskripsi);
+        setNomorReferensi(transaction.nomorReferensi || '');
+
+        // Populate line items
+        if (transaction.barisTransaksi && transaction.barisTransaksi.length > 0) {
+          setLineItems(
+            transaction.barisTransaksi.map((baris) => ({
+              idAkun: baris.idAkun,
+              jumlahDebit: baris.jumlahDebit.toString(),
+              jumlahKredit: baris.jumlahKredit.toString(),
+              keterangan: baris.keterangan || '',
+            }))
+          );
+        }
+      } else {
+        // Reset form for create mode
+        setNomorJurnal('');
+        setTanggalTransaksi(format(new Date(), 'yyyy-MM-dd'));
+        setDeskripsi('');
+        setNomorReferensi('');
+        setLineItems([
+          { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
         { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
       ]);
+      }
       setError('');
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, transaction]);
 
   const fetchAccounts = async () => {
     try {
@@ -251,8 +276,13 @@ export default function TransactionForm({
         })),
       };
 
-      await accountingApi.createTransaction(requestData);
-      showSuccess(`Transaksi "${nomorJurnal}" berhasil dibuat`);
+      if (isEditMode && transaction) {
+        await accountingApi.updateTransaction(transaction.id, requestData);
+        showSuccess(`Transaksi "${nomorJurnal}" berhasil diperbarui`);
+      } else {
+        await accountingApi.createTransaction(requestData);
+        showSuccess(`Transaksi "${nomorJurnal}" berhasil dibuat`);
+      }
       onSuccess();
     } catch (err: unknown) {
       console.error('Failed to create transaction:', err);
@@ -289,7 +319,9 @@ export default function TransactionForm({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Buat Jurnal Umum Baru</DialogTitle>
+        <DialogTitle>
+          {isEditMode ? 'Edit Jurnal Umum' : 'Buat Jurnal Umum Baru'}
+        </DialogTitle>
 
         <DialogContent>
           {error && (
