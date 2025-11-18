@@ -1,4 +1,4 @@
-.PHONY: help setup install-swag swagger build up down restart logs clean test quick-start dev
+.PHONY: help setup install-swag swagger build up down restart logs clean test quick-start dev dev-frontend dev-all frontend-setup frontend-build frontend-logs frontend-rebuild status
 
 # Default target
 help:
@@ -21,8 +21,15 @@ help:
 	@echo ""
 	@echo "Development Commands:"
 	@echo "  make dev            - Run backend in development mode"
+	@echo "  make dev-frontend   - Run frontend in development mode"
+	@echo "  make dev-all        - Run both backend and frontend"
 	@echo "  make test           - Run tests"
 	@echo "  make clean          - Clean build artifacts"
+	@echo ""
+	@echo "Frontend Commands:"
+	@echo "  make frontend-setup - Install frontend dependencies"
+	@echo "  make frontend-build - Build frontend for production"
+	@echo "  make frontend-logs  - View frontend container logs"
 	@echo ""
 	@echo "Database Commands:"
 	@echo "  make db-shell       - Connect to PostgreSQL shell"
@@ -32,8 +39,9 @@ help:
 # Quick start - setup and run everything
 quick-start: setup build up
 	@echo "✅ Cooperative ERP Lite is running!"
-	@echo "📍 Backend API: http://localhost:8080"
-	@echo "📍 Swagger Docs: http://localhost:8080/swagger/index.html"
+	@echo "📍 Frontend: http://localhost"
+	@echo "📍 Backend API: http://localhost/api/v1"
+	@echo "📍 Swagger Docs: http://localhost/swagger/index.html"
 	@echo ""
 	@echo "To view logs: make logs"
 	@echo "To stop: make down"
@@ -58,6 +66,8 @@ setup:
 	@$(MAKE) install-swag
 	@echo "4. Generating Swagger docs..."
 	@$(MAKE) swagger
+	@echo "5. Installing frontend dependencies..."
+	@$(MAKE) frontend-setup
 	@echo "✅ Setup complete!"
 
 # Install Swagger CLI
@@ -127,6 +137,22 @@ dev:
 	fi
 	@cd backend && go run cmd/api/main.go
 
+# Frontend development mode (run frontend without Docker)
+dev-frontend:
+	@echo "🔧 Starting frontend in development mode..."
+	@if [ ! -f frontend/.env.local ]; then \
+		echo "⚠️  Warning: frontend/.env.local not found. Using defaults."; \
+	fi
+	@cd frontend && npm run dev
+
+# Run both backend and frontend in development mode
+dev-all:
+	@echo "🔧 Starting all services in development mode..."
+	@echo "📍 Backend will run on: http://localhost:8080"
+	@echo "📍 Frontend will run on: http://localhost:3000"
+	@echo ""
+	@$(MAKE) -j2 dev dev-frontend
+
 # Database shell
 db-shell:
 	@docker compose exec postgres psql -U postgres -d koperasi_erp
@@ -169,3 +195,25 @@ lint:
 status:
 	@echo "📊 Service Status:"
 	@docker compose ps
+
+# Frontend-specific commands
+frontend-setup:
+	@echo "📦 Installing frontend dependencies..."
+	@cd frontend && npm install
+	@echo "✅ Frontend dependencies installed!"
+
+frontend-build:
+	@echo "🏗️  Building frontend..."
+	@cd frontend && npm run build
+	@echo "✅ Frontend built successfully!"
+
+frontend-logs:
+	@echo "📋 Frontend container logs:"
+	@docker compose logs -f frontend
+
+# Rebuild only frontend container
+frontend-rebuild:
+	@echo "🔄 Rebuilding frontend container..."
+	@docker compose build frontend
+	@docker compose up -d frontend
+	@echo "✅ Frontend container rebuilt!"

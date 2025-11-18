@@ -1,0 +1,86 @@
+# ============================================================================
+# Frontend .dockerignore - Optimize Docker build context
+# Excludes unnecessary files to reduce context size and improve caching
+# ============================================================================
+
+# Dependencies (will be reinstalled in container)
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build output (will be rebuilt in container)
+.next
+out
+build
+dist
+
+# Testing
+coverage
+.nyc_output
+*.lcov
+*.log
+
+# Environment variables (use build args instead)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+docs
+
+# Editor directories and files
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Vercel
+.vercel
+
+# TypeScript cache
+*.tsbuildinfo
+next-env.d.ts
+
+# Debugging
+.vscode-test
+
+# Testing
+__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+vitest.config.ts
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Logs
+logs
+*.log
+
+# OS
+Thumbs.db

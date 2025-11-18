@@ -41,6 +41,32 @@ services:
       - cooperative-network
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=http://backend:8080/api/v1
+    container_name: cooperative-erp-frontend
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost/api/v1
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cooperative-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
   nginx:
     image: nginx:1.28.0-alpine
     container_name: cooperative-erp-nginx
@@ -54,6 +80,7 @@ services:
       - ./nginx/logs:/var/log/nginx
     depends_on:
       - backend
+      - frontend
     networks:
       - cooperative-network
     restart: unless-stopped
