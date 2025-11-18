@@ -246,9 +246,11 @@ func (s *TransaksiService) generateNomorJurnalInTx(tx *gorm.DB, idKoperasi uuid.
 	// If there's a previous transaction, parse and increment
 	if err == nil && lastTransaksi.NomorJurnal != "" {
 		// Extract number from JRN-20250116-0001
+		// CRITICAL: Use %8s instead of %s to limit date string to exactly 8 characters (YYYYMMDD)
+		// Without the width specifier, %s greedily matches "20250120-0001" and parsing fails
 		var parsedTanggal string
 		var parsedUrut int
-		_, scanErr := fmt.Sscanf(lastTransaksi.NomorJurnal, "JRN-%s-%04d", &parsedTanggal, &parsedUrut)
+		_, scanErr := fmt.Sscanf(lastTransaksi.NomorJurnal, "JRN-%8s-%04d", &parsedTanggal, &parsedUrut)
 		if scanErr == nil && parsedTanggal == tanggalStr {
 			nomorUrut = parsedUrut + 1
 		}
