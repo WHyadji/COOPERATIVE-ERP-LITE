@@ -110,6 +110,70 @@ export interface MemberStatistics {
 }
 
 // ----------------------------------------------------------------------------
+// Share Capital (Simpanan) Types
+// ----------------------------------------------------------------------------
+
+export type TipeSimpanan = "pokok" | "wajib" | "sukarela";
+
+export interface Simpanan {
+  id: string;
+  idKoperasi: string;
+  idAnggota: string;
+  namaAnggota: string;
+  nomorAnggota: string;
+  tipeSimpanan: TipeSimpanan;
+  tanggalTransaksi: string;
+  jumlahSetoran: number;
+  keterangan: string;
+  nomorReferensi: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateSimpananRequest {
+  idAnggota: string;
+  tipeSimpanan: TipeSimpanan;
+  tanggalTransaksi: string;
+  jumlahSetoran: number;
+  keterangan?: string;
+}
+
+export interface SaldoSimpananAnggota {
+  idAnggota: string;
+  nomorAnggota: string;
+  namaAnggota: string;
+  simpananPokok: number;
+  simpananWajib: number;
+  simpananSukarela: number;
+  totalSimpanan: number;
+}
+
+export interface RingkasanSimpanan {
+  totalSimpananPokok: number;
+  totalSimpananWajib: number;
+  totalSimpananSukarela: number;
+  totalSemuaSimpanan: number;
+  jumlahAnggota: number;
+}
+
+export interface SimpananListFilters {
+  tipeSimpanan?: TipeSimpanan | "all";
+  idAnggota?: string;
+  tanggalMulai?: string;
+  tanggalAkhir?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface SimpananFormData {
+  idAnggota: string;
+  tipeSimpanan: TipeSimpanan | "";
+  tanggalTransaksi: Date | null;
+  jumlahSetoran: string;
+  keterangan: string;
+}
+
+// ----------------------------------------------------------------------------
 // API Response Types
 // ----------------------------------------------------------------------------
 
