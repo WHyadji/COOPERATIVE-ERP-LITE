@@ -144,6 +144,8 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 				simpanan.POST("", simpananHandler.CatatSetoran)
 				simpanan.GET("", simpananHandler.List)
 				simpanan.GET("/anggota/:idAnggota/saldo", simpananHandler.GetSaldoAnggota)
+				simpanan.GET("/ringkasan", simpananHandler.GetRingkasan)
+				simpanan.GET("/laporan-saldo", simpananHandler.GetLaporanSaldo)
 			}
 
 			// Akun (Chart of Accounts) routes
