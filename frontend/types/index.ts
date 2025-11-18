@@ -564,6 +564,97 @@ export interface CartItem {
 }
 
 // ----------------------------------------------------------------------------
+// Reports (Laporan) Types
+// ----------------------------------------------------------------------------
+
+// Common report item structure
+export interface ItemLaporanKeuangan {
+  kodeAkun: string;
+  namaAkun: string;
+  saldo: number;
+}
+
+// Balance Sheet (Neraca / Laporan Posisi Keuangan)
+export interface LaporanPosisiKeuangan {
+  tanggalLaporan: string;
+  aset: ItemLaporanKeuangan[];
+  totalAset: number;
+  kewajiban: ItemLaporanKeuangan[];
+  totalKewajiban: number;
+  modal: ItemLaporanKeuangan[];
+  totalModal: number;
+}
+
+// Income Statement (Laporan Laba Rugi)
+export interface LaporanLabaRugi {
+  periodeMulai: string;
+  periodeAkhir: string;
+  pendapatan: ItemLaporanKeuangan[];
+  totalPendapatan: number;
+  beban: ItemLaporanKeuangan[];
+  totalBeban: number;
+  labaRugiBersih: number;
+}
+
+// Cash Flow Statement (Laporan Arus Kas)
+export interface LaporanArusKas {
+  periodeMulai: string;
+  periodeAkhir: string;
+  arusKasOperasional: ItemLaporanKeuangan[];
+  totalOperasional: number;
+  arusKasInvestasi: ItemLaporanKeuangan[];
+  totalInvestasi: number;
+  arusKasPendanaan: ItemLaporanKeuangan[];
+  totalPendanaan: number;
+  kenaikanKasBersih: number;
+  saldoKasAwal: number;
+  saldoKasAkhir: number;
+}
+
+// Trial Balance (Neraca Saldo)
+export interface NeracaSaldoItem {
+  kodeAkun: string;
+  namaAkun: string;
+  tipeAkun: string;
+  saldoDebit: number;
+  saldoKredit: number;
+}
+
+export interface NeracaSaldo {
+  tanggalPer: string;
+  items: NeracaSaldoItem[];
+  totalDebit: number;
+  totalKredit: number;
+  isBalanced: boolean;
+}
+
+// Daily Transaction Report
+export interface LaporanTransaksiHarian {
+  tanggal: string;
+  totalKasMasuk: number;
+  totalKasKeluar: number;
+  saldoKasAkhir: number;
+  jumlahPenjualan: number;
+  jumlahSimpanan: number;
+}
+
+// General Ledger (Buku Besar) - extends existing LedgerEntry
+export interface BukuBesarResponse {
+  akun: {
+    kode: string;
+    nama: string;
+    tipe: TipeAkun;
+  };
+  periode: {
+    tanggalMulai: string;
+    tanggalAkhir: string;
+  };
+  transaksi: LedgerEntry[];
+  saldoAwal: number;
+  saldoAkhir: number;
+}
+
+// ----------------------------------------------------------------------------
 // Utility Types
 // ----------------------------------------------------------------------------
 
