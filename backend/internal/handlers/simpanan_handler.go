@@ -24,11 +24,21 @@ func NewSimpananHandler(simpananService *services.SimpananService) *SimpananHand
 
 // CatatSetoran handles POST /api/v1/simpanan/setor
 func (h *SimpananHandler) CatatSetoran(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
-	idPengguna, _ := c.Get("idPengguna")
-	penggunaUUID := idPengguna.(uuid.UUID)
+	idPengguna, exists := c.Get("idPengguna")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "UNAUTHORIZED", "User ID not found in context", nil)
+		return
+	}
+	penggunaUUID, ok := idPengguna.(uuid.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Invalid user ID type", nil)
+		return
+	}
 
 	var req services.CatatSetoranRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -47,8 +57,10 @@ func (h *SimpananHandler) CatatSetoran(c *gin.Context) {
 
 // List handles GET /api/v1/simpanan
 func (h *SimpananHandler) List(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
@@ -98,8 +110,10 @@ func (h *SimpananHandler) GetSaldoAnggota(c *gin.Context) {
 
 // GetRingkasan handles GET /api/v1/simpanan/ringkasan
 func (h *SimpananHandler) GetRingkasan(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	ringkasan, err := h.simpananService.DapatkanRingkasanSimpanan(koperasiUUID)
 	if err != nil {
@@ -112,8 +126,10 @@ func (h *SimpananHandler) GetRingkasan(c *gin.Context) {
 
 // GetLaporanSaldo handles GET /api/v1/simpanan/laporan-saldo
 func (h *SimpananHandler) GetLaporanSaldo(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	laporanSaldo, err := h.simpananService.DapatkanLaporanSaldoAnggota(koperasiUUID)
 	if err != nil {

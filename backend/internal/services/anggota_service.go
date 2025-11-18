@@ -530,9 +530,20 @@ func (s *AnggotaService) GetSemuaAnggota(idKoperasi uuid.UUID, status *models.St
 	return s.DapatkanSemuaAnggota(idKoperasi, statusStr, search, page, pageSize)
 }
 
-// GetAnggotaByID is an English wrapper for DapatkanAnggota
+// GetAnggotaByID is an English wrapper for DapatkanAnggota with multi-tenant isolation
 func (s *AnggotaService) GetAnggotaByID(idKoperasi, id uuid.UUID) (*models.AnggotaResponse, error) {
-	return s.DapatkanAnggota(id)
+	var anggota models.Anggota
+	err := s.db.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&anggota).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("anggota tidak ditemukan")
+		}
+		return nil, err
+	}
+
+	response := anggota.ToResponse()
+	return &response, nil
 }
 
 // GetAnggotaByNomor is an English wrapper for DapatkanAnggotaByNomor

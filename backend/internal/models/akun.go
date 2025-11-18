@@ -21,7 +21,7 @@ const (
 // Akun merepresentasikan Chart of Accounts (Bagan Akun)
 type Akun struct {
 	ID                uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
-	IDKoperasi        uuid.UUID      `gorm:"type:uuid;not null;index" json:"idKoperasi" validate:"required"`
+	IDKoperasi        uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:idx_koperasi_kode_akun" json:"idKoperasi" validate:"required"`
 	KodeAkun          string         `gorm:"type:varchar(20);not null;uniqueIndex:idx_koperasi_kode_akun" json:"kodeAkun" validate:"required"`
 	NamaAkun          string         `gorm:"type:varchar(255);not null" json:"namaAkun" validate:"required"`
 	TipeAkun          TipeAkun       `gorm:"type:varchar(20);not null" json:"tipeAkun" validate:"required,oneof=aset kewajiban modal pendapatan beban"`

@@ -25,8 +25,10 @@ func NewAnggotaHandler(anggotaService *services.AnggotaService) *AnggotaHandler 
 
 // Create handles POST /api/v1/anggota
 func (h *AnggotaHandler) Create(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	var req services.BuatAnggotaRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -45,8 +47,10 @@ func (h *AnggotaHandler) Create(c *gin.Context) {
 
 // List handles GET /api/v1/anggota
 func (h *AnggotaHandler) List(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
@@ -72,8 +76,10 @@ func (h *AnggotaHandler) List(c *gin.Context) {
 
 // GetByID handles GET /api/v1/anggota/:id
 func (h *AnggotaHandler) GetByID(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -93,8 +99,10 @@ func (h *AnggotaHandler) GetByID(c *gin.Context) {
 
 // GetByNomor handles GET /api/v1/anggota/nomor/:nomor
 func (h *AnggotaHandler) GetByNomor(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	nomorAnggota := c.Param("nomor")
 
@@ -109,8 +117,10 @@ func (h *AnggotaHandler) GetByNomor(c *gin.Context) {
 
 // Update handles PUT /api/v1/anggota/:id
 func (h *AnggotaHandler) Update(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -136,8 +146,10 @@ func (h *AnggotaHandler) Update(c *gin.Context) {
 
 // Delete handles DELETE /api/v1/anggota/:id
 func (h *AnggotaHandler) Delete(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -156,8 +168,10 @@ func (h *AnggotaHandler) Delete(c *gin.Context) {
 
 // SetPIN handles POST /api/v1/anggota/:id/set-pin
 func (h *AnggotaHandler) SetPIN(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -185,8 +199,10 @@ func (h *AnggotaHandler) SetPIN(c *gin.Context) {
 
 // ValidatePIN handles POST /api/v1/anggota/validate-pin
 func (h *AnggotaHandler) ValidatePIN(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	var req struct {
 		NomorAnggota string `json:"nomorAnggota" binding:"required"`
@@ -209,8 +225,10 @@ func (h *AnggotaHandler) ValidatePIN(c *gin.Context) {
 
 // GetStatistik handles GET /api/v1/anggota/statistik
 func (h *AnggotaHandler) GetStatistik(c *gin.Context) {
-	idKoperasi, _ := c.Get("idKoperasi")
-	koperasiUUID := idKoperasi.(uuid.UUID)
+	koperasiUUID, ok := utils.GetKoperasiID(c)
+	if !ok {
+		return // Error response already sent by GetKoperasiID
+	}
 
 	status := c.Query("status") // Get status filter from query params
 	jumlah, err := h.anggotaService.HitungJumlahAnggota(koperasiUUID, status)
