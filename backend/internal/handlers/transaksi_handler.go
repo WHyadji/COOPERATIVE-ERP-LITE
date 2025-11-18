@@ -94,8 +94,49 @@ func (h *TransaksiHandler) GetByID(c *gin.Context) {
 
 // Update handles PUT /api/v1/transaksi/:id
 func (h *TransaksiHandler) Update(c *gin.Context) {
-	// TODO: PerbaruiTransaksi method not yet implemented in service
-	utils.BadRequestResponse(c, "Fitur update transaksi belum tersedia")
+	// Get transaction ID from URL parameter
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.BadRequestResponse(c, "ID transaksi tidak valid")
+		return
+	}
+
+	// Get koperasi and user ID from middleware
+	idKoperasi, _ := c.Get("idKoperasi")
+	koperasiUUID := idKoperasi.(uuid.UUID)
+
+	idPengguna, _ := c.Get("idPengguna")
+	penggunaUUID := idPengguna.(uuid.UUID)
+
+	// Bind request body
+	var req services.BuatTransaksiRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ValidationErrorResponse(c, err.Error())
+		return
+	}
+
+	// Call service to update transaction
+	transaksi, err := h.transaksiService.PerbaruiTransaksi(id, koperasiUUID, penggunaUUID, &req)
+	if err != nil {
+		// Handle specific error cases
+		if err.Error() == "transaksi tidak ditemukan" {
+			utils.NotFoundResponse(c, err.Error())
+			return
+		}
+
+		// Check if validation error
+		if err.Error() == "total debit harus sama dengan total kredit" ||
+			err.Error() == "satu baris tidak boleh memiliki debit dan kredit sekaligus" {
+			utils.BadRequestResponse(c, err.Error())
+			return
+		}
+
+		utils.SafeInternalServerErrorResponse(c, err)
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Transaksi berhasil diperbarui", transaksi)
 }
 
 // Delete handles DELETE /api/v1/transaksi/:id

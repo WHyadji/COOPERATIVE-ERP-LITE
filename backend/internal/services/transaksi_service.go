@@ -144,6 +144,106 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 	return &response, nil
 }
 
+// PerbaruiTransaksi memperbarui transaksi yang sudah ada
+func (s *TransaksiService) PerbaruiTransaksi(id, idKoperasi, idPengguna uuid.UUID, req *BuatTransaksiRequest) (*models.TransaksiResponse, error) {
+	// Initialize validator
+	validator := validasi.Baru()
+
+	// Validasi business logic
+	if err := validator.TanggalTransaksi(req.TanggalTransaksi); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksWajib(req.Deskripsi, "deskripsi", 5, 500); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.NomorReferensi, "nomor referensi", 50); err != nil {
+		return nil, err
+	}
+
+	if err := validator.TeksOpsional(req.TipeTransaksi, "tipe transaksi", 50); err != nil {
+		return nil, err
+	}
+
+	// Validasi baris transaksi (debit = kredit)
+	if err := s.ValidasiTransaksi(req.BarisTransaksi); err != nil {
+		return nil, err
+	}
+
+	// Hitung total debit dan kredit
+	var totalDebit, totalKredit float64
+	for _, baris := range req.BarisTransaksi {
+		totalDebit += baris.JumlahDebit
+		totalKredit += baris.JumlahKredit
+	}
+
+	// Update transaksi dalam transaction
+	var transaksi models.Transaksi
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		// Ambil transaksi yang akan diupdate
+		if err := tx.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&transaksi).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("transaksi tidak ditemukan")
+			}
+			return errors.New("gagal mengambil transaksi")
+		}
+
+		// Hapus baris transaksi yang lama
+		if err := tx.Where("id_transaksi = ?", id).Delete(&models.BarisTransaksi{}).Error; err != nil {
+			return errors.New("gagal menghapus baris transaksi lama")
+		}
+
+		// Update header transaksi
+		transaksi.TanggalTransaksi = req.TanggalTransaksi
+		transaksi.Deskripsi = req.Deskripsi
+		transaksi.NomorReferensi = req.NomorReferensi
+		transaksi.TipeTransaksi = req.TipeTransaksi
+		transaksi.TotalDebit = totalDebit
+		transaksi.TotalKredit = totalKredit
+		transaksi.StatusBalanced = true
+		transaksi.DiperbaruiOleh = idPengguna
+
+		if err := tx.Save(&transaksi).Error; err != nil {
+			return errors.New("gagal memperbarui transaksi")
+		}
+
+		// Buat baris transaksi baru
+		for _, barisReq := range req.BarisTransaksi {
+			// Validasi akun exists
+			var akun models.Akun
+			if err := tx.Where("id = ? AND id_koperasi = ?", barisReq.IDAkun, idKoperasi).First(&akun).Error; err != nil {
+				return fmt.Errorf("akun %s tidak ditemukan", barisReq.IDAkun)
+			}
+
+			baris := models.BarisTransaksi{
+				IDTransaksi:  transaksi.ID,
+				IDAkun:       barisReq.IDAkun,
+				JumlahDebit:  barisReq.JumlahDebit,
+				JumlahKredit: barisReq.JumlahKredit,
+				Keterangan:   barisReq.Keterangan,
+			}
+
+			if err := tx.Create(&baris).Error; err != nil {
+				return errors.New("gagal membuat baris transaksi")
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Reload dengan baris transaksi
+	s.db.Preload("BarisTransaksi.Akun").First(&transaksi, transaksi.ID)
+
+	response := transaksi.ToResponse()
+	return &response, nil
+}
+
 // ValidasiTransaksi memvalidasi bahwa total debit = total kredit
 func (s *TransaksiService) ValidasiTransaksi(barisTransaksi []BuatBarisTransaksiRequest) error {
 	validator := validasi.Baru()
