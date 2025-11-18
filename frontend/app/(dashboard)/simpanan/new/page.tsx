@@ -18,9 +18,6 @@ import {
   Button,
   Grid,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormHelperText,
   Alert,
   RadioGroup,
@@ -33,7 +30,7 @@ import {
 import { Save as SaveIcon, Cancel as CancelIcon } from '@mui/icons-material';
 import simpananApi from '@/lib/api/simpananApi';
 import memberApi from '@/lib/api/memberApi';
-import type { CreateSimpananRequest, TipeSimpanan, Member } from '@/types';
+import type { CreateSimpananRequest, Member } from '@/types';
 import { format } from 'date-fns';
 
 // ============================================================================
