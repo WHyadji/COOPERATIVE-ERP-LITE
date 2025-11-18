@@ -14,6 +14,7 @@ import type {
   APIResponse,
   PaginatedResponse,
   TipeAkun,
+  LedgerEntry,
 } from '@/types';
 
 // ============================================================================
@@ -225,7 +226,7 @@ export const getAccountLedger = async (
   idAkun: string,
   tanggalMulai?: string,
   tanggalAkhir?: string
-): Promise<any[]> => {
+): Promise<LedgerEntry[]> => {
   const params: Record<string, string> = {
     idAkun,
   };
@@ -238,7 +239,7 @@ export const getAccountLedger = async (
     params.tanggalAkhir = tanggalAkhir;
   }
 
-  const response = await apiClient.get<APIResponse<any[]>>('/laporan/buku-besar', {
+  const response = await apiClient.get<APIResponse<LedgerEntry[]>>('/laporan/buku-besar', {
     params,
   });
 

@@ -368,6 +368,15 @@ export interface AkunFormData {
   deskripsi: string;
 }
 
+export interface LedgerEntry {
+  tanggal: string;
+  nomorJurnal: string;
+  deskripsi: string;
+  debit: number;
+  kredit: number;
+  saldo: number;
+}
+
 // ----------------------------------------------------------------------------
 // Utility Types
 // ----------------------------------------------------------------------------

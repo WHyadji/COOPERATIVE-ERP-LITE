@@ -31,21 +31,8 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import accountingApi from '@/lib/api/accountingApi';
-import type { Akun } from '@/types';
+import type { Akun, LedgerEntry } from '@/types';
 import { format, parseISO } from 'date-fns';
-
-// ============================================================================
-// Ledger Entry Interface
-// ============================================================================
-
-interface LedgerEntry {
-  tanggal: string;
-  nomorJurnal: string;
-  deskripsi: string;
-  debit: number;
-  kredit: number;
-  saldo: number;
-}
 
 // ============================================================================
 // Account Ledger Page Component
