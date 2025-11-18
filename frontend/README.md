@@ -50,12 +50,18 @@ frontend/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/login        # Login page
 │   └── (dashboard)/        # Protected dashboard
-│       ├── members/        # Member management
+│       ├── anggota/        # Member management
+│       ├── simpanan/       # Savings/Share capital
+│       ├── akuntansi/      # Accounting module
+│       │   ├── akun/       # Chart of accounts
+│       │   └── jurnal/     # Journal entries
 │       └── page.tsx        # Dashboard home
-├── components/layout/      # Sidebar & Header
+├── components/
+│   ├── accounting/         # Accounting components
+│   └── layout/            # Sidebar & Header
 ├── lib/
 │   ├── api/               # API integration
-│   └── context/           # Auth context
+│   └── context/           # Auth & Toast contexts
 └── types/                 # TypeScript definitions
 ```
 
@@ -74,6 +80,38 @@ frontend/
 - **Edit**: Inline editing with cancel
 - **Delete**: With confirmation
 
+### ✅ Savings Management (Simpanan)
+- **List**: Paginated table with filters by type & date range
+- **Create**: Transaction form with member selection
+- **View**: Balance summaries by member and type
+- **Types**: Simpanan Pokok, Wajib, Sukarela
+- **Reports**: Member balance summaries
+
+### ✅ Accounting Module (Akuntansi)
+- **Chart of Accounts (Akun)**:
+  - List with hierarchical display
+  - Create/Edit account forms
+  - Filter by account type (Aset, Kewajiban, Modal, Pendapatan, Beban)
+  - Account balance tracking
+  - Seed default Indonesian cooperative COA
+
+- **Journal Entries (Jurnal)**:
+  - Create/Edit journal entries with line items
+  - Double-entry validation (Debit = Kredit)
+  - Transaction detail view with audit trail
+  - Edit functionality with version tracking
+  - Balance status indicators
+  - Date range filtering
+  - Print-friendly transaction views
+  - Audit trail: Creator and updater tracking
+
+### ✅ User Experience
+- **Toast Notifications**: Professional feedback for all CRUD operations
+- **Audit Trail**: Complete tracking of who created/updated records
+- **Responsive Design**: Mobile-first Material-UI components
+- **Loading States**: Skeleton screens and spinners
+- **Error Handling**: User-friendly error messages
+
 ### ✅ Dashboard Layout
 - Responsive sidebar navigation
 - Mobile drawer
@@ -88,13 +126,45 @@ Contact backend team for test credentials.
 
 All endpoints use `/api/v1` prefix:
 
+### Authentication
 - `POST /auth/login` - Authentication
 - `GET /auth/profile` - User profile
-- `GET /anggota` - List members
+
+### Members (Anggota)
+- `GET /anggota` - List members with pagination
 - `POST /anggota` - Create member
-- `GET /anggota/:id` - Get member
+- `GET /anggota/:id` - Get member details
 - `PUT /anggota/:id` - Update member
 - `DELETE /anggota/:id` - Delete member
+- `GET /anggota/statistik` - Member statistics
+
+### Savings (Simpanan)
+- `GET /simpanan` - List savings transactions
+- `POST /simpanan` - Create savings transaction
+- `GET /simpanan/:id` - Get transaction details
+- `DELETE /simpanan/:id` - Delete transaction
+- `GET /simpanan/saldo/:idAnggota` - Get member balance
+- `GET /simpanan/ringkasan` - Get savings summary
+
+### Accounting (Akuntansi)
+- **Chart of Accounts**:
+  - `GET /akun` - List accounts with filters
+  - `POST /akun` - Create account
+  - `GET /akun/:id` - Get account details
+  - `PUT /akun/:id` - Update account
+  - `DELETE /akun/:id` - Delete account
+  - `GET /akun/:id/saldo` - Get account balance
+  - `POST /akun/seed-coa` - Seed default COA
+
+- **Transactions**:
+  - `GET /transaksi` - List transactions with pagination
+  - `POST /transaksi` - Create journal entry
+  - `GET /transaksi/:id` - Get transaction details
+  - `PUT /transaksi/:id` - Update journal entry
+  - `DELETE /transaksi/:id` - Delete transaction
+
+- **Reports**:
+  - `GET /laporan/buku-besar` - Get account ledger
 
 ## User Roles
 
@@ -125,13 +195,25 @@ npm run build
 
 ## Next Steps
 
-Placeholder pages to implement:
-- Savings Management (`/dashboard/simpanan`)
-- POS/Sales (`/dashboard/pos`)
-- Products (`/dashboard/products`)
-- Accounting (`/dashboard/accounting`)
-- Reports (`/dashboard/reports`)
-- Settings (`/dashboard/settings`)
+### Completed Features ✅
+- ✅ Member Management (`/anggota`)
+- ✅ Savings Management (`/simpanan`)
+- ✅ Chart of Accounts (`/akuntansi/akun`)
+- ✅ Journal Entries (`/akuntansi/jurnal`)
+- ✅ Toast Notification System
+- ✅ Audit Trail Tracking
+
+### In Progress 🚧
+- Account Ledger View (`/akuntansi/buku-besar`)
+- Financial Reports (`/laporan`)
+
+### Upcoming Features 📋
+- POS/Sales (`/pos`)
+- Products (`/produk`)
+- Inventory Management
+- Advanced Reports (Balance Sheet, P&L)
+- Settings (`/pengaturan`)
+- User Management
 
 ## Documentation
 
