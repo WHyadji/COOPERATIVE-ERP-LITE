@@ -63,13 +63,14 @@ nginx/ssl/
 *.crt
 *.csr
 
-# Test scripts (development only)
-test-*.sh
-check-*.sh
-debug-*.sh
-cleanup-*.sh
-seed-*.sh
-create-test-*.sh
+# Test scripts in root directory (development only)
+# Note: Scripts in scripts/ directory are tracked for organization
+/test-*.sh
+/check-*.sh
+/debug-*.sh
+/cleanup-*.sh
+/seed-*.sh
+/create-test-*.sh
 
 # Generated API documentation
 backend/api
