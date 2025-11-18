@@ -81,8 +81,8 @@ const menuItems: MenuItem[] = [
   {
     label: 'Produk',
     icon: <InventoryIcon />,
-    path: '/dashboard/products',
-    roles: ['admin', 'bendahara'],
+    path: '/produk',
+    roles: ['admin', 'bendahara', 'kasir'],
   },
   {
     label: 'Bagan Akun',
