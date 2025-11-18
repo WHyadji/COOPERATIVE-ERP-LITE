@@ -19,7 +19,7 @@ const (
 // Anggota merepresentasikan anggota koperasi
 type Anggota struct {
 	ID                uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
-	IDKoperasi        uuid.UUID      `gorm:"type:uuid;not null;index" json:"idKoperasi" validate:"required"`
+	IDKoperasi        uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:idx_koperasi_nomor" json:"idKoperasi" validate:"required"`
 	NomorAnggota      string         `gorm:"type:varchar(50);not null;uniqueIndex:idx_koperasi_nomor" json:"nomorAnggota" validate:"required"`
 	NamaLengkap       string         `gorm:"type:varchar(255);not null" json:"namaLengkap" validate:"required"`
 	NIK               string         `gorm:"type:varchar(16)" json:"nik" validate:"omitempty,len=16"` // Nomor Induk Kependudukan
