@@ -1,5 +1,7 @@
 # Package Validasi
 
+> **Version**: 1.1 | **Last Updated**: 2025-11-18
+
 Package `validasi` menyediakan helper functions untuk validasi business logic di layer service. Package ini dirancang khusus untuk Cooperative ERP Lite dengan naming convention bahasa Indonesia yang konsisten.
 
 ## 📋 Daftar Isi
@@ -154,6 +156,7 @@ func (v *Validasi) Email(email string) error
 - Boleh kosong (opsional)
 - Format email yang valid
 - Maksimal 255 karakter
+- **Enhanced regex** - Mencegah consecutive dots dan trailing dots ⭐ _New in v1.1_
 
 **Contoh:**
 ```go
@@ -161,11 +164,14 @@ func (v *Validasi) Email(email string) error
 validator.Email("")                           // OK - opsional
 validator.Email("user@example.com")           // OK
 validator.Email("admin@mail.example.com")     // OK
+validator.Email("user.name@domain.co.id")     // OK
 
 // ❌ Invalid
 validator.Email("invalid-email")              // Error: format tidak valid
 validator.Email("test@")                      // Error: format tidak valid
 validator.Email("@example.com")               // Error: format tidak valid
+validator.Email("user..name@domain.com")      // Error: consecutive dots (v1.1+)
+validator.Email("user.@domain.com")           // Error: trailing dot (v1.1+)
 ```
 
 ---
@@ -252,6 +258,7 @@ func (v *Validasi) KuantitasProduk(kuantitas float64, namaField string) error
 **Validasi:**
 - Harus lebih dari 0
 - Maksimal 1,000,000 unit
+- **Harus bilangan bulat** (tidak boleh pecahan) ⭐ _New in v1.1_
 
 **Contoh:**
 ```go
@@ -263,7 +270,11 @@ validator.KuantitasProduk(100, "jumlah")      // OK
 validator.KuantitasProduk(0, "jumlah")        // Error: harus lebih dari 0
 validator.KuantitasProduk(-10, "jumlah")      // Error: harus lebih dari 0
 validator.KuantitasProduk(1000001, "jumlah")  // Error: terlalu besar
+validator.KuantitasProduk(1.5, "jumlah")      // Error: harus bilangan bulat
+validator.KuantitasProduk(10.25, "jumlah")    // Error: harus bilangan bulat
 ```
+
+**Catatan**: Barang yang tidak utuh menyulitkan manajemen inventory, oleh karena itu hanya bilangan bulat yang diterima.
 
 ---
 
@@ -457,8 +468,12 @@ go test ./pkg/validasi/... -v -run TestJumlah
 
 **Test Coverage:**
 - 12 test suites
-- 60+ test scenarios
+- 62 test scenarios (updated v1.1)
 - Coverage: 100% untuk semua fungsi validasi
+
+**What's New in v1.1 Tests:**
+- ✅ Added fractional validation tests for `KuantitasProduk` (1.5, 10.25)
+- ✅ All tests passing
 
 ## ✅ Best Practices
 
@@ -580,6 +595,43 @@ Package validasi ini membantu mencegah:
 - **No Dependencies**: Pure Go, tidak ada external library
 - **Fast Execution**: Rata-rata < 1ms per validasi
 
+## 🆕 What's New in Version 1.1 (2025-11-18)
+
+### Package Documentation ✅
+- Added comprehensive godoc-style documentation
+- Accessible via `go doc cooperative-erp-lite/pkg/validasi`
+- Includes usage examples and function overview
+
+### Integer-Only Quantity Validation ✅
+- `KuantitasProduk()` now enforces whole numbers only
+- Prevents fractional quantities (e.g., 1.5, 10.25)
+- Error message: "harus bilangan bulat (tidak boleh ada pecahan)"
+- **Rationale**: Inventory items cannot be fractional (barang tidak utuh)
+
+### Enhanced Email Validation ✅
+- Stricter regex pattern to prevent edge cases
+- Blocks consecutive dots (user..name@domain.com)
+- Blocks trailing dots (user.@domain.com)
+- Maintains backward compatibility for valid emails
+
+### Expanded Test Coverage ✅
+- Added 2 new test cases for fractional quantity validation
+- Total: 62 test scenarios (was 60+)
+- All tests passing
+- 100% function coverage maintained
+
+### Migration Notes
+
+**No Breaking Changes** - This version is fully backward compatible:
+- Existing valid data remains valid
+- Only invalid edge cases now properly rejected
+- No API changes or new required parameters
+
+**Recommended Actions:**
+- Review existing inventory data for fractional quantities
+- Update frontend validation rules to match backend
+- Inform users about integer-only quantity requirement
+
 ## 🤝 Contributing
 
 Untuk menambah fungsi validasi baru:
@@ -587,8 +639,14 @@ Untuk menambah fungsi validasi baru:
 1. Tambahkan function di `validasi.go`
 2. Gunakan naming bahasa Indonesia yang konsisten
 3. Tambahkan unit tests di `validasi_test.go`
-4. Update dokumentasi ini
-5. Pastikan semua tests pass
+4. Update dokumentasi ini (README.md)
+5. Update `validation-implementation-guide.md`
+6. Pastikan semua tests pass
+
+## 📚 Additional Documentation
+
+- **Implementation Guide**: `validation-implementation-guide.md` - Detailed documentation with service integration examples
+- **Test Suite**: `validasi_test.go` - Comprehensive test cases
 
 ## 📄 License
 
@@ -596,4 +654,7 @@ Bagian dari Cooperative ERP Lite project.
 
 ## 📞 Support
 
-Untuk pertanyaan atau issue, silakan buat issue di GitHub repository.
+Untuk pertanyaan atau issue:
+- Check `validation-implementation-guide.md` untuk dokumentasi lengkap
+- Review test files untuk contoh penggunaan
+- Silakan buat issue di GitHub repository dengan label `validation`

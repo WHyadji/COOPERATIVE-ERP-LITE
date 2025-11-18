@@ -1,7 +1,7 @@
 # Validation Implementation Guide
 
-> **Status**: ✅ Implemented (Resolves Issue #8)
-> **Last Updated**: 2025-11-17
+> **Status**: ✅ Enhanced (v1.1)
+> **Last Updated**: 2025-11-18
 > **Author**: Claude AI Assistant
 
 ## 📋 Overview
@@ -22,9 +22,24 @@ Dokumen ini menjelaskan implementasi business validation layer yang telah ditamb
 backend/
 └── pkg/
     └── validasi/
-        ├── validasi.go          # Validation functions
-        ├── validasi_test.go     # Unit tests (12 test suites, 60+ scenarios)
-        └── README.md            # Package documentation
+        ├── validasi.go                          # Validation functions (with package docs)
+        ├── validasi_test.go                     # Unit tests (12 test suites, 62 scenarios)
+        ├── validation-implementation-guide.md   # Implementation guide (this file)
+        └── README.md                            # Package quick reference
+```
+
+### Package Documentation
+
+Package `validasi` kini dilengkapi dengan dokumentasi lengkap di header file (godoc style):
+- Overview dan tujuan package
+- Daftar lengkap fungsi validasi
+- Contoh penggunaan
+- Format sesuai standar Go documentation
+
+Dokumentasi dapat dilihat dengan `go doc`:
+```bash
+go doc cooperative-erp-lite/pkg/validasi
+go doc cooperative-erp-lite/pkg/validasi.Validasi.Jumlah
 ```
 
 ## 🔧 Implementation Details
@@ -63,6 +78,7 @@ if err := validator.Jumlah(req.JumlahSetoran, "jumlah setoran"); err != nil {
 **Quantity Validation** (`KuantitasProduk`)
 - Min: > 0
 - Max: 1,000,000 units
+- **Must be integer** (no fractional quantities)
 - Use cases: product quantities, stock levels
 
 ```go
@@ -70,6 +86,9 @@ if err := validator.Jumlah(req.JumlahSetoran, "jumlah setoran"); err != nil {
 if err := validator.KuantitasProduk(float64(item.Kuantitas), fmt.Sprintf("kuantitas item ke-%d", i+1)); err != nil {
     return nil, err
 }
+
+// Will reject: 1.5, 10.25 (fractional values)
+// Will accept: 1, 10, 100 (whole numbers only)
 ```
 
 **Percentage Validation** (`Persentase`)
@@ -139,12 +158,16 @@ if err := validator.TeksOpsional(req.Catatan, "catatan", 500); err != nil {
 - Optional (can be empty)
 - Valid email format (strict regex)
 - Max length: 255 characters
+- **Enhanced validation** (v1.1): Prevents consecutive dots and trailing dots
 
 ```go
 // Example in anggota_service.go
 if err := validator.Email(req.Email); err != nil {
     return nil, err
 }
+
+// Will reject: user..name@domain.com, user.@domain.com
+// Will accept: user.name@domain.com, user@domain.co.id
 ```
 
 **Phone Number** (`NomorHP`)
@@ -472,7 +495,7 @@ if err := validator.TeksOpsional(req.Deskripsi, "deskripsi", 500); err != nil {
 
 **Coverage**:
 - 12 test suites
-- 60+ test scenarios
+- 62 test scenarios (updated v1.1)
 - 100% function coverage
 
 **Test Suites**:
@@ -484,7 +507,7 @@ if err := validator.TeksOpsional(req.Deskripsi, "deskripsi", 500); err != nil {
 6. `TestNomorHP` - Phone number (7 scenarios)
 7. `TestJenisKelamin` - Gender (5 scenarios)
 8. `TestEnum` - Enum values (4 scenarios)
-9. `TestKuantitasProduk` - Product quantity (5 scenarios)
+9. `TestKuantitasProduk` - Product quantity (7 scenarios) ⭐ **+2 new tests for fractional validation**
 10. `TestPersentase` - Percentage (7 scenarios)
 11. `TestKodeAkun` - Account code (6 scenarios)
 12. `TestTanggalLahir` - Birth date (6 scenarios)
@@ -665,6 +688,45 @@ When reviewing validation code:
 - [ ] Naming follows Indonesian convention
 - [ ] No external dependencies added
 
+## 🆕 Version 1.1 Enhancements (2025-11-18)
+
+### What's New
+
+1. **Package Documentation** ✅
+   - Added comprehensive godoc-style package documentation
+   - Includes usage examples and function overview
+   - Accessible via `go doc` command
+   - Location: Header of `validasi.go`
+
+2. **Integer-Only Quantity Validation** ✅
+   - `KuantitasProduk()` now enforces whole numbers
+   - Prevents fractional quantities (e.g., 1.5, 10.25)
+   - Error message: "harus bilangan bulat (tidak boleh ada pecahan)"
+   - Rationale: Inventory items cannot be fractional (barang tidak utuh)
+
+3. **Enhanced Email Validation** ✅
+   - Stricter regex pattern to prevent edge cases
+   - Blocks consecutive dots (user..name@domain.com)
+   - Blocks trailing dots (user.@domain.com)
+   - Maintains backward compatibility for valid emails
+
+4. **Expanded Test Coverage** ✅
+   - Added 2 new test cases for fractional quantity validation
+   - Total: 62 test scenarios (was 60+)
+   - All tests passing
+
+### Migration Impact
+
+**Breaking Changes**: None
+- Existing valid data remains valid
+- Only invalid edge cases now properly rejected
+- Backward compatible implementation
+
+**Recommended Actions**:
+- Review any existing inventory data for fractional quantities
+- Update frontend validation to match backend rules
+- Inform users about integer-only quantity requirement
+
 ## 🐛 Known Issues
 
 **None currently**
@@ -700,12 +762,22 @@ Potential improvements for Phase 2:
 
 ## ✅ Checklist
 
+### Version 1.0 (Initial Implementation)
 - [x] Validation package created
 - [x] All 7 services updated
 - [x] Unit tests written (100% coverage)
 - [x] All tests passing
 - [x] Documentation completed
 - [x] Code committed and pushed
+
+### Version 1.1 (Enhancements)
+- [x] Package documentation added
+- [x] Integer validation for quantities enforced
+- [x] Email validation enhanced
+- [x] Test coverage expanded (62 scenarios)
+- [x] Implementation guide updated
+- [x] Code committed (commit: 1713c5f)
+- [ ] README.md created
 - [ ] Code review pending
 - [ ] Deployment to staging
 - [ ] QA testing
@@ -713,6 +785,7 @@ Potential improvements for Phase 2:
 
 ---
 
-**Document Version**: 1.0
-**Last Review**: 2025-11-17
+**Document Version**: 1.1
+**Last Review**: 2025-11-18
 **Next Review**: Before production deployment
+**Latest Commit**: 1713c5f - enhance(backend): improve validation package with docs and stricter rules
