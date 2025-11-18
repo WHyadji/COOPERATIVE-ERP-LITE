@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 const (
@@ -73,12 +72,6 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 		return nil, err
 	}
 
-	// Generate nomor jurnal
-	nomorJurnal, err := s.GenerateNomorJurnal(idKoperasi, req.TanggalTransaksi)
-	if err != nil {
-		return nil, err
-	}
-
 	// Hitung total debit dan kredit
 	var totalDebit, totalKredit float64
 	for _, baris := range req.BarisTransaksi {
@@ -87,9 +80,17 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 	}
 
 	// Buat transaksi dengan baris-barisnya dalam satu transaction
+	// IMPORTANT: GenerateNomorJurnal is now called INSIDE the transaction to prevent race conditions
 	var transaksi models.Transaksi
 
-	err = s.db.Transaction(func(tx *gorm.DB) error {
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		// Generate nomor jurnal INSIDE transaction with row-level locking
+		// This prevents race conditions when multiple requests come simultaneously
+		nomorJurnal, err := s.generateNomorJurnalInTx(tx, idKoperasi, req.TanggalTransaksi)
+		if err != nil {
+			return err
+		}
+
 		// Buat header transaksi
 		transaksi = models.Transaksi{
 			IDKoperasi:       idKoperasi,
@@ -211,41 +212,85 @@ func (s *TransaksiService) ValidasiTransaksi(barisTransaksi []BuatBarisTransaksi
 	return nil
 }
 
-// GenerateNomorJurnal menghasilkan nomor jurnal otomatis
+// generateNomorJurnalInTx menghasilkan nomor jurnal otomatis dalam transaction yang sudah ada
 // Format: JRN-YYYYMMDD-NNNN (contoh: JRN-20250116-0001)
-// Uses row-level locking to prevent race conditions in concurrent requests
-func (s *TransaksiService) GenerateNomorJurnal(idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
+// MUST be called within an existing transaction to maintain row-level locking throughout
+// the entire transaction lifecycle, preventing race conditions in concurrent requests
+//
+// Uses PostgreSQL advisory lock to prevent race conditions even when no rows exist yet.
+// This solves the "first transaction of the day" problem where SELECT FOR UPDATE
+// cannot lock non-existent rows.
+func (s *TransaksiService) generateNomorJurnalInTx(tx *gorm.DB, idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
 	tanggalStr := tanggal.Format("20060102")
 	tanggalDate := tanggal.Format("2006-01-02")
-	var nomorJurnal string
 
-	// Use transaction with row-level locking to prevent race conditions
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		// Lock and get the last journal number for this date
-		var lastTransaksi models.Transaksi
-		err := tx.Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggalDate).
-			Order("nomor_jurnal DESC").
-			Limit(1).
-			Clauses(clause.Locking{Strength: "UPDATE"}).
-			First(&lastTransaksi).Error
+	// CRITICAL: Use PostgreSQL advisory lock to prevent race conditions
+	// Advisory lock works even when no rows exist (solves first-transaction-of-day problem)
+	// Lock ID is derived from hash of (koperasi_id + date) to ensure uniqueness per koperasi per day
+	// Lock is automatically released when transaction commits/rolls back
+	lockKey := generateAdvisoryLockKey(idKoperasi, tanggalStr)
+	if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", lockKey).Error; err != nil {
+		return "", fmt.Errorf("gagal acquire advisory lock: %w", err)
+	}
 
-		nomorUrut := 1
+	// Now safely get the last journal number for this date
+	// Even if no row exists, we're protected by the advisory lock above
+	var lastTransaksi models.Transaksi
+	err := tx.Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggalDate).
+		Order("nomor_jurnal DESC").
+		Limit(1).
+		First(&lastTransaksi).Error
 
-		// If there's a previous transaction, parse and increment
-		if err == nil && lastTransaksi.NomorJurnal != "" {
-			// Extract number from JRN-20250116-0001
-			var parsedTanggal string
-			var parsedUrut int
-			_, scanErr := fmt.Sscanf(lastTransaksi.NomorJurnal, "JRN-%s-%04d", &parsedTanggal, &parsedUrut)
-			if scanErr == nil && parsedTanggal == tanggalStr {
-				nomorUrut = parsedUrut + 1
-			}
-		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return err
+	nomorUrut := 1
+
+	// If there's a previous transaction, parse and increment
+	if err == nil && lastTransaksi.NomorJurnal != "" {
+		// Extract number from JRN-20250116-0001
+		var parsedTanggal string
+		var parsedUrut int
+		_, scanErr := fmt.Sscanf(lastTransaksi.NomorJurnal, "JRN-%s-%04d", &parsedTanggal, &parsedUrut)
+		if scanErr == nil && parsedTanggal == tanggalStr {
+			nomorUrut = parsedUrut + 1
 		}
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", fmt.Errorf("gagal membaca transaksi terakhir: %w", err)
+	}
 
-		nomorJurnal = fmt.Sprintf("JRN-%s-%04d", tanggalStr, nomorUrut)
-		return nil
+	nomorJurnal := fmt.Sprintf("JRN-%s-%04d", tanggalStr, nomorUrut)
+	return nomorJurnal, nil
+}
+
+// generateAdvisoryLockKey generates a consistent int64 lock key from koperasi ID and date
+// This ensures the same key is generated for the same koperasi and date across all instances
+func generateAdvisoryLockKey(idKoperasi uuid.UUID, tanggalStr string) int64 {
+	// Combine koperasi ID and date to create unique lock key
+	// Use first 8 bytes of UUID XOR with hash of date string
+	h := int64(0)
+
+	// XOR first 8 bytes of UUID
+	uuidBytes := [16]byte(idKoperasi)
+	for i := 0; i < 8; i++ {
+		h = (h << 8) | int64(uuidBytes[i])
+	}
+
+	// XOR with simple hash of date string
+	for i := 0; i < len(tanggalStr); i++ {
+		h ^= int64(tanggalStr[i]) << uint(i%8*8)
+	}
+
+	return h
+}
+
+// GenerateNomorJurnal is a public wrapper for backward compatibility
+// It creates its own transaction if called outside of an existing transaction
+// WARNING: This method is deprecated for use in BuatTransaksi to avoid race conditions
+// Prefer using generateNomorJurnalInTx within an existing transaction instead
+func (s *TransaksiService) GenerateNomorJurnal(idKoperasi uuid.UUID, tanggal time.Time) (string, error) {
+	var nomorJurnal string
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		nomorJurnal, err = s.generateNomorJurnalInTx(tx, idKoperasi, tanggal)
+		return err
 	})
 
 	if err != nil {
