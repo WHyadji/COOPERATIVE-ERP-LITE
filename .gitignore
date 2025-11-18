@@ -62,3 +62,20 @@ nginx/ssl/
 *.key
 *.crt
 *.csr
+
+# Test scripts (development only)
+test-*.sh
+check-*.sh
+debug-*.sh
+cleanup-*.sh
+seed-*.sh
+create-test-*.sh
+
+# Generated API documentation
+backend/api
+backend/docs/docs.go
+backend/docs/swagger.json
+backend/docs/swagger.yaml
+
+# Backend utilities (development)
+backend/cmd/hashpass/
