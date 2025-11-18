@@ -262,6 +262,113 @@ export interface Cooperative {
 }
 
 // ----------------------------------------------------------------------------
+// Accounting (Akun & Transaksi) Types
+// ----------------------------------------------------------------------------
+
+export type TipeAkun = "aset" | "kewajiban" | "modal" | "pendapatan" | "beban";
+export type NormalSaldo = "debit" | "kredit";
+
+export interface Akun {
+  id: string;
+  idKoperasi: string;
+  kodeAkun: string;
+  namaAkun: string;
+  tipeAkun: TipeAkun;
+  idInduk?: string;
+  namaInduk?: string;
+  normalSaldo: NormalSaldo;
+  deskripsi?: string;
+  statusAktif: boolean;
+  saldo?: number;
+  tanggalDibuat?: string;
+  tanggalDiperbarui?: string;
+}
+
+export interface CreateAkunRequest {
+  kodeAkun: string;
+  namaAkun: string;
+  tipeAkun: TipeAkun;
+  idInduk?: string;
+  normalSaldo?: NormalSaldo;
+  deskripsi?: string;
+}
+
+export interface UpdateAkunRequest extends CreateAkunRequest {
+  statusAktif?: boolean;
+}
+
+export interface BarisTransaksi {
+  id?: string;
+  idAkun: string;
+  kodeAkun?: string;
+  namaAkun?: string;
+  jumlahDebit: number;
+  jumlahKredit: number;
+  keterangan?: string;
+}
+
+export interface Transaksi {
+  id: string;
+  idKoperasi: string;
+  nomorJurnal: string;
+  tanggalTransaksi: string;
+  deskripsi: string;
+  nomorReferensi?: string;
+  tipeTransaksi?: string;
+  totalDebit: number;
+  totalKredit: number;
+  statusBalanced: boolean;
+  barisTransaksi?: BarisTransaksi[];
+  tanggalDibuat?: string;
+  tanggalDiperbarui?: string;
+}
+
+export interface CreateTransaksiRequest {
+  nomorJurnal: string;
+  tanggalTransaksi: string;
+  deskripsi: string;
+  nomorReferensi?: string;
+  tipeTransaksi?: string;
+  barisTransaksi: {
+    idAkun: string;
+    jumlahDebit: number;
+    jumlahKredit: number;
+    keterangan?: string;
+  }[];
+}
+
+export interface TransaksiListFilters {
+  tanggalMulai?: string;
+  tanggalAkhir?: string;
+  tipeTransaksi?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface TransaksiFormData {
+  nomorJurnal: string;
+  tanggalTransaksi: Date | null;
+  deskripsi: string;
+  nomorReferensi: string;
+  tipeTransaksi: string;
+  barisTransaksi: {
+    idAkun: string;
+    jumlahDebit: string;
+    jumlahKredit: string;
+    keterangan: string;
+  }[];
+}
+
+export interface AkunFormData {
+  kodeAkun: string;
+  namaAkun: string;
+  tipeAkun: TipeAkun | "";
+  idInduk: string;
+  normalSaldo: NormalSaldo | "";
+  deskripsi: string;
+}
+
+// ----------------------------------------------------------------------------
 // Utility Types
 // ----------------------------------------------------------------------------
 

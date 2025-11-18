@@ -85,9 +85,15 @@ const menuItems: MenuItem[] = [
     roles: ['admin', 'bendahara'],
   },
   {
-    label: 'Akuntansi',
+    label: 'Bagan Akun',
     icon: <ReceiptIcon />,
-    path: '/dashboard/accounting',
+    path: '/akuntansi',
+    roles: ['admin', 'bendahara'],
+  },
+  {
+    label: 'Jurnal Umum',
+    icon: <ReceiptIcon />,
+    path: '/akuntansi/jurnal',
     roles: ['admin', 'bendahara'],
   },
   {
