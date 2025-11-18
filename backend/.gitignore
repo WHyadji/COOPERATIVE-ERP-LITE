@@ -30,6 +30,18 @@ go.work
 # Binary output
 bin/
 tmp/
+api
+main
+server
+accounting-ledger
 
 # Air (live reload)
 tmp/
+
+# Test coverage
+coverage.out
+*.coverprofile
+
+# Build artifacts
+*.test
+dist/
