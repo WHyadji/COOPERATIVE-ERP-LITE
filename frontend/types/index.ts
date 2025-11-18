@@ -378,6 +378,67 @@ export interface LedgerEntry {
 }
 
 // ----------------------------------------------------------------------------
+// Product (Produk) Types
+// ----------------------------------------------------------------------------
+
+export interface Produk {
+  id: string;
+  kodeProduk: string;
+  namaProduk: string;
+  kategori: string;
+  deskripsi?: string;
+  harga: number;           // Selling price
+  hargaBeli: number;       // Cost price / HPP
+  stok: number;
+  stokMinimum: number;
+  satuan: string;          // pcs, kg, liter, etc.
+  barcode?: string;
+  gambarUrl?: string;
+  statusAktif: boolean;
+}
+
+export interface CreateProdukRequest {
+  kodeProduk: string;
+  namaProduk: string;
+  kategori?: string;
+  deskripsi?: string;
+  harga: number;
+  hargaBeli?: number;
+  stok?: number;
+  stokMinimum?: number;
+  satuan?: string;
+  barcode?: string;
+  gambarUrl?: string;
+}
+
+export interface UpdateProdukRequest extends CreateProdukRequest {
+  statusAktif?: boolean;
+}
+
+export interface ProdukListFilters {
+  search?: string;
+  kategori?: string;
+  statusAktif?: boolean | "all";
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ProdukFormData {
+  kodeProduk: string;
+  namaProduk: string;
+  kategori: string;
+  deskripsi: string;
+  harga: string;
+  hargaBeli: string;
+  stok: string;
+  stokMinimum: string;
+  satuan: string;
+  barcode: string;
+  gambarUrl: string;
+  statusAktif: boolean;
+}
+
+// ----------------------------------------------------------------------------
 // Utility Types
 // ----------------------------------------------------------------------------
 
