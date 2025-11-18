@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "echo \"Warning: No tests yet. Add tests before production.\" && exit 0"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
