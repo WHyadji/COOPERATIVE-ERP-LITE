@@ -27,6 +27,7 @@ type Transaksi struct {
 	TotalKredit       float64        `gorm:"type:decimal(15,2);not null;default:0" json:"totalKredit"`
 	StatusBalanced    bool           `gorm:"type:boolean;default:false" json:"statusBalanced"` // Apakah debit = kredit
 	DibuatOleh        uuid.UUID      `gorm:"type:uuid" json:"dibuatOleh"`
+	DiperbaruiOleh    uuid.UUID      `gorm:"type:uuid" json:"diperbaruiOleh"`
 	TanggalDibuat     time.Time      `gorm:"autoCreateTime" json:"tanggalDibuat"`
 	TanggalDiperbarui time.Time      `gorm:"autoUpdateTime" json:"tanggalDiperbarui"`
 	TanggalDihapus    gorm.DeletedAt `gorm:"index" json:"-"`
@@ -108,16 +109,22 @@ func (BarisTransaksi) TableName() string {
 
 // TransaksiResponse adalah response untuk API
 type TransaksiResponse struct {
-	ID               uuid.UUID                `json:"id"`
-	NomorJurnal      string                   `json:"nomorJurnal"`
-	TanggalTransaksi time.Time                `json:"tanggalTransaksi"`
-	Deskripsi        string                   `json:"deskripsi"`
-	NomorReferensi   string                   `json:"nomorReferensi"`
-	TipeTransaksi    string                   `json:"tipeTransaksi"`
-	TotalDebit       float64                  `json:"totalDebit"`
-	TotalKredit      float64                  `json:"totalKredit"`
-	StatusBalanced   bool                     `json:"statusBalanced"`
-	BarisTransaksi   []BarisTransaksiResponse `json:"barisTransaksi,omitempty"`
+	ID                 uuid.UUID                `json:"id"`
+	NomorJurnal        string                   `json:"nomorJurnal"`
+	TanggalTransaksi   time.Time                `json:"tanggalTransaksi"`
+	Deskripsi          string                   `json:"deskripsi"`
+	NomorReferensi     string                   `json:"nomorReferensi"`
+	TipeTransaksi      string                   `json:"tipeTransaksi"`
+	TotalDebit         float64                  `json:"totalDebit"`
+	TotalKredit        float64                  `json:"totalKredit"`
+	StatusBalanced     bool                     `json:"statusBalanced"`
+	DibuatOleh         uuid.UUID                `json:"dibuatOleh,omitempty"`
+	NamaDibuatOleh     string                   `json:"namaDibuatOleh,omitempty"`
+	DiperbaruiOleh     uuid.UUID                `json:"diperbaruiOleh,omitempty"`
+	NamaDiperbaruiOleh string                   `json:"namaDiperbaruiOleh,omitempty"`
+	TanggalDibuat      time.Time                `json:"tanggalDibuat,omitempty"`
+	TanggalDiperbarui  time.Time                `json:"tanggalDiperbarui,omitempty"`
+	BarisTransaksi     []BarisTransaksiResponse `json:"barisTransaksi,omitempty"`
 }
 
 // BarisTransaksiResponse adalah response untuk baris transaksi
@@ -134,15 +141,19 @@ type BarisTransaksiResponse struct {
 // ToResponse mengkonversi Transaksi ke TransaksiResponse
 func (t *Transaksi) ToResponse() TransaksiResponse {
 	resp := TransaksiResponse{
-		ID:               t.ID,
-		NomorJurnal:      t.NomorJurnal,
-		TanggalTransaksi: t.TanggalTransaksi,
-		Deskripsi:        t.Deskripsi,
-		NomorReferensi:   t.NomorReferensi,
-		TipeTransaksi:    t.TipeTransaksi,
-		TotalDebit:       t.TotalDebit,
-		TotalKredit:      t.TotalKredit,
-		StatusBalanced:   t.StatusBalanced,
+		ID:                t.ID,
+		NomorJurnal:       t.NomorJurnal,
+		TanggalTransaksi:  t.TanggalTransaksi,
+		Deskripsi:         t.Deskripsi,
+		NomorReferensi:    t.NomorReferensi,
+		TipeTransaksi:     t.TipeTransaksi,
+		TotalDebit:        t.TotalDebit,
+		TotalKredit:       t.TotalKredit,
+		StatusBalanced:    t.StatusBalanced,
+		DibuatOleh:        t.DibuatOleh,
+		DiperbaruiOleh:    t.DiperbaruiOleh,
+		TanggalDibuat:     t.TanggalDibuat,
+		TanggalDiperbarui: t.TanggalDiperbarui,
 	}
 
 	// Convert baris transaksi jika ada
