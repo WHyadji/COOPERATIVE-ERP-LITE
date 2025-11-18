@@ -36,6 +36,7 @@ import accountingApi from '@/lib/api/accountingApi';
 import type { Transaksi, TransaksiListFilters } from '@/types';
 import { format, parseISO } from 'date-fns';
 import TransactionForm from '@/components/accounting/TransactionForm';
+import { useToast } from '@/lib/context/ToastContext';
 
 // ============================================================================
 // Journal Entry Page Component
@@ -43,6 +44,7 @@ import TransactionForm from '@/components/accounting/TransactionForm';
 
 export default function JournalEntryPage() {
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [transactions, setTransactions] = useState<Transaksi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -121,10 +123,11 @@ export default function JournalEntryPage() {
 
     try {
       await accountingApi.deleteTransaction(id);
+      showSuccess(`Transaksi "${nomorJurnal}" berhasil dihapus`);
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
       console.error('Failed to delete transaction:', err);
-      alert('Gagal menghapus transaksi. Silakan coba lagi.');
+      showError('Gagal menghapus transaksi. Silakan coba lagi.');
     }
   };
 

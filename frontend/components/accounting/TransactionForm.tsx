@@ -41,6 +41,7 @@ import {
 import accountingApi from '@/lib/api/accountingApi';
 import type { Akun, CreateTransaksiRequest } from '@/types';
 import { format } from 'date-fns';
+import { useToast } from '@/lib/context/ToastContext';
 
 // ============================================================================
 // Component Props
@@ -68,6 +69,8 @@ export default function TransactionForm({
   onClose,
   onSuccess,
 }: TransactionFormProps) {
+  const { showSuccess } = useToast();
+
   // Form state
   const [nomorJurnal, setNomorJurnal] = useState('');
   const [tanggalTransaksi, setTanggalTransaksi] = useState(
@@ -249,6 +252,7 @@ export default function TransactionForm({
       };
 
       await accountingApi.createTransaction(requestData);
+      showSuccess(`Transaksi "${nomorJurnal}" berhasil dibuat`);
       onSuccess();
     } catch (err: unknown) {
       console.error('Failed to create transaction:', err);
