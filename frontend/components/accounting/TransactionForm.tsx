@@ -24,12 +24,13 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  TableContainer,
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Paper,
   Divider,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -394,11 +395,15 @@ export default function TransactionForm({
                             <MenuItem value="">
                               <em>Pilih Akun</em>
                             </MenuItem>
-                            {accounts.map((account) => (
-                              <MenuItem key={account.id} value={account.id}>
-                                {account.kodeAkun} - {account.namaAkun}
-                              </MenuItem>
-                            ))}
+                            {loadingAccounts ? (
+                              <MenuItem disabled>Loading accounts...</MenuItem>
+                            ) : (
+                              accounts?.map((account) => (
+                                <MenuItem key={account.id} value={account.id}>
+                                  {account.kodeAkun} - {account.namaAkun}
+                                </MenuItem>
+                              ))
+                            )}
                           </Select>
                         </FormControl>
                       </TableCell>

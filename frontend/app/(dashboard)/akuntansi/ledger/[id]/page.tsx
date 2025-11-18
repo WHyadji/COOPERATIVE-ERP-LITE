@@ -28,7 +28,6 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   Print as PrintIcon,
-  Download as DownloadIcon,
 } from '@mui/icons-material';
 import accountingApi from '@/lib/api/accountingApi';
 import type { Akun, LedgerEntry } from '@/types';
@@ -51,7 +50,6 @@ export default function AccountLedgerPage() {
   // Filters
   const [tanggalMulai, setTanggalMulai] = useState('');
   const [tanggalAkhir, setTanggalAkhir] = useState('');
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // ============================================================================
   // Fetch Account Details
@@ -112,7 +110,7 @@ export default function AccountLedgerPage() {
     return () => {
       ignore = true;
     };
-  }, [accountId, tanggalMulai, tanggalAkhir, refreshKey]);
+  }, [accountId, tanggalMulai, tanggalAkhir]);
 
   // ============================================================================
   // Helper Functions

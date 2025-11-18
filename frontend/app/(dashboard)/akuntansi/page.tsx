@@ -55,7 +55,6 @@ export default function ChartOfAccountsPage() {
 
   // Account form dialog
   const [formOpen, setFormOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
   const [currentAccount, setCurrentAccount] = useState<Akun | null>(null);
 
   // ============================================================================
@@ -99,13 +98,11 @@ export default function ChartOfAccountsPage() {
   // ============================================================================
 
   const handleCreate = () => {
-    setEditMode(false);
     setCurrentAccount(null);
     setFormOpen(true);
   };
 
   const handleEdit = (account: Akun) => {
-    setEditMode(true);
     setCurrentAccount(account);
     setFormOpen(true);
   };
