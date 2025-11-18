@@ -57,7 +57,7 @@ func setupLaporanTestDB(t *testing.T) *gorm.DB {
 }
 
 // createTestKoperasiForLaporan creates a test cooperative with COA
-func createTestKoperasiForLaporan(t *testing.T, db *gorm.DB) (*models.Koperasi, *AkunService) {
+func createTestKoperasiForLaporan(_ *testing.T, db *gorm.DB) (*models.Koperasi, *AkunService) {
 	koperasi := &models.Koperasi{
 		ID:           uuid.New(),
 		NamaKoperasi: "Test Koperasi",

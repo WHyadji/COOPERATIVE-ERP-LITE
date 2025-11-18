@@ -175,9 +175,7 @@ func (s *KoperasiService) GetSemuaKoperasi(page, pageSize int) ([]models.Koperas
 
 	// Convert to response
 	responses := make([]models.Koperasi, len(koperasiList))
-	for i, koperasi := range koperasiList {
-		responses[i] = koperasi
-	}
+	copy(responses, koperasiList)
 
 	total := int64(len(responses))
 

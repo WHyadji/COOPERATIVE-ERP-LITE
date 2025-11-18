@@ -233,10 +233,11 @@ func (s *LaporanService) GenerateLaporanLabaRugi(idKoperasi uuid.UUID, tanggalMu
 		}
 
 		// Categorize by account type
-		if balance.TipeAkun == models.AkunPendapatan {
+		switch balance.TipeAkun {
+		case models.AkunPendapatan:
 			laporan.Pendapatan = append(laporan.Pendapatan, item)
 			laporan.TotalPendapatan += saldoPeriode
-		} else if balance.TipeAkun == models.AkunBeban {
+		case models.AkunBeban:
 			laporan.Beban = append(laporan.Beban, item)
 			laporan.TotalBeban += saldoPeriode
 		}
