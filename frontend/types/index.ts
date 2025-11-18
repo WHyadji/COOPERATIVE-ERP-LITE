@@ -319,6 +319,10 @@ export interface Transaksi {
   totalKredit: number;
   statusBalanced: boolean;
   barisTransaksi?: BarisTransaksi[];
+  dibuatOleh?: string;
+  namaDibuatOleh?: string;
+  diperbaruiOleh?: string;
+  namaDiperbaruiOleh?: string;
   tanggalDibuat?: string;
   tanggalDiperbarui?: string;
 }

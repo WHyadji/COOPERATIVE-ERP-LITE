@@ -209,6 +209,25 @@ export const createTransaction = async (
 };
 
 /**
+ * Update existing transaction (journal entry)
+ */
+export const updateTransaction = async (
+  id: string,
+  data: CreateTransaksiRequest
+): Promise<Transaksi> => {
+  const response = await apiClient.put<APIResponse<Transaksi>>(
+    `/transaksi/${id}`,
+    data
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.message || 'Failed to update transaction');
+  }
+
+  return response.data.data;
+};
+
+/**
  * Delete transaction
  */
 export const deleteTransaction = async (id: string): Promise<void> => {
@@ -268,6 +287,7 @@ const accountingApi = {
   getTransactions,
   getTransactionById,
   createTransaction,
+  updateTransaction,
   deleteTransaction,
 
   // Ledger functions
