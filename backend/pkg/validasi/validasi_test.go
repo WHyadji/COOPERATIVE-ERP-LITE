@@ -238,6 +238,8 @@ func TestKuantitasProduk(t *testing.T) {
 		{"Invalid 0", 0, "test", true},
 		{"Invalid negative", -10, "test", true},
 		{"Invalid too large", 1000001, "test", true},
+		{"Invalid fractional 1.5", 1.5, "test", true},
+		{"Invalid fractional 10.25", 10.25, "test", true},
 	}
 
 	for _, tt := range tests {

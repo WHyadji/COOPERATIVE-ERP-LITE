@@ -1,3 +1,34 @@
+// Package validasi menyediakan fungsi-fungsi validasi business logic untuk Cooperative ERP Lite.
+//
+// Package ini berisi helper validasi untuk berbagai kebutuhan business logic meliputi:
+//   - Validasi finansial (jumlah uang, kuantitas, persentase)
+//   - Validasi tanggal (tanggal transaksi, tanggal lahir)
+//   - Validasi string (teks wajib/opsional dengan batas panjang)
+//   - Validasi format (email, nomor HP, kode akun)
+//   - Validasi enum (jenis kelamin, status, dll)
+//
+// Semua error message menggunakan Bahasa Indonesia untuk pengalaman pengguna yang lebih baik.
+//
+// Penggunaan:
+//
+//	validator := validasi.Baru()
+//	if err := validator.Jumlah(amount, "jumlah setoran"); err != nil {
+//	    return err
+//	}
+//
+// Validasi yang tersedia:
+//   - Jumlah: Validasi nilai uang (max 999 juta, 2 desimal)
+//   - TanggalTransaksi: Validasi tanggal transaksi (tidak future, max 1 tahun)
+//   - TanggalLahir: Validasi tanggal lahir (min umur 17 tahun)
+//   - TeksWajib: Validasi teks dengan min/max panjang
+//   - TeksOpsional: Validasi teks opsional dengan max panjang
+//   - Email: Validasi format email
+//   - NomorHP: Validasi nomor HP Indonesia (08xx/+628xx)
+//   - JenisKelamin: Validasi jenis kelamin (L/P)
+//   - Enum: Validasi nilai enum terhadap daftar yang diizinkan
+//   - KuantitasProduk: Validasi kuantitas produk (bilangan bulat positif)
+//   - Persentase: Validasi nilai persentase (0-100, 2 desimal)
+//   - KodeAkun: Validasi format kode akun (XXXX atau XXXX-XX)
 package validasi
 
 import (
@@ -101,7 +132,8 @@ func (v *Validasi) Email(email string) error {
 	}
 
 	// Regex untuk validasi email yang lebih strict
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	// Mencegah consecutive dots dan trailing dots
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$`)
 	if !emailRegex.MatchString(email) {
 		return errors.New("format email tidak valid")
 	}
@@ -171,6 +203,11 @@ func (v *Validasi) KuantitasProduk(kuantitas float64, namaField string) error {
 	// Maksimal 1 juta unit (batas wajar)
 	if kuantitas > 1000000 {
 		return fmt.Errorf("%s terlalu besar (maksimal 1.000.000)", namaField)
+	}
+
+	// Validasi bilangan bulat (produk tidak boleh pecahan)
+	if kuantitas != math.Floor(kuantitas) {
+		return fmt.Errorf("%s harus bilangan bulat (tidak boleh ada pecahan)", namaField)
 	}
 
 	return nil
