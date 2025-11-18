@@ -40,12 +40,17 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-// cleanupTestData removes test data
+// cleanupTestData removes test data including soft-deleted records
 func cleanupTestData(db *gorm.DB, koperasiID uuid.UUID) {
-	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Anggota{})
-	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Transaksi{})
-	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Simpanan{})
+	// Delete in correct order to respect foreign keys
 	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Penjualan{})
+	db.Unscoped().Exec("DELETE FROM baris_transaksi WHERE id_transaksi IN (SELECT id FROM transaksi WHERE id_koperasi = ?)", koperasiID)
+	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Simpanan{})
+	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Transaksi{})
+	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Produk{})
+	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Akun{})
+	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Anggota{})
+	db.Unscoped().Where("id_koperasi = ?", koperasiID).Delete(&models.Pengguna{})
 	db.Unscoped().Where("id = ?", koperasiID).Delete(&models.Koperasi{})
 }
 

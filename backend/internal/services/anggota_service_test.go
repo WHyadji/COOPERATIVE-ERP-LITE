@@ -99,12 +99,20 @@ func TestHapusAnggota_WithPenjualanTransactions(t *testing.T) {
 		return
 	}
 
+	koperasiID := uuid.New()
+	defer cleanupTestData(db, koperasiID)
+
 	// Create test cooperative
 	koperasi := &models.Koperasi{
+		ID:           koperasiID,
 		NamaKoperasi: "Test Delete Member with Sales Koperasi",
 		Alamat:       "Test Address",
+		NoTelepon:    "08111111116",
+		Email:        "delpenjualan@test.com",
 	}
-	db.Create(koperasi)
+	if err := db.Create(koperasi).Error; err != nil {
+		t.Fatalf("Failed to create koperasi: %v", err)
+	}
 
 	// Create test member
 	member := &models.Anggota{
@@ -113,7 +121,23 @@ func TestHapusAnggota_WithPenjualanTransactions(t *testing.T) {
 		NamaLengkap:  "Test Member with Penjualan",
 		Status:       models.StatusAktif,
 	}
-	db.Create(member)
+	if err := db.Create(member).Error; err != nil {
+		t.Fatalf("Failed to create member: %v", err)
+	}
+
+	// Create a pengguna to use as kasir (required for penjualan)
+	kasir := &models.Pengguna{
+		IDKoperasi:   koperasi.ID,
+		NamaLengkap:  "Kasir Test",
+		NamaPengguna: "kasir_test",
+		Email:        "kasir@test.com",
+		Peran:        models.PeranKasir,
+		StatusAktif:  true,
+	}
+	kasir.SetKataSandi("password123")
+	if err := db.Create(kasir).Error; err != nil {
+		t.Fatalf("Failed to create kasir: %v", err)
+	}
 
 	// Create penjualan transaction for this member
 	penjualan := &models.Penjualan{
@@ -124,9 +148,11 @@ func TestHapusAnggota_WithPenjualanTransactions(t *testing.T) {
 		TotalBelanja:     50000,
 		MetodePembayaran: models.PembayaranTunai,
 		JumlahBayar:      50000,
-		IDKasir:          member.ID, // Use member ID as kasir for test
+		IDKasir:          kasir.ID,
 	}
-	db.Create(penjualan)
+	if err := db.Create(penjualan).Error; err != nil {
+		t.Fatalf("Failed to create penjualan: %v", err)
+	}
 
 	// Try to delete the member - should fail
 	service := NewAnggotaService(db)

@@ -374,24 +374,30 @@ func TestHapusAkun(t *testing.T) {
 	t.Run("delete account with sub-accounts (should fail)", func(t *testing.T) {
 		// Create parent
 		parentReq := &BuatAkunRequest{
-			KodeAkun: "1100",
+			KodeAkun: "1200",
 			NamaAkun: "Aset Lancar",
 			TipeAkun: models.AkunAset,
 		}
-		parent, _ := service.BuatAkun(koperasi.ID, parentReq)
+		parent, err := service.BuatAkun(koperasi.ID, parentReq)
+		assert.NoError(t, err)
+		assert.NotNil(t, parent)
 
 		// Create child
 		childReq := &BuatAkunRequest{
-			KodeAkun: "1101",
+			KodeAkun: "1201",
 			NamaAkun: "Kas",
 			TipeAkun: models.AkunAset,
 			IDInduk:  &parent.ID,
 		}
-		service.BuatAkun(koperasi.ID, childReq)
+		child, err := service.BuatAkun(koperasi.ID, childReq)
+		assert.NoError(t, err)
+		assert.NotNil(t, child)
 
-		err := service.HapusAkun(koperasi.ID, parent.ID)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "sub-akun")
+		// Try to delete parent with sub-accounts (should fail)
+		err = service.HapusAkun(koperasi.ID, parent.ID)
+		if assert.Error(t, err) {
+			assert.Contains(t, err.Error(), "sub-akun")
+		}
 	})
 }
 
@@ -405,6 +411,7 @@ func TestInisialisasiCOADefault(t *testing.T) {
 	service := NewAkunService(db)
 	koperasi := &models.Koperasi{ID: uuid.New(), NamaKoperasi: "Test", Email: "test@test.com", NoTelepon: "081234567890"}
 	db.Create(koperasi)
+	defer cleanupTestData(db, koperasi.ID)
 
 	err := service.InisialisasiCOADefault(koperasi.ID)
 	assert.NoError(t, err)
@@ -520,6 +527,8 @@ func TestMultiTenant_AccountIsolation(t *testing.T) {
 	koperasi2 := &models.Koperasi{ID: uuid.New(), NamaKoperasi: "Koperasi 2", Email: "kop2@test.com", NoTelepon: "081234567891"}
 	db.Create(koperasi1)
 	db.Create(koperasi2)
+	defer cleanupTestData(db, koperasi1.ID)
+	defer cleanupTestData(db, koperasi2.ID)
 
 	// Create accounts in both cooperatives with same code
 	req1 := &BuatAkunRequest{KodeAkun: "1101", NamaAkun: "Kas Koperasi 1", TipeAkun: models.AkunAset}
@@ -527,9 +536,11 @@ func TestMultiTenant_AccountIsolation(t *testing.T) {
 
 	akun1, err := service.BuatAkun(koperasi1.ID, req1)
 	assert.NoError(t, err)
+	assert.NotNil(t, akun1)
 
 	akun2, err := service.BuatAkun(koperasi2.ID, req2)
 	assert.NoError(t, err)
+	assert.NotNil(t, akun2)
 
 	// Verify accounts are different
 	assert.NotEqual(t, akun1.ID, akun2.ID)
