@@ -75,7 +75,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'POS / Kasir',
     icon: <PointOfSaleIcon />,
-    path: '/dashboard/pos',
+    path: '/pos',
     roles: ['admin', 'kasir'],
   },
   {
