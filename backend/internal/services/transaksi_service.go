@@ -666,3 +666,242 @@ func (s *TransaksiService) PostingOtomatisPenjualan(idKoperasi, idPengguna, idPe
 
 	return nil
 }
+
+// PostingOtomatisPenjualanWithTx membuat jurnal entry otomatis untuk penjualan menggunakan transaction yang diberikan.
+//
+// Method ini dirancang untuk dipanggil dalam transaction yang sama dengan pembuatan penjualan,
+// sehingga memastikan atomicity antara data penjualan dan jurnal akuntansi. Jika terjadi error
+// saat pembuatan jurnal, transaction akan di-rollback dan semua perubahan (penjualan, items, stock)
+// akan dibatalkan secara otomatis.
+//
+// Parameters:
+//   - tx: Database transaction yang sedang aktif
+//   - idKoperasi: ID koperasi pemilik penjualan
+//   - idPengguna: ID user yang melakukan posting
+//   - idPenjualan: ID penjualan yang akan dibuatkan jurnalnya
+//
+// Returns error jika:
+//   - Penjualan tidak ditemukan
+//   - Akun-akun yang diperlukan (Kas, Penjualan, HPP, Persediaan) tidak ditemukan
+//   - Gagal generate nomor jurnal
+//   - Gagal membuat transaksi atau baris transaksi
+func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperasi, idPengguna, idPenjualan uuid.UUID) error {
+	// Ambil data penjualan dengan items
+	var penjualan models.Penjualan
+	err := tx.Preload("ItemPenjualan.Produk").Where("id = ?", idPenjualan).First(&penjualan).Error
+	if err != nil {
+		return errors.New("penjualan tidak ditemukan")
+	}
+
+	// Dapatkan akun-akun yang diperlukan untuk jurnal penjualan
+	var akunKas, akunPenjualan, akunHPP, akunPersediaan models.Akun
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; err != nil {
+		return errors.New("akun kas tidak ditemukan")
+	}
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "4101").First(&akunPenjualan).Error; err != nil {
+		return errors.New("akun penjualan tidak ditemukan")
+	}
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "5201").First(&akunHPP).Error; err != nil {
+		return errors.New("akun HPP tidak ditemukan")
+	}
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1301").First(&akunPersediaan).Error; err != nil {
+		return errors.New("akun persediaan tidak ditemukan")
+	}
+
+	// Hitung total HPP
+	var totalHPP float64
+	for _, item := range penjualan.ItemPenjualan {
+		totalHPP += item.Produk.HargaBeli * float64(item.Kuantitas)
+	}
+
+	// Generate nomor jurnal dalam transaction yang sama
+	nomorJurnal, err := s.generateNomorJurnalInTx(tx, idKoperasi, penjualan.TanggalPenjualan)
+	if err != nil {
+		return fmt.Errorf("gagal generate nomor jurnal: %w", err)
+	}
+
+	// Hitung total debit dan kredit
+	totalDebit := penjualan.TotalBelanja + totalHPP
+	totalKredit := penjualan.TotalBelanja + totalHPP
+
+	// Buat header transaksi langsung menggunakan tx
+	transaksi := models.Transaksi{
+		IDKoperasi:       idKoperasi,
+		NomorJurnal:      nomorJurnal,
+		TanggalTransaksi: penjualan.TanggalPenjualan,
+		Deskripsi:        fmt.Sprintf("Penjualan %s", penjualan.NomorPenjualan),
+		NomorReferensi:   penjualan.NomorPenjualan,
+		TipeTransaksi:    "penjualan",
+		TotalDebit:       totalDebit,
+		TotalKredit:      totalKredit,
+		StatusBalanced:   true,
+		DibuatOleh:       idPengguna,
+	}
+
+	if err := tx.Create(&transaksi).Error; err != nil {
+		return errors.New("gagal membuat jurnal penjualan")
+	}
+
+	// Buat baris transaksi menggunakan tx
+	// 1. Kas bertambah (debit)
+	barisKas := models.BarisTransaksi{
+		IDTransaksi:  transaksi.ID,
+		IDAkun:       akunKas.ID,
+		JumlahDebit:  penjualan.TotalBelanja,
+		JumlahKredit: 0,
+		Keterangan:   "Penerimaan kas dari penjualan",
+	}
+	if err := tx.Create(&barisKas).Error; err != nil {
+		return errors.New("gagal membuat baris kas")
+	}
+
+	// 2. Penjualan bertambah (kredit)
+	barisPenjualan := models.BarisTransaksi{
+		IDTransaksi:  transaksi.ID,
+		IDAkun:       akunPenjualan.ID,
+		JumlahDebit:  0,
+		JumlahKredit: penjualan.TotalBelanja,
+		Keterangan:   "Pendapatan penjualan",
+	}
+	if err := tx.Create(&barisPenjualan).Error; err != nil {
+		return errors.New("gagal membuat baris penjualan")
+	}
+
+	// 3. Jika ada HPP, tambahkan jurnal HPP
+	if totalHPP > 0 {
+		barisHPP := models.BarisTransaksi{
+			IDTransaksi:  transaksi.ID,
+			IDAkun:       akunHPP.ID,
+			JumlahDebit:  totalHPP,
+			JumlahKredit: 0,
+			Keterangan:   "Harga Pokok Penjualan",
+		}
+		if err := tx.Create(&barisHPP).Error; err != nil {
+			return errors.New("gagal membuat baris HPP")
+		}
+
+		barisPersediaan := models.BarisTransaksi{
+			IDTransaksi:  transaksi.ID,
+			IDAkun:       akunPersediaan.ID,
+			JumlahDebit:  0,
+			JumlahKredit: totalHPP,
+			Keterangan:   "Pengurangan persediaan",
+		}
+		if err := tx.Create(&barisPersediaan).Error; err != nil {
+			return errors.New("gagal membuat baris persediaan")
+		}
+	}
+
+	// Update penjualan dengan ID transaksi menggunakan tx
+	penjualan.IDTransaksi = &transaksi.ID
+	if err := tx.Save(&penjualan).Error; err != nil {
+		return errors.New("gagal update ID transaksi di penjualan")
+	}
+
+	return nil
+}
+
+// PostingOtomatisSimpananWithTx membuat jurnal entry otomatis untuk simpanan menggunakan transaction yang diberikan.
+//
+// Method ini dirancang untuk dipanggil dalam transaction yang sama dengan pembuatan simpanan,
+// sehingga memastikan atomicity antara data simpanan dan jurnal akuntansi. Jika terjadi error
+// saat pembuatan jurnal, transaction akan di-rollback dan simpanan tidak akan tersimpan.
+//
+// Parameters:
+//   - tx: Database transaction yang sedang aktif
+//   - idKoperasi: ID koperasi pemilik simpanan
+//   - idPengguna: ID user yang melakukan posting
+//   - idSimpanan: ID simpanan yang akan dibuatkan jurnalnya
+//
+// Returns error jika:
+//   - Simpanan tidak ditemukan
+//   - Tipe simpanan tidak valid
+//   - Akun-akun yang diperlukan (Kas, Modal Simpanan) tidak ditemukan
+//   - Gagal generate nomor jurnal
+//   - Gagal membuat transaksi atau baris transaksi
+func (s *TransaksiService) PostingOtomatisSimpananWithTx(tx *gorm.DB, idKoperasi, idPengguna, idSimpanan uuid.UUID) error {
+	// Ambil data simpanan menggunakan tx
+	var simpanan models.Simpanan
+	err := tx.Where("id = ?", idSimpanan).First(&simpanan).Error
+	if err != nil {
+		return errors.New("simpanan tidak ditemukan")
+	}
+
+	// Tentukan akun modal berdasarkan tipe simpanan
+	var kodeAkunModal string
+	switch simpanan.TipeSimpanan {
+	case models.SimpananPokok:
+		kodeAkunModal = "3101" // Simpanan Pokok
+	case models.SimpananWajib:
+		kodeAkunModal = "3102" // Simpanan Wajib
+	case models.SimpananSukarela:
+		kodeAkunModal = "3103" // Simpanan Sukarela
+	default:
+		return errors.New("tipe simpanan tidak valid")
+	}
+
+	// Dapatkan akun kas dan akun modal menggunakan tx
+	var akunKas, akunModal models.Akun
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; err != nil {
+		return errors.New("akun kas tidak ditemukan")
+	}
+	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, kodeAkunModal).First(&akunModal).Error; err != nil {
+		return errors.New("akun modal tidak ditemukan")
+	}
+
+	// Generate nomor jurnal dalam transaction yang sama
+	nomorJurnal, err := s.generateNomorJurnalInTx(tx, idKoperasi, simpanan.TanggalTransaksi)
+	if err != nil {
+		return fmt.Errorf("gagal generate nomor jurnal: %w", err)
+	}
+
+	// Buat header transaksi langsung menggunakan tx
+	transaksi := models.Transaksi{
+		IDKoperasi:       idKoperasi,
+		NomorJurnal:      nomorJurnal,
+		TanggalTransaksi: simpanan.TanggalTransaksi,
+		Deskripsi:        fmt.Sprintf("Setoran %s", simpanan.TipeSimpanan),
+		NomorReferensi:   simpanan.NomorReferensi,
+		TipeTransaksi:    "simpanan",
+		TotalDebit:       simpanan.JumlahSetoran,
+		TotalKredit:      simpanan.JumlahSetoran,
+		StatusBalanced:   true,
+		DibuatOleh:       idPengguna,
+	}
+
+	if err := tx.Create(&transaksi).Error; err != nil {
+		return errors.New("gagal membuat jurnal simpanan")
+	}
+
+	// Buat baris debit (Kas) menggunakan tx
+	barisKas := models.BarisTransaksi{
+		IDTransaksi:  transaksi.ID,
+		IDAkun:       akunKas.ID,
+		JumlahDebit:  simpanan.JumlahSetoran,
+		JumlahKredit: 0,
+		Keterangan:   fmt.Sprintf("Setoran %s", simpanan.TipeSimpanan),
+	}
+	if err := tx.Create(&barisKas).Error; err != nil {
+		return errors.New("gagal membuat baris kas")
+	}
+
+	// Buat baris kredit (Modal) menggunakan tx
+	barisModal := models.BarisTransaksi{
+		IDTransaksi:  transaksi.ID,
+		IDAkun:       akunModal.ID,
+		JumlahDebit:  0,
+		JumlahKredit: simpanan.JumlahSetoran,
+		Keterangan:   fmt.Sprintf("Setoran %s", simpanan.TipeSimpanan),
+	}
+	if err := tx.Create(&barisModal).Error; err != nil {
+		return errors.New("gagal membuat baris modal")
+	}
+
+	// Update simpanan dengan ID transaksi menggunakan tx
+	simpanan.IDTransaksi = &transaksi.ID
+	if err := tx.Save(&simpanan).Error; err != nil {
+		return errors.New("gagal update ID transaksi di simpanan")
+	}
+
+	return nil
+}
