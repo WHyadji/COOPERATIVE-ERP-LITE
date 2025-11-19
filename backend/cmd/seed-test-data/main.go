@@ -67,17 +67,27 @@ func main() {
 	fmt.Printf("   ✓ Member: %s (%s)\n", anggota.NamaLengkap, anggota.NomorAnggota)
 	fmt.Printf("   ✓ PIN: 123456 (hashed)\n")
 
-	// 3. Create initial balance
-	fmt.Println("\n3. Creating initial balance...")
-	saldo := createInitialBalance(tx, anggota.ID, koperasi.ID)
-	fmt.Printf("   ✓ Simpanan Pokok: Rp %,.0f\n", saldo.SimpananPokok)
-	fmt.Printf("   ✓ Simpanan Wajib: Rp %,.0f\n", saldo.SimpananWajib)
-	fmt.Printf("   ✓ Simpanan Sukarela: Rp %,.0f\n", saldo.SimpananSukarela)
-
-	// 4. Create sample transactions
-	fmt.Println("\n4. Creating sample transactions...")
+	// 3. Create sample transactions
+	fmt.Println("\n3. Creating sample transactions...")
 	transactions := createSampleTransactions(tx, anggota.ID, koperasi.ID)
 	fmt.Printf("   ✓ Created %d transactions\n", len(transactions))
+
+	// Calculate and display totals
+	var totalPokok, totalWajib, totalSukarela float64
+	for _, t := range transactions {
+		switch t.TipeSimpanan {
+		case models.SimpananPokok:
+			totalPokok += t.JumlahSetoran
+		case models.SimpananWajib:
+			totalWajib += t.JumlahSetoran
+		case models.SimpananSukarela:
+			totalSukarela += t.JumlahSetoran
+		}
+	}
+	fmt.Printf("   ✓ Simpanan Pokok: Rp %,.0f\n", totalPokok)
+	fmt.Printf("   ✓ Simpanan Wajib: Rp %,.0f\n", totalWajib)
+	fmt.Printf("   ✓ Simpanan Sukarela: Rp %,.0f\n", totalSukarela)
+	fmt.Printf("   ✓ Total Simpanan: Rp %,.0f\n", totalPokok+totalWajib+totalSukarela)
 
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
@@ -99,8 +109,8 @@ func main() {
 func createTestKoperasi(db *gorm.DB) *models.Koperasi {
 	var koperasi models.Koperasi
 
-	// Try to find existing test cooperative
-	err := db.Where("nomor_badan_hukum = ?", "TEST-E2E-001").First(&koperasi).Error
+	// Try to find existing test cooperative by name
+	err := db.Where("nama_koperasi = ?", "Koperasi Test E2E").First(&koperasi).Error
 	if err == nil {
 		fmt.Println("   → Using existing test cooperative")
 		return &koperasi
@@ -108,27 +118,14 @@ func createTestKoperasi(db *gorm.DB) *models.Koperasi {
 
 	// Create new test cooperative
 	koperasi = models.Koperasi{
-		ID:               uuid.New(),
-		NamaKoperasi:     "Koperasi Test E2E",
-		NomorBadanHukum:  "TEST-E2E-001",
-		TanggalBerdiri:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		Alamat:           "Jl. Test E2E No. 123",
-		Kelurahan:        "Test Kelurahan",
-		Kecamatan:        "Test Kecamatan",
-		KotaKabupaten:    "Test City",
-		Provinsi:         "Test Province",
-		KodePos:          "12345",
-		NomorTelepon:     "08123456789",
-		Email:            "test@e2e.com",
-		Website:          "https://test-e2e.com",
-		JumlahAnggota:    1,
-		TotalAset:        5000000,
-		SimpananPokok:    1000000,
-		SimpananWajib:    500000,
-		SimpananSukarela: 200000,
-		Aktif:            true,
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
+		ID:            uuid.New(),
+		NamaKoperasi:  "Koperasi Test E2E",
+		Alamat:        "Jl. Test E2E No. 123, Jakarta",
+		NoTelepon:     "08123456789",
+		Email:         "test@e2e.com",
+		LogoURL:       "",
+		TahunBukuMulai: 1, // January
+		Pengaturan:    "{}",
 	}
 
 	if err := db.Create(&koperasi).Error; err != nil {
@@ -167,7 +164,7 @@ func createTestMember(db *gorm.DB, koperasiID uuid.UUID) *models.Anggota {
 		NIK:              "1234567890123456",
 		JenisKelamin:     "L",
 		TempatLahir:      "Jakarta",
-		TanggalLahir:     tanggalLahir,
+		TanggalLahir:     &tanggalLahir,
 		Alamat:           "Jl. Test Member No. 1",
 		RT:               "001",
 		RW:               "002",
@@ -176,14 +173,12 @@ func createTestMember(db *gorm.DB, koperasiID uuid.UUID) *models.Anggota {
 		KotaKabupaten:    "Jakarta",
 		Provinsi:         "DKI Jakarta",
 		KodePos:          "12345",
-		NomorTelepon:     "081234567890",
+		NoTelepon:        "081234567890",
 		Email:            "test.member@email.com",
 		Pekerjaan:        "Karyawan Swasta",
 		TanggalBergabung: tanggalBergabung,
 		Status:           models.StatusAktif,
-		PIN:              string(hashedPIN),
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
+		PINPortal:        string(hashedPIN),
 	}
 
 	if err := db.Create(&anggota).Error; err != nil {
@@ -191,37 +186,6 @@ func createTestMember(db *gorm.DB, koperasiID uuid.UUID) *models.Anggota {
 	}
 
 	return &anggota
-}
-
-// createInitialBalance creates the initial balance for test member
-func createInitialBalance(db *gorm.DB, anggotaID, koperasiID uuid.UUID) *models.SaldoSimpananAnggota {
-	var saldo models.SaldoSimpananAnggota
-
-	// Try to find existing balance
-	err := db.Where("id_anggota = ? AND id_koperasi = ?", anggotaID, koperasiID).First(&saldo).Error
-	if err == nil {
-		fmt.Println("   → Using existing balance")
-		return &saldo
-	}
-
-	// Create new balance
-	saldo = models.SaldoSimpananAnggota{
-		ID:               uuid.New(),
-		IDKoperasi:       koperasiID,
-		IDAnggota:        anggotaID,
-		SimpananPokok:    1000000,  // Rp 1,000,000
-		SimpananWajib:    2500000,  // Rp 2,500,000
-		SimpananSukarela: 500000,   // Rp 500,000
-		TotalSimpanan:    4000000,  // Rp 4,000,000
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
-	}
-
-	if err := db.Create(&saldo).Error; err != nil {
-		log.Fatalf("Failed to create initial balance: %v", err)
-	}
-
-	return &saldo
 }
 
 // createSampleTransactions creates sample transactions for testing
@@ -244,13 +208,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SP-2024-001",
 			TipeSimpanan:     models.SimpananPokok,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-			Jumlah:           1000000,
+			JumlahSetoran:    1000000,
 			Keterangan:       "Setoran Simpanan Pokok",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 		// Simpanan Wajib (monthly deposits)
 		{
@@ -259,13 +219,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SW-2024-001",
 			TipeSimpanan:     models.SimpananWajib,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
-			Jumlah:           500000,
+			JumlahSetoran:    500000,
 			Keterangan:       "Setoran Simpanan Wajib Januari 2024",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 		{
 			ID:               uuid.New(),
@@ -273,13 +229,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SW-2024-002",
 			TipeSimpanan:     models.SimpananWajib,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 2, 15, 10, 0, 0, 0, time.UTC),
-			Jumlah:           500000,
+			JumlahSetoran:    500000,
 			Keterangan:       "Setoran Simpanan Wajib Februari 2024",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 		{
 			ID:               uuid.New(),
@@ -287,13 +239,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SW-2024-003",
 			TipeSimpanan:     models.SimpananWajib,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC),
-			Jumlah:           500000,
+			JumlahSetoran:    500000,
 			Keterangan:       "Setoran Simpanan Wajib Maret 2024",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 		{
 			ID:               uuid.New(),
@@ -301,13 +249,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SW-2024-004",
 			TipeSimpanan:     models.SimpananWajib,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 4, 15, 10, 0, 0, 0, time.UTC),
-			Jumlah:           500000,
+			JumlahSetoran:    500000,
 			Keterangan:       "Setoran Simpanan Wajib April 2024",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 		{
 			ID:               uuid.New(),
@@ -315,13 +259,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SW-2024-005",
 			TipeSimpanan:     models.SimpananWajib,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 5, 15, 10, 0, 0, 0, time.UTC),
-			Jumlah:           500000,
+			JumlahSetoran:    500000,
 			Keterangan:       "Setoran Simpanan Wajib Mei 2024",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 		// Simpanan Sukarela (voluntary deposits)
 		{
@@ -330,13 +270,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SS-2024-001",
 			TipeSimpanan:     models.SimpananSukarela,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 2, 1, 10, 0, 0, 0, time.UTC),
-			Jumlah:           200000,
+			JumlahSetoran:    200000,
 			Keterangan:       "Setoran Simpanan Sukarela",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 		{
 			ID:               uuid.New(),
@@ -344,13 +280,9 @@ func createSampleTransactions(db *gorm.DB, anggotaID, koperasiID uuid.UUID) []mo
 			IDAnggota:        anggotaID,
 			NomorReferensi:   "SS-2024-002",
 			TipeSimpanan:     models.SimpananSukarela,
-			TipeTransaksi:    models.TipeSetoran,
 			TanggalTransaksi: time.Date(2024, 3, 20, 10, 0, 0, 0, time.UTC),
-			Jumlah:           300000,
+			JumlahSetoran:    300000,
 			Keterangan:       "Setoran Simpanan Sukarela",
-			MetodePembayaran: "tunai",
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
 		},
 	}
 
