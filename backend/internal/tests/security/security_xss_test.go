@@ -132,6 +132,17 @@ func TestXSS_JSONEncoding(t *testing.T) {
 	}
 	db.Create(koperasi)
 
+	// Create user for authentication
+	user := &models.Pengguna{
+		IDKoperasi:   koperasi.ID,
+		NamaPengguna: "testuser",
+		Email:        "test@test.com",
+		Peran:        models.PeranAdmin,
+		NamaLengkap:  "Test User",
+		StatusAktif:  true,
+	}
+	db.Create(user)
+
 	// Create member with potential XSS content
 	member := &models.Anggota{
 		IDKoperasi:     koperasi.ID,
@@ -157,6 +168,14 @@ func TestXSS_JSONEncoding(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+
+	// Add mock auth middleware
+	router.Use(func(c *gin.Context) {
+		c.Set("idKoperasi", koperasi.ID)
+		c.Set("idPengguna", user.ID)
+		c.Set("peran", user.Peran)
+		c.Next()
+	})
 
 	anggotaService := services.NewAnggotaService(db)
 	anggotaHandler := handlers.NewAnggotaHandler(anggotaService)
