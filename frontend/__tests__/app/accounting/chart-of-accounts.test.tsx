@@ -3,49 +3,49 @@
 // Integration tests for COA list and management
 // ============================================================================
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import ChartOfAccountsPage from '@/app/(dashboard)/akuntansi/page';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Akun } from '@/types';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import ChartOfAccountsPage from "@/app/(dashboard)/akuntansi/page";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Akun } from "@/types";
 
 // Mock dependencies
-vi.mock('@/lib/api/accountingApi');
-vi.mock('next/navigation', () => ({
+vi.mock("@/lib/api/accountingApi");
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     back: vi.fn(),
   }),
 }));
 
-describe('Chart of Accounts Page', () => {
+describe("Chart of Accounts Page", () => {
   const mockAccounts: Akun[] = [
     {
-      id: '1',
-      idKoperasi: 'kop1',
-      kodeAkun: '1101',
-      namaAkun: 'Kas',
-      tipeAkun: 'aset',
-      normalSaldo: 'debit',
+      id: "1",
+      idKoperasi: "kop1",
+      kodeAkun: "1101",
+      namaAkun: "Kas",
+      tipeAkun: "aset",
+      normalSaldo: "debit",
       statusAktif: true,
     },
     {
-      id: '2',
-      idKoperasi: 'kop1',
-      kodeAkun: '1102',
-      namaAkun: 'Bank',
-      tipeAkun: 'aset',
-      normalSaldo: 'debit',
+      id: "2",
+      idKoperasi: "kop1",
+      kodeAkun: "1102",
+      namaAkun: "Bank",
+      tipeAkun: "aset",
+      normalSaldo: "debit",
       statusAktif: true,
     },
     {
-      id: '3',
-      idKoperasi: 'kop1',
-      kodeAkun: '2101',
-      namaAkun: 'Hutang Usaha',
-      tipeAkun: 'kewajiban',
-      normalSaldo: 'kredit',
+      id: "3",
+      idKoperasi: "kop1",
+      kodeAkun: "2101",
+      namaAkun: "Hutang Usaha",
+      tipeAkun: "kewajiban",
+      normalSaldo: "kredit",
       statusAktif: true,
     },
   ];
@@ -59,18 +59,18 @@ describe('Chart of Accounts Page', () => {
   // Page Rendering Tests
   // ============================================================================
 
-  describe('Page Rendering', () => {
-    it('should render page title', async () => {
+  describe("Page Rendering", () => {
+    it("should render page title", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
         expect(
-          screen.getByText('Bagan Akun (Chart of Accounts)')
+          screen.getByText("Bagan Akun (Chart of Accounts)")
         ).toBeInTheDocument();
       });
     });
 
-    it('should render action buttons', async () => {
+    it("should render action buttons", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
@@ -79,7 +79,7 @@ describe('Chart of Accounts Page', () => {
       });
     });
 
-    it('should render filter controls', async () => {
+    it("should render filter controls", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
@@ -88,11 +88,11 @@ describe('Chart of Accounts Page', () => {
       });
     });
 
-    it('should render accounts table', async () => {
+    it("should render accounts table", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByRole('table')).toBeInTheDocument();
+        expect(screen.getByRole("table")).toBeInTheDocument();
       });
     });
   });
@@ -101,8 +101,8 @@ describe('Chart of Accounts Page', () => {
   // Data Loading Tests
   // ============================================================================
 
-  describe('Data Loading', () => {
-    it('should fetch and display accounts on mount', async () => {
+  describe("Data Loading", () => {
+    it("should fetch and display accounts on mount", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
@@ -110,33 +110,31 @@ describe('Chart of Accounts Page', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Kas')).toBeInTheDocument();
-        expect(screen.getByText('Bank')).toBeInTheDocument();
-        expect(screen.getByText('Hutang Usaha')).toBeInTheDocument();
+        expect(screen.getByText("Kas")).toBeInTheDocument();
+        expect(screen.getByText("Bank")).toBeInTheDocument();
+        expect(screen.getByText("Hutang Usaha")).toBeInTheDocument();
       });
     });
 
-    it('should show loading state initially', () => {
+    it("should show loading state initially", () => {
       render(<ChartOfAccountsPage />);
 
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+      expect(screen.getByRole("progressbar")).toBeInTheDocument();
     });
 
-    it('should show error message when fetch fails', async () => {
+    it("should show error message when fetch fails", async () => {
       vi.mocked(accountingApi.getAccounts).mockRejectedValue(
-        new Error('Failed to fetch')
+        new Error("Failed to fetch")
       );
 
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/gagal memuat data akun/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/gagal memuat data akun/i)).toBeInTheDocument();
       });
     });
 
-    it('should show empty state when no accounts', async () => {
+    it("should show empty state when no accounts", async () => {
       vi.mocked(accountingApi.getAccounts).mockResolvedValue([]);
 
       render(<ChartOfAccountsPage />);
@@ -151,35 +149,35 @@ describe('Chart of Accounts Page', () => {
   // Table Display Tests
   // ============================================================================
 
-  describe('Table Display', () => {
-    it('should display account information correctly', async () => {
+  describe("Table Display", () => {
+    it("should display account information correctly", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
         // Check kode akun
-        expect(screen.getByText('1101')).toBeInTheDocument();
+        expect(screen.getByText("1101")).toBeInTheDocument();
 
         // Check nama akun
-        expect(screen.getByText('Kas')).toBeInTheDocument();
+        expect(screen.getByText("Kas")).toBeInTheDocument();
 
         // Check tipe (as chip label)
-        expect(screen.getByText('Aset')).toBeInTheDocument();
+        expect(screen.getByText("Aset")).toBeInTheDocument();
 
         // Check status
-        expect(screen.getAllByText('Aktif')[0]).toBeInTheDocument();
+        expect(screen.getAllByText("Aktif")[0]).toBeInTheDocument();
       });
     });
 
-    it('should display normal saldo for each account', async () => {
+    it("should display normal saldo for each account", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        const debitChips = screen.getAllByText('DEBIT');
+        const debitChips = screen.getAllByText("DEBIT");
         expect(debitChips.length).toBeGreaterThan(0);
       });
     });
 
-    it('should display action buttons for each account', async () => {
+    it("should display action buttons for each account", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
@@ -199,13 +197,12 @@ describe('Chart of Accounts Page', () => {
   // Filter Tests
   // ============================================================================
 
-  describe('Filters', () => {
-    it('should filter accounts by type', async () => {
-      const user = userEvent.setup();
+  describe("Filters", () => {
+    it("should filter accounts by type", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Kas')).toBeInTheDocument();
+        expect(screen.getByText("Kas")).toBeInTheDocument();
       });
 
       // Change filter (note: actual select interaction would be more complex)
@@ -216,11 +213,11 @@ describe('Chart of Accounts Page', () => {
       expect(tipeFilter).toBeInTheDocument();
     });
 
-    it('should filter accounts by status', async () => {
+    it("should filter accounts by status", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Kas')).toBeInTheDocument();
+        expect(screen.getByText("Kas")).toBeInTheDocument();
       });
 
       const statusFilter = screen.getByLabelText(/status/i);
@@ -232,8 +229,8 @@ describe('Chart of Accounts Page', () => {
   // Action Button Tests
   // ============================================================================
 
-  describe('Action Buttons', () => {
-    it('should open form dialog when Tambah Akun clicked', async () => {
+  describe("Action Buttons", () => {
+    it("should open form dialog when Tambah Akun clicked", async () => {
       const user = userEvent.setup();
       render(<ChartOfAccountsPage />);
 
@@ -248,13 +245,13 @@ describe('Chart of Accounts Page', () => {
       expect(addButton).toBeInTheDocument();
     });
 
-    it('should seed COA when button clicked', async () => {
+    it("should seed COA when button clicked", async () => {
       const user = userEvent.setup();
       vi.mocked(accountingApi.seedDefaultCOA).mockResolvedValue(undefined);
 
       // Mock window.confirm
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+      const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
 
       render(<ChartOfAccountsPage />);
 
@@ -271,7 +268,7 @@ describe('Chart of Accounts Page', () => {
       alertSpy.mockRestore();
     });
 
-    it('should disable seed button when accounts exist', async () => {
+    it("should disable seed button when accounts exist", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
@@ -285,18 +282,18 @@ describe('Chart of Accounts Page', () => {
   // Delete Account Tests
   // ============================================================================
 
-  describe('Delete Account', () => {
-    it('should delete account with confirmation', async () => {
+  describe("Delete Account", () => {
+    it("should delete account with confirmation", async () => {
       const user = userEvent.setup();
       vi.mocked(accountingApi.deleteAccount).mockResolvedValue(undefined);
 
       // Mock window.confirm
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Kas')).toBeInTheDocument();
+        expect(screen.getByText("Kas")).toBeInTheDocument();
       });
 
       const deleteButtons = screen.getAllByTitle(/hapus/i);
@@ -307,16 +304,16 @@ describe('Chart of Accounts Page', () => {
       confirmSpy.mockRestore();
     });
 
-    it('should not delete account if confirmation cancelled', async () => {
+    it("should not delete account if confirmation cancelled", async () => {
       const user = userEvent.setup();
 
       // Mock window.confirm to return false
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
 
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Kas')).toBeInTheDocument();
+        expect(screen.getByText("Kas")).toBeInTheDocument();
       });
 
       const deleteButtons = screen.getAllByTitle(/hapus/i);
@@ -332,13 +329,13 @@ describe('Chart of Accounts Page', () => {
   // Edit Account Tests
   // ============================================================================
 
-  describe('Edit Account', () => {
-    it('should open edit form when edit button clicked', async () => {
+  describe("Edit Account", () => {
+    it("should open edit form when edit button clicked", async () => {
       const user = userEvent.setup();
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Kas')).toBeInTheDocument();
+        expect(screen.getByText("Kas")).toBeInTheDocument();
       });
 
       const editButtons = screen.getAllByTitle(/edit/i);
@@ -353,13 +350,13 @@ describe('Chart of Accounts Page', () => {
   // Account Type Chip Display Tests
   // ============================================================================
 
-  describe('Account Type Chips', () => {
-    it('should display correct chip colors for account types', async () => {
+  describe("Account Type Chips", () => {
+    it("should display correct chip colors for account types", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Aset')).toBeInTheDocument();
-        expect(screen.getByText('Kewajiban')).toBeInTheDocument();
+        expect(screen.getByText("Aset")).toBeInTheDocument();
+        expect(screen.getByText("Kewajiban")).toBeInTheDocument();
       });
     });
   });
@@ -368,17 +365,17 @@ describe('Chart of Accounts Page', () => {
   // Status Chip Display Tests
   // ============================================================================
 
-  describe('Status Chips', () => {
-    it('should display active status correctly', async () => {
+  describe("Status Chips", () => {
+    it("should display active status correctly", async () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        const activeChips = screen.getAllByText('Aktif');
+        const activeChips = screen.getAllByText("Aktif");
         expect(activeChips.length).toBe(mockAccounts.length);
       });
     });
 
-    it('should display inactive status for non-active accounts', async () => {
+    it("should display inactive status for non-active accounts", async () => {
       const inactiveAccount: Akun = {
         ...mockAccounts[0],
         statusAktif: false,
@@ -389,7 +386,7 @@ describe('Chart of Accounts Page', () => {
       render(<ChartOfAccountsPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('Non-aktif')).toBeInTheDocument();
+        expect(screen.getByText("Non-aktif")).toBeInTheDocument();
       });
     });
   });

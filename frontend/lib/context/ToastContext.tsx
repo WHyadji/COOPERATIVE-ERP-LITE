@@ -3,10 +3,10 @@
 // Provides a simple API for showing success/error/info/warning messages
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Snackbar, Alert, AlertColor } from '@mui/material';
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { Snackbar, Alert, AlertColor } from "@mui/material";
 
 // ============================================================================
 // Types
@@ -39,39 +39,57 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState>({
     open: false,
-    message: '',
-    severity: 'info',
+    message: "",
+    severity: "info",
   });
 
   // Show toast with custom severity
-  const showToast = useCallback((message: string, severity: AlertColor = 'info') => {
-    setToast({
-      open: true,
-      message,
-      severity,
-    });
-  }, []);
+  const showToast = useCallback(
+    (message: string, severity: AlertColor = "info") => {
+      setToast({
+        open: true,
+        message,
+        severity,
+      });
+    },
+    []
+  );
 
   // Convenience methods for specific severity levels
-  const showSuccess = useCallback((message: string) => {
-    showToast(message, 'success');
-  }, [showToast]);
+  const showSuccess = useCallback(
+    (message: string) => {
+      showToast(message, "success");
+    },
+    [showToast]
+  );
 
-  const showError = useCallback((message: string) => {
-    showToast(message, 'error');
-  }, [showToast]);
+  const showError = useCallback(
+    (message: string) => {
+      showToast(message, "error");
+    },
+    [showToast]
+  );
 
-  const showInfo = useCallback((message: string) => {
-    showToast(message, 'info');
-  }, [showToast]);
+  const showInfo = useCallback(
+    (message: string) => {
+      showToast(message, "info");
+    },
+    [showToast]
+  );
 
-  const showWarning = useCallback((message: string) => {
-    showToast(message, 'warning');
-  }, [showToast]);
+  const showWarning = useCallback(
+    (message: string) => {
+      showToast(message, "warning");
+    },
+    [showToast]
+  );
 
   // Handle toast close
-  const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
+  const handleClose = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
       return;
     }
     setToast((prev) => ({ ...prev, open: false }));
@@ -94,13 +112,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         open={toast.open}
         autoHideDuration={6000}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={handleClose}
           severity={toast.severity}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
           elevation={6}
         >
           {toast.message}
@@ -118,7 +136,7 @@ export function useToast(): ToastContextType {
   const context = useContext(ToastContext);
 
   if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider');
+    throw new Error("useToast must be used within a ToastProvider");
   }
 
   return context;

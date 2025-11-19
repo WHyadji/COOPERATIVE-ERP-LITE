@@ -3,7 +3,7 @@
 // Type-safe API calls for product management
 // ============================================================================
 
-import apiClient from './client';
+import apiClient from "./client";
 import type {
   Produk,
   CreateProdukRequest,
@@ -11,7 +11,7 @@ import type {
   ProdukListFilters,
   APIResponse,
   PaginatedResponse,
-} from '@/types';
+} from "@/types";
 
 // ============================================================================
 // Product (Produk) API Functions
@@ -33,7 +33,7 @@ export const getProducts = async (
     params.kategori = filters.kategori;
   }
 
-  if (filters?.statusAktif !== undefined && filters.statusAktif !== 'all') {
+  if (filters?.statusAktif !== undefined && filters.statusAktif !== "all") {
     params.statusAktif = filters.statusAktif.toString();
   }
 
@@ -45,12 +45,12 @@ export const getProducts = async (
     params.pageSize = filters.pageSize.toString();
   }
 
-  const response = await apiClient.get<PaginatedResponse<Produk>>('/produk', {
+  const response = await apiClient.get<PaginatedResponse<Produk>>("/produk", {
     params,
   });
 
   if (!response.data.success) {
-    throw new Error('Failed to fetch products');
+    throw new Error("Failed to fetch products");
   }
 
   return response.data;
@@ -63,7 +63,7 @@ export const getProductById = async (id: string): Promise<Produk> => {
   const response = await apiClient.get<APIResponse<Produk>>(`/produk/${id}`);
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch product');
+    throw new Error("Failed to fetch product");
   }
 
   return response.data.data;
@@ -78,7 +78,7 @@ export const getProductByBarcode = async (barcode: string): Promise<Produk> => {
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch product');
+    throw new Error("Failed to fetch product");
   }
 
   return response.data.data;
@@ -89,11 +89,11 @@ export const getProductByBarcode = async (barcode: string): Promise<Produk> => {
  */
 export const getLowStockProducts = async (): Promise<Produk[]> => {
   const response = await apiClient.get<APIResponse<Produk[]>>(
-    '/produk/stok-rendah'
+    "/produk/stok-rendah"
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch low stock products');
+    throw new Error("Failed to fetch low stock products");
   }
 
   return response.data.data;
@@ -105,10 +105,10 @@ export const getLowStockProducts = async (): Promise<Produk[]> => {
 export const createProduct = async (
   data: CreateProdukRequest
 ): Promise<Produk> => {
-  const response = await apiClient.post<APIResponse<Produk>>('/produk', data);
+  const response = await apiClient.post<APIResponse<Produk>>("/produk", data);
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to create product');
+    throw new Error(response.data.message || "Failed to create product");
   }
 
   return response.data.data;
@@ -127,7 +127,7 @@ export const updateProduct = async (
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to update product');
+    throw new Error(response.data.message || "Failed to update product");
   }
 
   return response.data.data;
@@ -140,7 +140,7 @@ export const deleteProduct = async (id: string): Promise<void> => {
   const response = await apiClient.delete<APIResponse<null>>(`/produk/${id}`);
 
   if (!response.data.success) {
-    throw new Error(response.data.message || 'Failed to delete product');
+    throw new Error(response.data.message || "Failed to delete product");
   }
 };
 

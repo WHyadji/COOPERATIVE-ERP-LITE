@@ -3,10 +3,10 @@
 // Comprehensive product information with stock adjustment functionality
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -24,7 +24,7 @@ import {
   DialogActions,
   Card,
   CardContent,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
@@ -32,11 +32,11 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Inventory as InventoryIcon,
-} from '@mui/icons-material';
-import { useToast } from '@/lib/context/ToastContext';
-import productApi from '@/lib/api/productApi';
-import type { Produk } from '@/types';
-import ProductForm from '@/components/products/ProductForm';
+} from "@mui/icons-material";
+import { useToast } from "@/lib/context/ToastContext";
+import productApi from "@/lib/api/productApi";
+import type { Produk } from "@/types";
+import ProductForm from "@/components/products/ProductForm";
 
 // ============================================================================
 // Product Detail Page Component
@@ -50,13 +50,13 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Produk | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Form dialog states
   const [formOpen, setFormOpen] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
-  const [newStock, setNewStock] = useState('');
+  const [newStock, setNewStock] = useState("");
   const [stockAdjusting, setStockAdjusting] = useState(false);
 
   // ============================================================================
@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const data = await productApi.getProductById(productId);
 
@@ -79,8 +79,8 @@ export default function ProductDetailPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch product:', err);
-          setError('Gagal memuat data produk. Silakan coba lagi.');
+          console.error("Failed to fetch product:", err);
+          setError("Gagal memuat data produk. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -101,7 +101,7 @@ export default function ProductDetailPage() {
   // ============================================================================
 
   const handleBack = () => {
-    router.push('/produk');
+    router.push("/produk");
   };
 
   const handleEdit = () => {
@@ -122,10 +122,10 @@ export default function ProductDetailPage() {
     try {
       await productApi.deleteProduct(product.id);
       showSuccess(`Produk "${product.namaProduk}" berhasil dihapus`);
-      router.push('/produk');
+      router.push("/produk");
     } catch (err) {
-      console.error('Failed to delete product:', err);
-      showError('Gagal menghapus produk. Silakan coba lagi.');
+      console.error("Failed to delete product:", err);
+      showError("Gagal menghapus produk. Silakan coba lagi.");
     }
   };
 
@@ -154,7 +154,7 @@ export default function ProductDetailPage() {
 
     const stockValue = parseInt(newStock);
     if (isNaN(stockValue) || stockValue < 0) {
-      showError('Stok harus berupa angka >= 0');
+      showError("Stok harus berupa angka >= 0");
       return;
     }
 
@@ -168,8 +168,8 @@ export default function ProductDetailPage() {
       setStockDialogOpen(false);
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
-      console.error('Failed to update stock:', err);
-      showError('Gagal memperbarui stok. Silakan coba lagi.');
+      console.error("Failed to update stock:", err);
+      showError("Gagal memperbarui stok. Silakan coba lagi.");
     } finally {
       setStockAdjusting(false);
     }
@@ -180,9 +180,9 @@ export default function ProductDetailPage() {
   // ============================================================================
 
   const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(value);
   };
@@ -205,10 +205,10 @@ export default function ProductDetailPage() {
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
         }}
       >
         <CircularProgress />
@@ -219,9 +219,7 @@ export default function ProductDetailPage() {
   if (error || !product) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          {error || 'Produk tidak ditemukan'}
-        </Alert>
+        <Alert severity="error">{error || "Produk tidak ditemukan"}</Alert>
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
@@ -248,19 +246,19 @@ export default function ProductDetailPage() {
 
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
           }}
         >
           <Box>
             <Typography variant="h4" fontWeight={600} gutterBottom>
               {product.namaProduk}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Chip
-                label={product.statusAktif ? 'Aktif' : 'Nonaktif'}
-                color={product.statusAktif ? 'success' : 'default'}
+                label={product.statusAktif ? "Aktif" : "Nonaktif"}
+                color={product.statusAktif ? "success" : "default"}
                 size="small"
               />
               {isLowStock() && (
@@ -274,7 +272,7 @@ export default function ProductDetailPage() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               variant="outlined"
               color="primary"
@@ -319,7 +317,7 @@ export default function ProductDetailPage() {
                   Barcode
                 </Typography>
                 <Typography variant="body1" fontWeight={500}>
-                  {product.barcode || '-'}
+                  {product.barcode || "-"}
                 </Typography>
               </Grid>
 
@@ -328,7 +326,7 @@ export default function ProductDetailPage() {
                   Kategori
                 </Typography>
                 <Typography variant="body1" fontWeight={500}>
-                  {product.kategori || '-'}
+                  {product.kategori || "-"}
                 </Typography>
               </Grid>
 
@@ -346,9 +344,7 @@ export default function ProductDetailPage() {
                   <Typography variant="body2" color="text.secondary">
                     Deskripsi
                   </Typography>
-                  <Typography variant="body1">
-                    {product.deskripsi}
-                  </Typography>
+                  <Typography variant="body1">{product.deskripsi}</Typography>
                 </Grid>
               )}
             </Grid>
@@ -376,9 +372,7 @@ export default function ProductDetailPage() {
                   Harga Beli (HPP)
                 </Typography>
                 <Typography variant="body1" fontWeight={500}>
-                  {product.hargaBeli
-                    ? formatCurrency(product.hargaBeli)
-                    : '-'}
+                  {product.hargaBeli ? formatCurrency(product.hargaBeli) : "-"}
                 </Typography>
               </Grid>
 
@@ -400,7 +394,9 @@ export default function ProductDetailPage() {
                     <Typography
                       variant="body1"
                       fontWeight={500}
-                      color={calculateMargin() > 0 ? 'success.main' : 'error.main'}
+                      color={
+                        calculateMargin() > 0 ? "success.main" : "error.main"
+                      }
                     >
                       {calculateMargin().toFixed(2)}%
                     </Typography>
@@ -415,12 +411,12 @@ export default function ProductDetailPage() {
         <Grid item xs={12} md={4}>
           <Card
             sx={{
-              bgcolor: isLowStock() ? 'warning.light' : 'primary.light',
-              color: 'primary.contrastText',
+              bgcolor: isLowStock() ? "warning.light" : "primary.light",
+              color: "primary.contrastText",
             }}
           >
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <InventoryIcon sx={{ mr: 1, fontSize: 40 }} />
                 <Box>
                   <Typography variant="body2" sx={{ opacity: 0.9 }}>
@@ -432,7 +428,7 @@ export default function ProductDetailPage() {
                 </Box>
               </Box>
 
-              <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.3)' }} />
+              <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.3)" }} />
 
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
@@ -444,11 +440,7 @@ export default function ProductDetailPage() {
               </Box>
 
               {isLowStock() && (
-                <Alert
-                  severity="warning"
-                  icon={<WarningIcon />}
-                  sx={{ mb: 2 }}
-                >
+                <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2 }}>
                   Stok produk sudah mencapai batas minimum!
                 </Alert>
               )}
@@ -459,10 +451,10 @@ export default function ProductDetailPage() {
                 color="inherit"
                 onClick={handleOpenStockDialog}
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.9)',
-                  color: 'primary.main',
-                  '&:hover': {
-                    bgcolor: 'rgba(255,255,255,1)',
+                  bgcolor: "rgba(255,255,255,0.9)",
+                  color: "primary.main",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,1)",
                   },
                 }}
               >
@@ -478,10 +470,10 @@ export default function ProductDetailPage() {
             </Typography>
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 1,
-                color: isLowStock() ? 'warning.main' : 'success.main',
+                color: isLowStock() ? "warning.main" : "success.main",
               }}
             >
               {isLowStock() ? (
@@ -518,7 +510,7 @@ export default function ProductDetailPage() {
         <DialogTitle>Sesuaikan Stok Produk</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Masukkan jumlah stok baru untuk produk{' '}
+            Masukkan jumlah stok baru untuk produk{" "}
             <strong>{product.namaProduk}</strong>
           </Typography>
 
@@ -547,7 +539,7 @@ export default function ProductDetailPage() {
             disabled={stockAdjusting}
             startIcon={stockAdjusting && <CircularProgress size={20} />}
           >
-            {stockAdjusting ? 'Memperbarui...' : 'Simpan'}
+            {stockAdjusting ? "Memperbarui..." : "Simpan"}
           </Button>
         </DialogActions>
       </Dialog>

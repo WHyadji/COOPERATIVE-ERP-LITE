@@ -3,10 +3,10 @@
 // Shows transaction header, line items, totals, and balance status
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -25,7 +25,7 @@ import {
   Link,
   Divider,
   Grid,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   Delete as DeleteIcon,
@@ -35,12 +35,12 @@ import {
   Warning as WarningIcon,
   Home as HomeIcon,
   Receipt as ReceiptIcon,
-} from '@mui/icons-material';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Transaksi } from '@/types';
-import { format, parseISO } from 'date-fns';
-import { useToast } from '@/lib/context/ToastContext';
-import TransactionForm from '@/components/accounting/TransactionForm';
+} from "@mui/icons-material";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Transaksi } from "@/types";
+import { format, parseISO } from "date-fns";
+import { useToast } from "@/lib/context/ToastContext";
+import TransactionForm from "@/components/accounting/TransactionForm";
 
 // ============================================================================
 // Transaction Detail Page Component
@@ -54,7 +54,7 @@ export default function TransactionDetailPage() {
 
   const [transaction, setTransaction] = useState<Transaksi | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [formOpen, setFormOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -68,7 +68,7 @@ export default function TransactionDetailPage() {
     const fetchTransaction = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const data = await accountingApi.getTransactionById(transactionId);
 
@@ -77,8 +77,8 @@ export default function TransactionDetailPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch transaction:', err);
-          setError('Gagal memuat detail transaksi. Silakan coba lagi.');
+          console.error("Failed to fetch transaction:", err);
+          setError("Gagal memuat detail transaksi. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -99,7 +99,7 @@ export default function TransactionDetailPage() {
   // ============================================================================
 
   const handleBack = () => {
-    router.push('/akuntansi/jurnal');
+    router.push("/akuntansi/jurnal");
   };
 
   const handleEdit = () => {
@@ -118,17 +118,21 @@ export default function TransactionDetailPage() {
   const handleDelete = async () => {
     if (!transaction) return;
 
-    if (!confirm(`Apakah Anda yakin ingin menghapus transaksi "${transaction.nomorJurnal}"?`)) {
+    if (
+      !confirm(
+        `Apakah Anda yakin ingin menghapus transaksi "${transaction.nomorJurnal}"?`
+      )
+    ) {
       return;
     }
 
     try {
       await accountingApi.deleteTransaction(transaction.id);
       showSuccess(`Transaksi "${transaction.nomorJurnal}" berhasil dihapus`);
-      router.push('/akuntansi/jurnal');
+      router.push("/akuntansi/jurnal");
     } catch (err) {
-      console.error('Failed to delete transaction:', err);
-      showError('Gagal menghapus transaksi. Silakan coba lagi.');
+      console.error("Failed to delete transaction:", err);
+      showError("Gagal menghapus transaksi. Silakan coba lagi.");
     }
   };
 
@@ -141,9 +145,9 @@ export default function TransactionDetailPage() {
   // ============================================================================
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -151,7 +155,7 @@ export default function TransactionDetailPage() {
 
   const formatDate = (dateString: string): string => {
     try {
-      return format(parseISO(dateString), 'dd/MM/yyyy');
+      return format(parseISO(dateString), "dd/MM/yyyy");
     } catch {
       return dateString;
     }
@@ -163,7 +167,14 @@ export default function TransactionDetailPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -173,9 +184,13 @@ export default function TransactionDetailPage() {
     return (
       <Box>
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error || 'Transaksi tidak ditemukan'}
+          {error || "Transaksi tidak ditemukan"}
         </Alert>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleBack}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={handleBack}
+        >
           Kembali ke Daftar Jurnal
         </Button>
       </Box>
@@ -193,10 +208,10 @@ export default function TransactionDetailPage() {
         <Link
           href="/dashboard"
           underline="hover"
-          sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
           onClick={(e) => {
             e.preventDefault();
-            router.push('/dashboard');
+            router.push("/dashboard");
           }}
         >
           <HomeIcon sx={{ mr: 0.5 }} fontSize="small" />
@@ -205,36 +220,64 @@ export default function TransactionDetailPage() {
         <Link
           href="/akuntansi/jurnal"
           underline="hover"
-          sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
           onClick={(e) => {
             e.preventDefault();
-            router.push('/akuntansi/jurnal');
+            router.push("/akuntansi/jurnal");
           }}
         >
           <ReceiptIcon sx={{ mr: 0.5 }} fontSize="small" />
           Jurnal Umum
         </Link>
-        <Typography sx={{ display: 'flex', alignItems: 'center' }} color="text.primary">
+        <Typography
+          sx={{ display: "flex", alignItems: "center" }}
+          color="text.primary"
+        >
           Detail #{transaction.nomorJurnal}
         </Typography>
       </Breadcrumbs>
 
       {/* Header with Actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" fontWeight={600}>
           Detail Transaksi
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }} className="no-print">
-          <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleBack}>
+        <Box sx={{ display: "flex", gap: 1 }} className="no-print">
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBack}
+          >
             Kembali
           </Button>
-          <Button variant="outlined" color="primary" startIcon={<EditIcon />} onClick={handleEdit}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<EditIcon />}
+            onClick={handleEdit}
+          >
             Edit
           </Button>
-          <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleDelete}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={handleDelete}
+          >
             Hapus
           </Button>
-          <Button variant="contained" startIcon={<PrintIcon />} onClick={handlePrint}>
+          <Button
+            variant="contained"
+            startIcon={<PrintIcon />}
+            onClick={handlePrint}
+          >
             Cetak
           </Button>
         </Box>
@@ -245,7 +288,11 @@ export default function TransactionDetailPage() {
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Nomor Jurnal
               </Typography>
               <Typography variant="h6" fontWeight={600} fontFamily="monospace">
@@ -253,7 +300,11 @@ export default function TransactionDetailPage() {
               </Typography>
             </Box>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Tanggal Transaksi
               </Typography>
               <Typography variant="body1">
@@ -261,26 +312,36 @@ export default function TransactionDetailPage() {
               </Typography>
             </Box>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Deskripsi
               </Typography>
-              <Typography variant="body1">
-                {transaction.deskripsi}
-              </Typography>
+              <Typography variant="body1">{transaction.deskripsi}</Typography>
             </Box>
           </Grid>
           <Grid item xs={12} md={6}>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Nomor Referensi
               </Typography>
               <Typography variant="body1">
-                {transaction.nomorReferensi || '-'}
+                {transaction.nomorReferensi || "-"}
               </Typography>
             </Box>
             {transaction.tipeTransaksi && (
               <Box sx={{ mb: 2 }}>
-                <Typography variant="caption" color="text.secondary" display="block">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                >
                   Tipe Transaksi
                 </Typography>
                 <Typography variant="body1">
@@ -289,7 +350,11 @@ export default function TransactionDetailPage() {
               </Box>
             )}
             <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
                 Status Balance
               </Typography>
               {transaction.statusBalanced ? (
@@ -314,7 +379,7 @@ export default function TransactionDetailPage() {
 
       {/* Line Items Table */}
       <Paper sx={{ mb: 3 }}>
-        <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+        <Box sx={{ p: 2, borderBottom: "1px solid rgba(0, 0, 0, 0.12)" }}>
           <Typography variant="h6" fontWeight={600}>
             Baris Transaksi (Journal Entry Lines)
           </Typography>
@@ -331,16 +396,17 @@ export default function TransactionDetailPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {transaction.barisTransaksi && transaction.barisTransaksi.length > 0 ? (
+              {transaction.barisTransaksi &&
+              transaction.barisTransaksi.length > 0 ? (
                 transaction.barisTransaksi.map((line, index) => (
                   <TableRow key={line.id || index} hover>
                     <TableCell>
                       <Typography fontFamily="monospace" fontWeight={600}>
-                        {line.kodeAkun || '-'}
+                        {line.kodeAkun || "-"}
                       </Typography>
                     </TableCell>
-                    <TableCell>{line.namaAkun || '-'}</TableCell>
-                    <TableCell>{line.keterangan || '-'}</TableCell>
+                    <TableCell>{line.namaAkun || "-"}</TableCell>
+                    <TableCell>{line.keterangan || "-"}</TableCell>
                     <TableCell align="right">
                       {line.jumlahDebit > 0 ? (
                         <Typography fontWeight={600}>
@@ -371,7 +437,7 @@ export default function TransactionDetailPage() {
                 </TableRow>
               )}
               {/* Totals Row */}
-              <TableRow sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}>
+              <TableRow sx={{ backgroundColor: "rgba(0, 0, 0, 0.04)" }}>
                 <TableCell colSpan={3}>
                   <Typography variant="h6" fontWeight={700}>
                     TOTAL
@@ -405,8 +471,8 @@ export default function TransactionDetailPage() {
               sx={{
                 p: 2,
                 borderRadius: 1,
-                backgroundColor: 'primary.light',
-                color: 'primary.contrastText',
+                backgroundColor: "primary.light",
+                color: "primary.contrastText",
               }}
             >
               <Typography variant="caption" display="block">
@@ -422,8 +488,8 @@ export default function TransactionDetailPage() {
               sx={{
                 p: 2,
                 borderRadius: 1,
-                backgroundColor: 'error.light',
-                color: 'error.contrastText',
+                backgroundColor: "error.light",
+                color: "error.contrastText",
               }}
             >
               <Typography variant="caption" display="block">
@@ -439,15 +505,21 @@ export default function TransactionDetailPage() {
               sx={{
                 p: 2,
                 borderRadius: 1,
-                backgroundColor: transaction.statusBalanced ? 'success.light' : 'warning.light',
-                color: transaction.statusBalanced ? 'success.contrastText' : 'warning.contrastText',
+                backgroundColor: transaction.statusBalanced
+                  ? "success.light"
+                  : "warning.light",
+                color: transaction.statusBalanced
+                  ? "success.contrastText"
+                  : "warning.contrastText",
               }}
             >
               <Typography variant="caption" display="block">
                 Selisih (Difference)
               </Typography>
               <Typography variant="h5" fontWeight={700}>
-                {formatCurrency(Math.abs(transaction.totalDebit - transaction.totalKredit))}
+                {formatCurrency(
+                  Math.abs(transaction.totalDebit - transaction.totalKredit)
+                )}
               </Typography>
             </Box>
           </Grid>
@@ -456,37 +528,59 @@ export default function TransactionDetailPage() {
         {/* Balance Status Info */}
         {transaction.statusBalanced ? (
           <Alert severity="success" sx={{ mt: 3 }}>
-            ✓ Transaksi ini <strong>balanced</strong> (seimbang). Total debit sama dengan total kredit.
+            ✓ Transaksi ini <strong>balanced</strong> (seimbang). Total debit
+            sama dengan total kredit.
           </Alert>
         ) : (
           <Alert severity="error" sx={{ mt: 3 }}>
-            ✗ Transaksi ini <strong>unbalanced</strong> (tidak seimbang). Total debit tidak sama dengan total kredit.
-            Perbedaan: {formatCurrency(Math.abs(transaction.totalDebit - transaction.totalKredit))}
+            ✗ Transaksi ini <strong>unbalanced</strong> (tidak seimbang). Total
+            debit tidak sama dengan total kredit. Perbedaan:{" "}
+            {formatCurrency(
+              Math.abs(transaction.totalDebit - transaction.totalKredit)
+            )}
           </Alert>
         )}
       </Paper>
 
       {/* Metadata & Audit Trail */}
-      <Box sx={{ mt: 3, p: 3, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+      <Box
+        sx={{
+          mt: 3,
+          p: 3,
+          backgroundColor: "rgba(0, 0, 0, 0.02)",
+          borderRadius: 1,
+        }}
+      >
         <Typography variant="subtitle2" fontWeight={600} gutterBottom>
           Informasi Audit Trail
         </Typography>
         <Divider sx={{ mb: 2 }} />
 
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ mb: 1 }}
+        >
           ID Transaksi: {transaction.id}
         </Typography>
 
         {transaction.namaDibuatOleh && transaction.tanggalDibuat && (
-          <Typography variant="body2" color="text.secondary" display="block" sx={{ mb: 1 }}>
-            Dibuat oleh <strong>{transaction.namaDibuatOleh}</strong> pada{' '}
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            display="block"
+            sx={{ mb: 1 }}
+          >
+            Dibuat oleh <strong>{transaction.namaDibuatOleh}</strong> pada{" "}
             {formatDate(transaction.tanggalDibuat)}
           </Typography>
         )}
 
         {transaction.namaDiperbaruiOleh && transaction.tanggalDiperbarui && (
           <Typography variant="body2" color="text.secondary" display="block">
-            Terakhir diperbarui oleh <strong>{transaction.namaDiperbaruiOleh}</strong> pada{' '}
+            Terakhir diperbarui oleh{" "}
+            <strong>{transaction.namaDiperbaruiOleh}</strong> pada{" "}
             {formatDate(transaction.tanggalDiperbarui)}
           </Typography>
         )}

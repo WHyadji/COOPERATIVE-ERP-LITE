@@ -3,9 +3,9 @@
 // Material-UI AppBar with user menu and logout
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -18,15 +18,15 @@ import {
   ListItemIcon,
   Divider,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Menu as MenuIcon,
   AccountCircle as AccountCircleIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
-} from '@mui/icons-material';
-import { useAuth } from '@/lib/context/AuthContext';
-import { DRAWER_WIDTH } from './Sidebar';
+} from "@mui/icons-material";
+import { useAuth } from "@/lib/context/AuthContext";
+import { DRAWER_WIDTH } from "./Sidebar";
 
 // ============================================================================
 // Header Props
@@ -42,17 +42,17 @@ interface HeaderProps {
 // ============================================================================
 
 const roleDisplayNames: Record<string, string> = {
-  admin: 'Administrator',
-  bendahara: 'Bendahara',
-  kasir: 'Kasir',
-  anggota: 'Anggota',
+  admin: "Administrator",
+  bendahara: "Bendahara",
+  kasir: "Kasir",
+  anggota: "Anggota",
 };
 
-const roleColors: Record<string, 'error' | 'primary' | 'info' | 'default'> = {
-  admin: 'error',
-  bendahara: 'primary',
-  kasir: 'info',
-  anggota: 'default',
+const roleColors: Record<string, "error" | "primary" | "info" | "default"> = {
+  admin: "error",
+  bendahara: "primary",
+  kasir: "info",
+  anggota: "default",
 };
 
 // ============================================================================
@@ -86,7 +86,7 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
   // ============================================================================
 
   const getInitials = (name: string): string => {
-    const names = name.trim().split(' ');
+    const names = name.trim().split(" ");
     if (names.length >= 2) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
@@ -103,8 +103,8 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
       sx={{
         width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
         ml: { md: `${DRAWER_WIDTH}px` },
-        backgroundColor: 'background.paper',
-        color: 'text.primary',
+        backgroundColor: "background.paper",
+        color: "text.primary",
         boxShadow: 1,
       }}
     >
@@ -115,25 +115,25 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
           aria-label="open drawer"
           edge="start"
           onClick={onMenuClick}
-          sx={{ mr: 2, display: { md: 'none' } }}
+          sx={{ mr: 2, display: { md: "none" } }}
         >
           <MenuIcon />
         </IconButton>
 
         {/* Page Title */}
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          {title || 'Dashboard'}
+          {title || "Dashboard"}
         </Typography>
 
         {/* User Info */}
         {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             {/* User Role Badge */}
             <Chip
               label={roleDisplayNames[user.peran] || user.peran}
-              color={roleColors[user.peran] || 'default'}
+              color={roleColors[user.peran] || "default"}
               size="small"
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
+              sx={{ display: { xs: "none", sm: "flex" } }}
             />
 
             {/* User Menu Button */}
@@ -141,11 +141,11 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
               onClick={handleMenuOpen}
               size="small"
               sx={{ ml: 1 }}
-              aria-controls={open ? 'user-menu' : undefined}
+              aria-controls={open ? "user-menu" : undefined}
               aria-haspopup="true"
-              aria-expanded={open ? 'true' : undefined}
+              aria-expanded={open ? "true" : undefined}
             >
-              <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
+              <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main" }}>
                 {getInitials(user.namaLengkap)}
               </Avatar>
             </IconButton>
@@ -163,11 +163,11 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
             paper: {
               elevation: 3,
               sx: {
-                overflow: 'visible',
-                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+                overflow: "visible",
+                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.15))",
                 mt: 1.5,
                 minWidth: 240,
-                '& .MuiAvatar-root': {
+                "& .MuiAvatar-root": {
                   width: 32,
                   height: 32,
                   ml: -0.5,
@@ -176,8 +176,8 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
               },
             },
           }}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         >
           {/* User Info Header */}
           {user && (
@@ -191,7 +191,7 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
               <Box sx={{ mt: 1 }}>
                 <Chip
                   label={roleDisplayNames[user.peran] || user.peran}
-                  color={roleColors[user.peran] || 'default'}
+                  color={roleColors[user.peran] || "default"}
                   size="small"
                 />
               </Box>

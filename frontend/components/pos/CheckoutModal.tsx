@@ -3,9 +3,9 @@
 // Handles payment input, change calculation, and sale confirmation
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -26,14 +26,14 @@ import {
   Alert,
   Grid,
   InputAdornment,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Payments as PaymentsIcon,
   CheckCircle as CheckIcon,
-} from '@mui/icons-material';
-import { useToast } from '@/lib/context/ToastContext';
-import posApi from '@/lib/api/posApi';
-import type { CartItem, Member, PenjualanResponse } from '@/types';
+} from "@mui/icons-material";
+import { useToast } from "@/lib/context/ToastContext";
+import posApi from "@/lib/api/posApi";
+import type { CartItem, Member, PenjualanResponse } from "@/types";
 
 // ============================================================================
 // Component Props
@@ -59,10 +59,10 @@ export default function CheckoutModal({
   onSuccess,
 }: CheckoutModalProps) {
   const { showError } = useToast();
-  const [jumlahBayar, setJumlahBayar] = useState('');
-  const [catatan, setCatatan] = useState('');
+  const [jumlahBayar, setJumlahBayar] = useState("");
+  const [catatan, setCatatan] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Calculate totals
   const totalBelanja = items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -71,9 +71,9 @@ export default function CheckoutModal({
 
   // Currency formatter
   const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -82,7 +82,7 @@ export default function CheckoutModal({
   // Format number input
   const formatNumberInput = (value: string): string => {
     // Remove non-numeric characters
-    const numericValue = value.replace(/[^\d]/g, '');
+    const numericValue = value.replace(/[^\d]/g, "");
     return numericValue;
   };
 
@@ -90,7 +90,7 @@ export default function CheckoutModal({
   const handlePaymentChange = (value: string) => {
     const formatted = formatNumberInput(value);
     setJumlahBayar(formatted);
-    setError('');
+    setError("");
   };
 
   // Quick amount buttons
@@ -103,18 +103,18 @@ export default function CheckoutModal({
   // Handle quick amount click
   const handleQuickAmount = (amount: number) => {
     setJumlahBayar(amount.toString());
-    setError('');
+    setError("");
   };
 
   // Validate payment
   const validatePayment = (): boolean => {
     if (!jumlahBayar || jumlahBayarNum <= 0) {
-      setError('Jumlah bayar harus diisi');
+      setError("Jumlah bayar harus diisi");
       return false;
     }
 
     if (jumlahBayarNum < totalBelanja) {
-      setError('Jumlah bayar kurang dari total belanja');
+      setError("Jumlah bayar kurang dari total belanja");
       return false;
     }
 
@@ -128,7 +128,7 @@ export default function CheckoutModal({
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const saleData = {
@@ -147,11 +147,12 @@ export default function CheckoutModal({
       onClose();
 
       // Reset form
-      setJumlahBayar('');
-      setCatatan('');
-      setError('');
+      setJumlahBayar("");
+      setCatatan("");
+      setError("");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Gagal memproses transaksi';
+      const errorMessage =
+        err instanceof Error ? err.message : "Gagal memproses transaksi";
       setError(errorMessage);
       showError(errorMessage);
     } finally {
@@ -162,9 +163,9 @@ export default function CheckoutModal({
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
-      setJumlahBayar('');
-      setCatatan('');
-      setError('');
+      setJumlahBayar("");
+      setCatatan("");
+      setError("");
     }
   }, [open]);
 
@@ -177,7 +178,7 @@ export default function CheckoutModal({
       disableEscapeKeyDown={loading}
     >
       <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <PaymentsIcon />
           <Typography variant="h6" component="span">
             Pembayaran
@@ -195,7 +196,7 @@ export default function CheckoutModal({
 
         {/* Member Info */}
         {member && (
-          <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+          <Box sx={{ mb: 2, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Anggota
             </Typography>
@@ -223,7 +224,9 @@ export default function CheckoutModal({
               {items.map((item) => (
                 <TableRow key={item.product.id}>
                   <TableCell>
-                    <Typography variant="body2">{item.product.namaProduk}</Typography>
+                    <Typography variant="body2">
+                      {item.product.namaProduk}
+                    </Typography>
                   </TableCell>
                   <TableCell align="right">
                     {formatCurrency(item.product.harga)}
@@ -237,10 +240,20 @@ export default function CheckoutModal({
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={3} sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                <TableCell
+                  colSpan={3}
+                  sx={{ fontWeight: 600, fontSize: "1.1rem" }}
+                >
                   TOTAL
                 </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.1rem', color: 'primary.main' }}>
+                <TableCell
+                  align="right"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: "1.1rem",
+                    color: "primary.main",
+                  }}
+                >
                   {formatCurrency(totalBelanja)}
                 </TableCell>
               </TableRow>
@@ -253,17 +266,19 @@ export default function CheckoutModal({
           <TextField
             fullWidth
             label="Jumlah Bayar"
-            value={jumlahBayar ? formatCurrency(jumlahBayarNum) : ''}
+            value={jumlahBayar ? formatCurrency(jumlahBayarNum) : ""}
             onChange={(e) => handlePaymentChange(e.target.value)}
             placeholder="0"
             disabled={loading}
             autoFocus
             InputProps={{
-              startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">Rp</InputAdornment>
+              ),
             }}
             sx={{
-              '& input': {
-                fontSize: '1.5rem',
+              "& input": {
+                fontSize: "1.5rem",
                 fontWeight: 600,
               },
             }}
@@ -291,7 +306,7 @@ export default function CheckoutModal({
         <Box
           sx={{
             p: 2,
-            bgcolor: kembalian >= 0 ? 'success.light' : 'error.light',
+            bgcolor: kembalian >= 0 ? "success.light" : "error.light",
             borderRadius: 1,
             mb: 2,
           }}
@@ -299,7 +314,11 @@ export default function CheckoutModal({
           <Typography variant="body2" color="text.secondary">
             Kembalian
           </Typography>
-          <Typography variant="h4" fontWeight={700} color={kembalian >= 0 ? 'success.dark' : 'error.dark'}>
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            color={kembalian >= 0 ? "success.dark" : "error.dark"}
+          >
             {formatCurrency(Math.max(0, kembalian))}
           </Typography>
         </Box>
@@ -330,7 +349,7 @@ export default function CheckoutModal({
           startIcon={loading ? null : <CheckIcon />}
           size="large"
         >
-          {loading ? 'Memproses...' : 'Proses Pembayaran'}
+          {loading ? "Memproses..." : "Proses Pembayaran"}
         </Button>
       </DialogActions>
     </Dialog>

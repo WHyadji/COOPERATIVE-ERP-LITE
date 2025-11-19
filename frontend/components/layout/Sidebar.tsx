@@ -3,10 +3,10 @@
 // Material-UI Drawer with role-based menu items
 // ============================================================================
 
-'use client';
+"use client";
 
-import React from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import React from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Box,
   Drawer,
@@ -18,7 +18,7 @@ import {
   Toolbar,
   Typography,
   Divider,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -28,9 +28,9 @@ import {
   PointOfSale as PointOfSaleIcon,
   Assessment as AssessmentIcon,
   Settings as SettingsIcon,
-} from '@mui/icons-material';
-import { useAuth } from '@/lib/context/AuthContext';
-import type { UserRole } from '@/types';
+} from "@mui/icons-material";
+import { useAuth } from "@/lib/context/AuthContext";
+import type { UserRole } from "@/types";
 
 // ============================================================================
 // Constants
@@ -55,58 +55,58 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    label: 'Dashboard',
+    label: "Dashboard",
     icon: <DashboardIcon />,
-    path: '/dashboard',
-    roles: ['admin', 'bendahara', 'kasir', 'anggota'],
+    path: "/dashboard",
+    roles: ["admin", "bendahara", "kasir", "anggota"],
   },
   {
-    label: 'Anggota',
+    label: "Anggota",
     icon: <PeopleIcon />,
-    path: '/dashboard/members',
-    roles: ['admin', 'bendahara'],
+    path: "/dashboard/members",
+    roles: ["admin", "bendahara"],
   },
   {
-    label: 'Simpanan',
+    label: "Simpanan",
     icon: <AccountBalanceIcon />,
-    path: '/dashboard/simpanan',
-    roles: ['admin', 'bendahara'],
+    path: "/dashboard/simpanan",
+    roles: ["admin", "bendahara"],
   },
   {
-    label: 'POS / Kasir',
+    label: "POS / Kasir",
     icon: <PointOfSaleIcon />,
-    path: '/pos',
-    roles: ['admin', 'kasir'],
+    path: "/pos",
+    roles: ["admin", "kasir"],
   },
   {
-    label: 'Produk',
+    label: "Produk",
     icon: <InventoryIcon />,
-    path: '/produk',
-    roles: ['admin', 'bendahara', 'kasir'],
+    path: "/produk",
+    roles: ["admin", "bendahara", "kasir"],
   },
   {
-    label: 'Bagan Akun',
+    label: "Bagan Akun",
     icon: <ReceiptIcon />,
-    path: '/akuntansi',
-    roles: ['admin', 'bendahara'],
+    path: "/akuntansi",
+    roles: ["admin", "bendahara"],
   },
   {
-    label: 'Jurnal Umum',
+    label: "Jurnal Umum",
     icon: <ReceiptIcon />,
-    path: '/akuntansi/jurnal',
-    roles: ['admin', 'bendahara'],
+    path: "/akuntansi/jurnal",
+    roles: ["admin", "bendahara"],
   },
   {
-    label: 'Laporan',
+    label: "Laporan",
     icon: <AssessmentIcon />,
-    path: '/dashboard/reports',
-    roles: ['admin', 'bendahara'],
+    path: "/dashboard/reports",
+    roles: ["admin", "bendahara"],
   },
   {
-    label: 'Pengaturan',
+    label: "Pengaturan",
     icon: <SettingsIcon />,
-    path: '/dashboard/settings',
-    roles: ['admin'],
+    path: "/dashboard/settings",
+    roles: ["admin"],
   },
 ];
 
@@ -149,7 +149,7 @@ export default function Sidebar({ mobileOpen, onDrawerToggle }: SidebarProps) {
     <Box>
       {/* Logo/Header */}
       <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <AccountBalanceIcon color="primary" sx={{ fontSize: 32 }} />
           <Box>
             <Typography variant="h6" noWrap fontWeight={600}>
@@ -167,7 +167,8 @@ export default function Sidebar({ mobileOpen, onDrawerToggle }: SidebarProps) {
       {/* Navigation Menu */}
       <List sx={{ px: 1, py: 2 }}>
         {visibleMenuItems.map((item) => {
-          const isActive = pathname === item.path || pathname?.startsWith(`${item.path}/`);
+          const isActive =
+            pathname === item.path || pathname?.startsWith(`${item.path}/`);
 
           return (
             <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
@@ -176,21 +177,21 @@ export default function Sidebar({ mobileOpen, onDrawerToggle }: SidebarProps) {
                 selected={isActive}
                 sx={{
                   borderRadius: 2,
-                  '&.Mui-selected': {
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
+                  "&.Mui-selected": {
+                    backgroundColor: "primary.main",
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "primary.dark",
                     },
-                    '& .MuiListItemIcon-root': {
-                      color: 'white',
+                    "& .MuiListItemIcon-root": {
+                      color: "white",
                     },
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive ? 'white' : 'action.active',
+                    color: isActive ? "white" : "action.active",
                     minWidth: 40,
                   }}
                 >
@@ -199,7 +200,7 @@ export default function Sidebar({ mobileOpen, onDrawerToggle }: SidebarProps) {
                 <ListItemText
                   primary={item.label}
                   primaryTypographyProps={{
-                    fontSize: '0.95rem',
+                    fontSize: "0.95rem",
                     fontWeight: isActive ? 600 : 400,
                   }}
                 />
@@ -216,7 +217,10 @@ export default function Sidebar({ mobileOpen, onDrawerToggle }: SidebarProps) {
   // ============================================================================
 
   return (
-    <Box component="nav" sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>
+    <Box
+      component="nav"
+      sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+    >
       {/* Mobile Drawer */}
       <Drawer
         variant="temporary"
@@ -226,9 +230,9 @@ export default function Sidebar({ mobileOpen, onDrawerToggle }: SidebarProps) {
           keepMounted: true, // Better mobile performance
         }}
         sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': {
-            boxSizing: 'border-box',
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
             width: DRAWER_WIDTH,
           },
         }}
@@ -240,9 +244,9 @@ export default function Sidebar({ mobileOpen, onDrawerToggle }: SidebarProps) {
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: 'none', md: 'block' },
-          '& .MuiDrawer-paper': {
-            boxSizing: 'border-box',
+          display: { xs: "none", md: "block" },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
             width: DRAWER_WIDTH,
           },
         }}

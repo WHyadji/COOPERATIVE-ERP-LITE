@@ -3,10 +3,10 @@
 // Material-UI table with transaction list, filters, and double-entry forms
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -24,7 +24,7 @@ import {
   Chip,
   Alert,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
@@ -32,12 +32,12 @@ import {
   Edit as EditIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
-} from '@mui/icons-material';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Transaksi, TransaksiListFilters } from '@/types';
-import { format, parseISO } from 'date-fns';
-import TransactionForm from '@/components/accounting/TransactionForm';
-import { useToast } from '@/lib/context/ToastContext';
+} from "@mui/icons-material";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Transaksi, TransaksiListFilters } from "@/types";
+import { format, parseISO } from "date-fns";
+import TransactionForm from "@/components/accounting/TransactionForm";
+import { useToast } from "@/lib/context/ToastContext";
 
 // ============================================================================
 // Journal Entry Page Component
@@ -48,19 +48,20 @@ export default function JournalEntryPage() {
   const { showSuccess, showError } = useToast();
   const [transactions, setTransactions] = useState<Transaksi[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Pagination & Filters
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  const [tanggalMulai, setTanggalMulai] = useState('');
-  const [tanggalAkhir, setTanggalAkhir] = useState('');
+  const [tanggalMulai, setTanggalMulai] = useState("");
+  const [tanggalAkhir, setTanggalAkhir] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Transaction form dialog
   const [formOpen, setFormOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaksi | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaksi | null>(null);
 
   // ============================================================================
   // Fetch Transactions
@@ -72,7 +73,7 @@ export default function JournalEntryPage() {
     const fetchTransactions = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const filters: TransaksiListFilters = {
           page: page + 1, // API uses 1-based pagination
@@ -89,8 +90,8 @@ export default function JournalEntryPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch transactions:', err);
-          setError('Gagal memuat data transaksi. Silakan coba lagi.');
+          console.error("Failed to fetch transactions:", err);
+          setError("Gagal memuat data transaksi. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -121,8 +122,8 @@ export default function JournalEntryPage() {
       setSelectedTransaction(transaction);
       setFormOpen(true);
     } catch (err) {
-      console.error('Failed to fetch transaction:', err);
-      showError('Gagal memuat data transaksi. Silakan coba lagi.');
+      console.error("Failed to fetch transaction:", err);
+      showError("Gagal memuat data transaksi. Silakan coba lagi.");
     }
   };
 
@@ -131,7 +132,9 @@ export default function JournalEntryPage() {
   };
 
   const handleDelete = async (id: string, nomorJurnal: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus transaksi "${nomorJurnal}"?`)) {
+    if (
+      !confirm(`Apakah Anda yakin ingin menghapus transaksi "${nomorJurnal}"?`)
+    ) {
       return;
     }
 
@@ -140,8 +143,8 @@ export default function JournalEntryPage() {
       showSuccess(`Transaksi "${nomorJurnal}" berhasil dihapus`);
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
-      console.error('Failed to delete transaction:', err);
-      showError('Gagal menghapus transaksi. Silakan coba lagi.');
+      console.error("Failed to delete transaction:", err);
+      showError("Gagal menghapus transaksi. Silakan coba lagi.");
     }
   };
 
@@ -149,7 +152,9 @@ export default function JournalEntryPage() {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -168,9 +173,9 @@ export default function JournalEntryPage() {
   // ============================================================================
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -178,7 +183,7 @@ export default function JournalEntryPage() {
 
   const formatDate = (dateString: string): string => {
     try {
-      return format(parseISO(dateString), 'dd/MM/yyyy');
+      return format(parseISO(dateString), "dd/MM/yyyy");
     } catch {
       return dateString;
     }
@@ -193,23 +198,27 @@ export default function JournalEntryPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
         <Typography variant="h4" fontWeight={600}>
           Jurnal Umum (Journal Entries)
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleCreate}
+        >
           Tambah Jurnal
         </Button>
       </Box>
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           {/* Date Range */}
           <TextField
             label="Tanggal Mulai"
@@ -232,8 +241,8 @@ export default function JournalEntryPage() {
           <Button
             variant="outlined"
             onClick={() => {
-              setTanggalMulai('');
-              setTanggalAkhir('');
+              setTanggalMulai("");
+              setTanggalAkhir("");
             }}
           >
             Reset Filter
@@ -291,7 +300,7 @@ export default function JournalEntryPage() {
                       {formatDate(transaction.tanggalTransaksi)}
                     </TableCell>
                     <TableCell>{transaction.deskripsi}</TableCell>
-                    <TableCell>{transaction.nomorReferensi || '-'}</TableCell>
+                    <TableCell>{transaction.nomorReferensi || "-"}</TableCell>
                     <TableCell align="right">
                       {formatCurrency(transaction.totalDebit)}
                     </TableCell>

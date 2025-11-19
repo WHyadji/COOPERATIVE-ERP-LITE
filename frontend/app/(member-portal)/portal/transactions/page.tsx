@@ -3,9 +3,9 @@
 // View all transactions (simpanan deposits)
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Card,
@@ -26,46 +26,50 @@ import {
   Grid,
   Button,
   Divider,
-} from '@mui/material';
-import { FilterList, Receipt } from '@mui/icons-material';
-import { getMemberTransactions, type MemberTransactionFilters, type RiwayatTransaksiAnggota } from '@/lib/api/memberPortalApi';
+} from "@mui/material";
+import { FilterList, Receipt } from "@mui/icons-material";
+import {
+  getMemberTransactions,
+  type MemberTransactionFilters,
+  type RiwayatTransaksiAnggota,
+} from "@/lib/api/memberPortalApi";
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  return new Date(dateString).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 };
 
 const getTipeSimpananLabel = (tipe: string): string => {
   const labels: Record<string, string> = {
-    pokok: 'Simpanan Pokok',
-    wajib: 'Simpanan Wajib',
-    sukarela: 'Simpanan Sukarela',
+    pokok: "Simpanan Pokok",
+    wajib: "Simpanan Wajib",
+    sukarela: "Simpanan Sukarela",
   };
   return labels[tipe] || tipe;
 };
 
-const getTipeSimpananColor = (tipe: string): 'primary' | 'success' | 'info' => {
-  const colors: Record<string, 'primary' | 'success' | 'info'> = {
-    pokok: 'primary',
-    wajib: 'success',
-    sukarela: 'info',
+const getTipeSimpananColor = (tipe: string): "primary" | "success" | "info" => {
+  const colors: Record<string, "primary" | "success" | "info"> = {
+    pokok: "primary",
+    wajib: "success",
+    sukarela: "info",
   };
-  return colors[tipe] || 'info';
+  return colors[tipe] || "info";
 };
 
 // ============================================================================
@@ -74,22 +78,24 @@ const getTipeSimpananColor = (tipe: string): 'primary' | 'success' | 'info' => {
 
 export default function MemberTransactionsPage() {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [transactions, setTransactions] = useState<RiwayatTransaksiAnggota[]>([]);
+  const [error, setError] = useState<string>("");
+  const [transactions, setTransactions] = useState<RiwayatTransaksiAnggota[]>(
+    []
+  );
   const [filters, setFilters] = useState<MemberTransactionFilters>({
-    tipeSimpanan: 'all',
-    tanggalMulai: '',
-    tanggalAkhir: '',
+    tipeSimpanan: "all",
+    tanggalMulai: "",
+    tanggalAkhir: "",
   });
 
   // ============================================================================
   // Fetch Transactions
   // ============================================================================
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       const filterParams: MemberTransactionFilters = {
         page: 1,
@@ -99,40 +105,45 @@ export default function MemberTransactionsPage() {
       let data = await getMemberTransactions(filterParams);
 
       // Client-side filtering since backend doesn't support these filters
-      if (filters.tipeSimpanan && filters.tipeSimpanan !== 'all') {
-        data = data.filter(t => t.tipeSimpanan === filters.tipeSimpanan);
+      if (filters.tipeSimpanan && filters.tipeSimpanan !== "all") {
+        data = data.filter((t) => t.tipeSimpanan === filters.tipeSimpanan);
       }
 
       if (filters.tanggalMulai) {
-        data = data.filter(t => t.tanggalTransaksi >= filters.tanggalMulai);
+        const tanggalMulai = filters.tanggalMulai;
+        data = data.filter((t) => t.tanggalTransaksi >= tanggalMulai);
       }
 
       if (filters.tanggalAkhir) {
-        data = data.filter(t => t.tanggalTransaksi <= filters.tanggalAkhir);
+        const tanggalAkhir = filters.tanggalAkhir;
+        data = data.filter((t) => t.tanggalTransaksi <= tanggalAkhir);
       }
 
       setTransactions(data);
     } catch (err: unknown) {
-      console.error('Failed to fetch transactions:', err);
-      if (err && typeof err === 'object' && 'message' in err) {
+      console.error("Failed to fetch transactions:", err);
+      if (err && typeof err === "object" && "message" in err) {
         setError(err.message as string);
       } else {
-        setError('Gagal memuat riwayat transaksi');
+        setError("Gagal memuat riwayat transaksi");
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  }, [fetchTransactions]);
 
   // ============================================================================
   // Handle Filter Change
   // ============================================================================
 
-  const handleFilterChange = (field: keyof MemberTransactionFilters, value: string) => {
+  const handleFilterChange = (
+    field: keyof MemberTransactionFilters,
+    value: string
+  ) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
@@ -145,9 +156,9 @@ export default function MemberTransactionsPage() {
 
   const handleResetFilters = () => {
     setFilters({
-      tipeSimpanan: 'all',
-      tanggalMulai: '',
-      tanggalAkhir: '',
+      tipeSimpanan: "all",
+      tanggalMulai: "",
+      tanggalAkhir: "",
     });
     setTimeout(() => {
       fetchTransactions();
@@ -179,7 +190,7 @@ export default function MemberTransactionsPage() {
       {/* Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
             <FilterList sx={{ mr: 1 }} />
             <Typography variant="h6">Filter</Typography>
           </Box>
@@ -191,7 +202,9 @@ export default function MemberTransactionsPage() {
                 fullWidth
                 label="Tipe Simpanan"
                 value={filters.tipeSimpanan}
-                onChange={(e) => handleFilterChange('tipeSimpanan', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("tipeSimpanan", e.target.value)
+                }
               >
                 <MenuItem value="all">Semua Tipe</MenuItem>
                 <MenuItem value="pokok">Simpanan Pokok</MenuItem>
@@ -206,7 +219,9 @@ export default function MemberTransactionsPage() {
                 label="Tanggal Mulai"
                 type="date"
                 value={filters.tanggalMulai}
-                onChange={(e) => handleFilterChange('tanggalMulai', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("tanggalMulai", e.target.value)
+                }
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
@@ -217,25 +232,27 @@ export default function MemberTransactionsPage() {
                 label="Tanggal Akhir"
                 type="date"
                 value={filters.tanggalAkhir}
-                onChange={(e) => handleFilterChange('tanggalAkhir', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("tanggalAkhir", e.target.value)
+                }
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
 
             <Grid item xs={12} md={2}>
-              <Box sx={{ display: 'flex', gap: 1, height: '100%' }}>
+              <Box sx={{ display: "flex", gap: 1, height: "100%" }}>
                 <Button
                   fullWidth
                   variant="contained"
                   onClick={handleApplyFilters}
-                  sx={{ height: '56px' }}
+                  sx={{ height: "56px" }}
                 >
                   Terapkan
                 </Button>
                 <Button
                   variant="outlined"
                   onClick={handleResetFilters}
-                  sx={{ height: '56px' }}
+                  sx={{ height: "56px" }}
                 >
                   Reset
                 </Button>
@@ -272,7 +289,7 @@ export default function MemberTransactionsPage() {
       {/* Transactions Table */}
       <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
             <Receipt sx={{ mr: 1 }} />
             <Typography variant="h6">Daftar Transaksi</Typography>
           </Box>
@@ -280,7 +297,7 @@ export default function MemberTransactionsPage() {
           <Divider sx={{ mb: 3 }} />
 
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress />
             </Box>
           ) : error ? (
@@ -305,7 +322,9 @@ export default function MemberTransactionsPage() {
                           {transaksi.nomorReferensi}
                         </Typography>
                       </TableCell>
-                      <TableCell>{formatDate(transaksi.tanggalTransaksi)}</TableCell>
+                      <TableCell>
+                        {formatDate(transaksi.tanggalTransaksi)}
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={getTipeSimpananLabel(transaksi.tipeSimpanan)}
@@ -313,9 +332,13 @@ export default function MemberTransactionsPage() {
                           size="small"
                         />
                       </TableCell>
-                      <TableCell>{transaksi.keterangan || '-'}</TableCell>
+                      <TableCell>{transaksi.keterangan || "-"}</TableCell>
                       <TableCell align="right">
-                        <Typography variant="body2" fontWeight={600} color="success.main">
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          color="success.main"
+                        >
                           {formatCurrency(transaksi.jumlah)}
                         </Typography>
                       </TableCell>

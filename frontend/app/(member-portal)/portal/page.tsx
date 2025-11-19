@@ -3,10 +3,10 @@
 // Main dashboard showing balance and recent transactions
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Card,
@@ -25,53 +25,56 @@ import {
   TableHead,
   TableRow,
   Paper,
-} from '@mui/material';
+} from "@mui/material";
 import {
   AccountBalance,
   TrendingUp,
   Receipt,
   ArrowForward,
   Savings,
-} from '@mui/icons-material';
-import { getMemberDashboard } from '@/lib/api/memberPortalApi';
-import type { MemberDashboardSummary, RiwayatTransaksiAnggota } from '@/lib/api/memberPortalApi';
+} from "@mui/icons-material";
+import { getMemberDashboard } from "@/lib/api/memberPortalApi";
+import type {
+  MemberDashboardSummary,
+  RiwayatTransaksiAnggota,
+} from "@/lib/api/memberPortalApi";
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  return new Date(dateString).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 };
 
 const getTipeSimpananLabel = (tipe: string): string => {
   const labels: Record<string, string> = {
-    pokok: 'Simpanan Pokok',
-    wajib: 'Simpanan Wajib',
-    sukarela: 'Simpanan Sukarela',
+    pokok: "Simpanan Pokok",
+    wajib: "Simpanan Wajib",
+    sukarela: "Simpanan Sukarela",
   };
   return labels[tipe] || tipe;
 };
 
-const getTipeSimpananColor = (tipe: string): 'primary' | 'success' | 'info' => {
-  const colors: Record<string, 'primary' | 'success' | 'info'> = {
-    pokok: 'primary',
-    wajib: 'success',
-    sukarela: 'info',
+const getTipeSimpananColor = (tipe: string): "primary" | "success" | "info" => {
+  const colors: Record<string, "primary" | "success" | "info"> = {
+    pokok: "primary",
+    wajib: "success",
+    sukarela: "info",
   };
-  return colors[tipe] || 'info';
+  return colors[tipe] || "info";
 };
 
 // ============================================================================
@@ -81,9 +84,10 @@ const getTipeSimpananColor = (tipe: string): 'primary' | 'success' | 'info' => {
 export default function MemberPortalDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [dashboardData, setDashboardData] = useState<MemberDashboardSummary | null>(null);
-  const [userName, setUserName] = useState<string>('Anggota');
+  const [error, setError] = useState<string>("");
+  const [dashboardData, setDashboardData] =
+    useState<MemberDashboardSummary | null>(null);
+  const [userName, setUserName] = useState<string>("Anggota");
 
   // ============================================================================
   // Fetch Dashboard Data
@@ -93,18 +97,18 @@ export default function MemberPortalDashboard() {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
         const data = await getMemberDashboard();
         setDashboardData(data);
         if (data.saldoSimpanan.namaAnggota) {
           setUserName(data.saldoSimpanan.namaAnggota);
         }
       } catch (err: unknown) {
-        console.error('Failed to fetch dashboard:', err);
-        if (err && typeof err === 'object' && 'message' in err) {
+        console.error("Failed to fetch dashboard:", err);
+        if (err && typeof err === "object" && "message" in err) {
           setError(err.message as string);
         } else {
-          setError('Gagal memuat data dashboard');
+          setError("Gagal memuat data dashboard");
         }
       } finally {
         setLoading(false);
@@ -120,7 +124,14 @@ export default function MemberPortalDashboard() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 400,
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -160,18 +171,20 @@ export default function MemberPortalDashboard() {
         <Grid item xs={12} md={6} lg={3}>
           <Card
             sx={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              height: '100%',
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              height: "100%",
             }}
           >
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <AccountBalance sx={{ fontSize: 40, mr: 2 }} />
                 <Typography variant="h6">Total Simpanan</Typography>
               </Box>
               <Typography variant="h4" fontWeight={700}>
-                {formatCurrency(dashboardData?.saldoSimpanan.totalSimpanan || 0)}
+                {formatCurrency(
+                  dashboardData?.saldoSimpanan.totalSimpanan || 0
+                )}
               </Typography>
               <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
                 Akumulasi semua simpanan
@@ -182,14 +195,16 @@ export default function MemberPortalDashboard() {
 
         {/* Simpanan Pokok */}
         <Grid item xs={12} md={6} lg={3}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ height: "100%" }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Savings sx={{ fontSize: 40, mr: 2, color: 'primary.main' }} />
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Savings sx={{ fontSize: 40, mr: 2, color: "primary.main" }} />
                 <Typography variant="h6">Simpanan Pokok</Typography>
               </Box>
               <Typography variant="h4" fontWeight={700} color="primary.main">
-                {formatCurrency(dashboardData?.saldoSimpanan.simpananPokok || 0)}
+                {formatCurrency(
+                  dashboardData?.saldoSimpanan.simpananPokok || 0
+                )}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Setoran pokok
@@ -200,14 +215,18 @@ export default function MemberPortalDashboard() {
 
         {/* Simpanan Wajib */}
         <Grid item xs={12} md={6} lg={3}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ height: "100%" }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp sx={{ fontSize: 40, mr: 2, color: 'success.main' }} />
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <TrendingUp
+                  sx={{ fontSize: 40, mr: 2, color: "success.main" }}
+                />
                 <Typography variant="h6">Simpanan Wajib</Typography>
               </Box>
               <Typography variant="h4" fontWeight={700} color="success.main">
-                {formatCurrency(dashboardData?.saldoSimpanan.simpananWajib || 0)}
+                {formatCurrency(
+                  dashboardData?.saldoSimpanan.simpananWajib || 0
+                )}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Setoran wajib bulanan
@@ -218,14 +237,16 @@ export default function MemberPortalDashboard() {
 
         {/* Simpanan Sukarela */}
         <Grid item xs={12} md={6} lg={3}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ height: "100%" }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Receipt sx={{ fontSize: 40, mr: 2, color: 'info.main' }} />
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Receipt sx={{ fontSize: 40, mr: 2, color: "info.main" }} />
                 <Typography variant="h6">Simpanan Sukarela</Typography>
               </Box>
               <Typography variant="h4" fontWeight={700} color="info.main">
-                {formatCurrency(dashboardData?.saldoSimpanan.simpananSukarela || 0)}
+                {formatCurrency(
+                  dashboardData?.saldoSimpanan.simpananSukarela || 0
+                )}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Setoran sukarela
@@ -238,13 +259,20 @@ export default function MemberPortalDashboard() {
       {/* Recent Transactions */}
       <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
             <Typography variant="h6" fontWeight={600}>
               Transaksi Terbaru
             </Typography>
             <Button
               endIcon={<ArrowForward />}
-              onClick={() => router.push('/portal/transactions')}
+              onClick={() => router.push("/portal/transactions")}
             >
               Lihat Semua
             </Button>
@@ -252,7 +280,8 @@ export default function MemberPortalDashboard() {
 
           <Divider sx={{ mb: 3 }} />
 
-          {dashboardData?.transaksiTerbaru && dashboardData.transaksiTerbaru.length > 0 ? (
+          {dashboardData?.transaksiTerbaru &&
+          dashboardData.transaksiTerbaru.length > 0 ? (
             <TableContainer component={Paper} variant="outlined">
               <Table>
                 <TableHead>
@@ -264,31 +293,37 @@ export default function MemberPortalDashboard() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {dashboardData.transaksiTerbaru.map((transaksi: RiwayatTransaksiAnggota) => (
-                    <TableRow key={transaksi.id} hover>
-                      <TableCell>{formatDate(transaksi.tanggalTransaksi)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getTipeSimpananLabel(transaksi.tipeSimpanan)}
-                          color={getTipeSimpananColor(transaksi.tipeSimpanan)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{transaksi.keterangan || '-'}</TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight={600} color="success.main">
-                          {formatCurrency(transaksi.jumlah)}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {dashboardData.transaksiTerbaru.map(
+                    (transaksi: RiwayatTransaksiAnggota) => (
+                      <TableRow key={transaksi.id} hover>
+                        <TableCell>
+                          {formatDate(transaksi.tanggalTransaksi)}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={getTipeSimpananLabel(transaksi.tipeSimpanan)}
+                            color={getTipeSimpananColor(transaksi.tipeSimpanan)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>{transaksi.keterangan || "-"}</TableCell>
+                        <TableCell align="right">
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="success.main"
+                          >
+                            {formatCurrency(transaksi.jumlah)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
           ) : (
-            <Alert severity="info">
-              Belum ada transaksi
-            </Alert>
+            <Alert severity="info">Belum ada transaksi</Alert>
           )}
         </CardContent>
       </Card>
@@ -300,7 +335,7 @@ export default function MemberPortalDashboard() {
             fullWidth
             variant="outlined"
             startIcon={<AccountBalance />}
-            onClick={() => router.push('/portal/balance')}
+            onClick={() => router.push("/portal/balance")}
             sx={{ py: 1.5 }}
           >
             Lihat Saldo Detail
@@ -311,7 +346,7 @@ export default function MemberPortalDashboard() {
             fullWidth
             variant="outlined"
             startIcon={<Receipt />}
-            onClick={() => router.push('/portal/transactions')}
+            onClick={() => router.push("/portal/transactions")}
             sx={{ py: 1.5 }}
           >
             Riwayat Transaksi

@@ -3,10 +3,10 @@
 // Shows running balance with debit/credit entries
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -24,14 +24,14 @@ import {
   Breadcrumbs,
   Link,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   Print as PrintIcon,
-} from '@mui/icons-material';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Akun, LedgerEntry } from '@/types';
-import { format, parseISO } from 'date-fns';
+} from "@mui/icons-material";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Akun, LedgerEntry } from "@/types";
+import { format, parseISO } from "date-fns";
 
 // ============================================================================
 // Account Ledger Page Component
@@ -45,11 +45,11 @@ export default function AccountLedgerPage() {
   const [account, setAccount] = useState<Akun | null>(null);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Filters
-  const [tanggalMulai, setTanggalMulai] = useState('');
-  const [tanggalAkhir, setTanggalAkhir] = useState('');
+  const [tanggalMulai, setTanggalMulai] = useState("");
+  const [tanggalAkhir, setTanggalAkhir] = useState("");
 
   // ============================================================================
   // Fetch Account Details
@@ -61,7 +61,7 @@ export default function AccountLedgerPage() {
         const data = await accountingApi.getAccountById(accountId);
         setAccount(data);
       } catch (err) {
-        console.error('Failed to fetch account:', err);
+        console.error("Failed to fetch account:", err);
       }
     };
 
@@ -80,7 +80,7 @@ export default function AccountLedgerPage() {
     const fetchLedger = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const data = await accountingApi.getAccountLedger(
           accountId,
@@ -93,8 +93,8 @@ export default function AccountLedgerPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch ledger:', err);
-          setError('Gagal memuat data buku besar. Silakan coba lagi.');
+          console.error("Failed to fetch ledger:", err);
+          setError("Gagal memuat data buku besar. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -117,9 +117,9 @@ export default function AccountLedgerPage() {
   // ============================================================================
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -127,7 +127,7 @@ export default function AccountLedgerPage() {
 
   const formatDate = (dateString: string): string => {
     try {
-      return format(parseISO(dateString), 'dd/MM/yyyy');
+      return format(parseISO(dateString), "dd/MM/yyyy");
     } catch {
       return dateString;
     }
@@ -156,7 +156,7 @@ export default function AccountLedgerPage() {
         <Alert severity="error">Akun tidak ditemukan</Alert>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/akuntansi')}
+          onClick={() => router.push("/akuntansi")}
           sx={{ mt: 2 }}
         >
           Kembali ke Bagan Akun
@@ -172,8 +172,8 @@ export default function AccountLedgerPage() {
         <Link
           underline="hover"
           color="inherit"
-          onClick={() => router.push('/akuntansi')}
-          sx={{ cursor: 'pointer' }}
+          onClick={() => router.push("/akuntansi")}
+          sx={{ cursor: "pointer" }}
         >
           Bagan Akun
         </Link>
@@ -183,9 +183,9 @@ export default function AccountLedgerPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
           mb: 3,
         }}
       >
@@ -194,7 +194,7 @@ export default function AccountLedgerPage() {
             Buku Besar (General Ledger)
           </Typography>
           {account && (
-            <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+            <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
               <Chip
                 label={`${account.kodeAkun} - ${account.namaAkun}`}
                 color="primary"
@@ -209,7 +209,7 @@ export default function AccountLedgerPage() {
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/akuntansi')}
+          onClick={() => router.push("/akuntansi")}
         >
           Kembali
         </Button>
@@ -217,7 +217,14 @@ export default function AccountLedgerPage() {
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
           <TextField
             label="Tanggal Mulai"
             type="date"
@@ -239,8 +246,8 @@ export default function AccountLedgerPage() {
           <Button
             variant="outlined"
             onClick={() => {
-              setTanggalMulai('');
-              setTanggalAkhir('');
+              setTanggalMulai("");
+              setTanggalAkhir("");
             }}
           >
             Reset Filter
@@ -300,25 +307,25 @@ export default function AccountLedgerPage() {
                       </TableCell>
                       <TableCell>{entry.deskripsi}</TableCell>
                       <TableCell align="right">
-                        {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
+                        {entry.debit > 0 ? formatCurrency(entry.debit) : "-"}
                       </TableCell>
                       <TableCell align="right">
-                        {entry.kredit > 0 ? formatCurrency(entry.kredit) : '-'}
+                        {entry.kredit > 0 ? formatCurrency(entry.kredit) : "-"}
                       </TableCell>
                       <TableCell align="right">
                         <Typography
                           fontWeight={600}
-                          color={entry.saldo >= 0 ? 'primary' : 'error'}
+                          color={entry.saldo >= 0 ? "primary" : "error"}
                         >
                           {formatCurrency(Math.abs(entry.saldo))}
-                          {entry.saldo < 0 && ' (CR)'}
+                          {entry.saldo < 0 && " (CR)"}
                         </Typography>
                       </TableCell>
                     </TableRow>
                   ))}
 
                   {/* Totals Row */}
-                  <TableRow sx={{ bgcolor: 'grey.100' }}>
+                  <TableRow sx={{ bgcolor: "grey.100" }}>
                     <TableCell colSpan={3}>
                       <Typography fontWeight={700}>TOTAL</Typography>
                     </TableCell>
@@ -335,7 +342,7 @@ export default function AccountLedgerPage() {
                     <TableCell align="right">
                       <Typography fontWeight={700}>
                         {formatCurrency(Math.abs(getFinalBalance()))}
-                        {getFinalBalance() < 0 && ' (CR)'}
+                        {getFinalBalance() < 0 && " (CR)"}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -352,7 +359,13 @@ export default function AccountLedgerPage() {
           <Typography variant="h6" gutterBottom>
             Ringkasan
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 3,
+            }}
+          >
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Total Debit
@@ -375,7 +388,7 @@ export default function AccountLedgerPage() {
               </Typography>
               <Typography variant="h6">
                 {formatCurrency(Math.abs(getFinalBalance()))}
-                {getFinalBalance() < 0 && ' (CR)'}
+                {getFinalBalance() < 0 && " (CR)"}
               </Typography>
             </Box>
           </Box>

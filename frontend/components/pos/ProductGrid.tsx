@@ -3,9 +3,9 @@
 // Grid layout with category filters and quick add to cart
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -20,15 +20,15 @@ import {
   CircularProgress,
   Alert,
   Badge,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Inventory as InventoryIcon,
   Warning as WarningIcon,
-} from '@mui/icons-material';
-import { useToast } from '@/lib/context/ToastContext';
-import productApi from '@/lib/api/productApi';
-import type { Produk } from '@/types';
+} from "@mui/icons-material";
+import { useToast } from "@/lib/context/ToastContext";
+import productApi from "@/lib/api/productApi";
+import type { Produk } from "@/types";
 
 // ============================================================================
 // Component Props
@@ -44,16 +44,16 @@ interface ProductGridProps {
 // ============================================================================
 
 const categories = [
-  'Semua',
-  'Makanan',
-  'Minuman',
-  'Sembako',
-  'Kebutuhan Rumah Tangga',
-  'Alat Tulis',
-  'Elektronik',
-  'Pakaian',
-  'Kesehatan',
-  'Lainnya',
+  "Semua",
+  "Makanan",
+  "Minuman",
+  "Sembako",
+  "Kebutuhan Rumah Tangga",
+  "Alat Tulis",
+  "Elektronik",
+  "Pakaian",
+  "Kesehatan",
+  "Lainnya",
 ];
 
 // ============================================================================
@@ -67,13 +67,13 @@ export default function ProductGrid({
   const { showError } = useToast();
   const [products, setProducts] = useState<Produk[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [selectedCategory, setSelectedCategory] = useState("Semua");
 
   // Currency formatter
   const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -91,13 +91,13 @@ export default function ProductGrid({
       try {
         const response = await productApi.getProducts({
           statusAktif: true,
-          kategori: selectedCategory === 'Semua' ? undefined : selectedCategory,
+          kategori: selectedCategory === "Semua" ? undefined : selectedCategory,
           pageSize: 100, // Show more products in POS
         });
 
         setProducts(response.data || []);
       } catch {
-        showError('Gagal memuat produk');
+        showError("Gagal memuat produk");
         setProducts([]);
       } finally {
         setLoading(false);
@@ -120,12 +120,16 @@ export default function ProductGrid({
   return (
     <Box>
       {/* Category Filter */}
-      <Box sx={{ mb: 3, overflowX: 'auto' }}>
-        <ButtonGroup variant="outlined" size="small" sx={{ flexWrap: 'wrap', gap: 1 }}>
+      <Box sx={{ mb: 3, overflowX: "auto" }}>
+        <ButtonGroup
+          variant="outlined"
+          size="small"
+          sx={{ flexWrap: "wrap", gap: 1 }}
+        >
           {categories.map((category) => (
             <Button
               key={category}
-              variant={selectedCategory === category ? 'contained' : 'outlined'}
+              variant={selectedCategory === category ? "contained" : "outlined"}
               onClick={() => setSelectedCategory(category)}
               sx={{ borderRadius: 2 }}
             >
@@ -137,7 +141,7 @@ export default function ProductGrid({
 
       {/* Loading State */}
       {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress />
         </Box>
       )}
@@ -145,7 +149,10 @@ export default function ProductGrid({
       {/* Empty State */}
       {!loading && products.length === 0 && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          Tidak ada produk aktif{selectedCategory !== 'Semua' ? ` dalam kategori "${selectedCategory}"` : ''}
+          Tidak ada produk aktif
+          {selectedCategory !== "Semua"
+            ? ` dalam kategori "${selectedCategory}"`
+            : ""}
         </Alert>
       )}
 
@@ -156,11 +163,11 @@ export default function ProductGrid({
             <Grid item xs={6} sm={4} md={3} lg={2} key={product.id}>
               <Card
                 sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
                   opacity: disabled || product.stok === 0 ? 0.6 : 1,
-                  position: 'relative',
+                  position: "relative",
                 }}
               >
                 {/* Low Stock Badge */}
@@ -168,7 +175,7 @@ export default function ProductGrid({
                   <Badge
                     badgeContent={<WarningIcon sx={{ fontSize: 16 }} />}
                     color="warning"
-                    sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+                    sx={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}
                   />
                 )}
 
@@ -178,14 +185,19 @@ export default function ProductGrid({
                     label="HABIS"
                     color="error"
                     size="small"
-                    sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+                    sx={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}
                   />
                 )}
 
                 <CardActionArea
                   onClick={() => !disabled && handleProductClick(product)}
                   disabled={disabled || product.stok === 0}
-                  sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
+                  sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "stretch",
+                  }}
                 >
                   {/* Product Image */}
                   {product.gambarUrl ? (
@@ -194,19 +206,19 @@ export default function ProductGrid({
                       height="120"
                       image={product.gambarUrl}
                       alt={product.namaProduk}
-                      sx={{ objectFit: 'cover' }}
+                      sx={{ objectFit: "cover" }}
                     />
                   ) : (
                     <Box
                       sx={{
                         height: 120,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: 'grey.200',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: "grey.200",
                       }}
                     >
-                      <InventoryIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                      <InventoryIcon sx={{ fontSize: 48, color: "grey.400" }} />
                     </Box>
                   )}
 
@@ -217,29 +229,51 @@ export default function ProductGrid({
                       fontWeight={600}
                       gutterBottom
                       sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
                         WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        minHeight: '2.5em',
+                        WebkitBoxOrient: "vertical",
+                        minHeight: "2.5em",
                       }}
                     >
                       {product.namaProduk}
                     </Typography>
 
-                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      gutterBottom
+                    >
                       {product.kodeProduk}
                     </Typography>
 
-                    <Typography variant="h6" color="primary" fontWeight={700} gutterBottom>
+                    <Typography
+                      variant="h6"
+                      color="primary"
+                      fontWeight={700}
+                      gutterBottom
+                    >
                       {formatCurrency(product.harga)}
                     </Typography>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
                       <Typography
                         variant="caption"
-                        color={product.stok === 0 ? 'error' : isLowStock(product) ? 'warning.main' : 'text.secondary'}
+                        color={
+                          product.stok === 0
+                            ? "error"
+                            : isLowStock(product)
+                              ? "warning.main"
+                              : "text.secondary"
+                        }
                       >
                         Stok: {product.stok} {product.satuan}
                       </Typography>

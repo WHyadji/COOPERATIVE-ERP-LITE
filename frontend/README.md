@@ -68,12 +68,14 @@ frontend/
 ## Features Implemented
 
 ### ✅ Authentication
+
 - Login with JWT
 - Protected routes
 - Auto-redirect on token expiration
 - Role-based access control
 
 ### ✅ Member Management
+
 - **List**: Paginated table with search & filters
 - **Create**: Multi-section form with validation
 - **View**: Member detail page
@@ -81,6 +83,7 @@ frontend/
 - **Delete**: With confirmation
 
 ### ✅ Savings Management (Simpanan)
+
 - **List**: Paginated table with filters by type & date range
 - **Create**: Transaction form with member selection
 - **View**: Balance summaries by member and type
@@ -88,6 +91,7 @@ frontend/
 - **Reports**: Member balance summaries
 
 ### ✅ Accounting Module (Akuntansi)
+
 - **Chart of Accounts (Akun)**:
   - List with hierarchical display
   - Create/Edit account forms
@@ -106,6 +110,7 @@ frontend/
   - Audit trail: Creator and updater tracking
 
 ### ✅ User Experience
+
 - **Toast Notifications**: Professional feedback for all CRUD operations
 - **Audit Trail**: Complete tracking of who created/updated records
 - **Responsive Design**: Mobile-first Material-UI components
@@ -113,6 +118,7 @@ frontend/
 - **Error Handling**: User-friendly error messages
 
 ### ✅ Dashboard Layout
+
 - Responsive sidebar navigation
 - Mobile drawer
 - User profile menu
@@ -127,10 +133,12 @@ Contact backend team for test credentials.
 All endpoints use `/api/v1` prefix:
 
 ### Authentication
+
 - `POST /auth/login` - Authentication
 - `GET /auth/profile` - User profile
 
 ### Members (Anggota)
+
 - `GET /anggota` - List members with pagination
 - `POST /anggota` - Create member
 - `GET /anggota/:id` - Get member details
@@ -139,6 +147,7 @@ All endpoints use `/api/v1` prefix:
 - `GET /anggota/statistik` - Member statistics
 
 ### Savings (Simpanan)
+
 - `GET /simpanan` - List savings transactions
 - `POST /simpanan` - Create savings transaction
 - `GET /simpanan/:id` - Get transaction details
@@ -147,6 +156,7 @@ All endpoints use `/api/v1` prefix:
 - `GET /simpanan/ringkasan` - Get savings summary
 
 ### Accounting (Akuntansi)
+
 - **Chart of Accounts**:
   - `GET /akun` - List accounts with filters
   - `POST /akun` - Create account
@@ -196,6 +206,7 @@ npm run build
 ## Next Steps
 
 ### Completed Features ✅
+
 - ✅ Member Management (`/anggota`)
 - ✅ Savings Management (`/simpanan`)
 - ✅ Chart of Accounts (`/akuntansi/akun`)
@@ -204,10 +215,12 @@ npm run build
 - ✅ Audit Trail Tracking
 
 ### In Progress 🚧
+
 - Account Ledger View (`/akuntansi/buku-besar`)
 - Financial Reports (`/laporan`)
 
 ### Upcoming Features 📋
+
 - POS/Sales (`/pos`)
 - Products (`/produk`)
 - Inventory Management
@@ -218,6 +231,7 @@ npm run build
 ## Documentation
 
 See main project docs:
+
 - `/docs/mvp-action-plan.md` - Feature roadmap
 - `/docs/quick-start-guide.md` - Setup guide
 - `/CLAUDE.md` - Development guidelines

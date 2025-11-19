@@ -3,7 +3,7 @@
 // Type-safe API calls for generating financial reports
 // ============================================================================
 
-import apiClient from './client';
+import apiClient from "./client";
 import type {
   LaporanPosisiKeuangan,
   LaporanLabaRugi,
@@ -12,7 +12,7 @@ import type {
   LaporanTransaksiHarian,
   BukuBesarResponse,
   APIResponse,
-} from '@/types';
+} from "@/types";
 
 // ============================================================================
 // Reports (Laporan) API Functions
@@ -34,12 +34,12 @@ export const getBalanceSheet = async (
   }
 
   const response = await apiClient.get<APIResponse<LaporanPosisiKeuangan>>(
-    '/laporan/neraca',
+    "/laporan/neraca",
     { params }
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch balance sheet');
+    throw new Error(response.data.message || "Failed to fetch balance sheet");
   }
 
   return response.data.data;
@@ -57,7 +57,7 @@ export const getIncomeStatement = async (
   tanggalAkhir: string
 ): Promise<LaporanLabaRugi> => {
   if (!tanggalMulai || !tanggalAkhir) {
-    throw new Error('Start date and end date are required');
+    throw new Error("Start date and end date are required");
   }
 
   const params = {
@@ -66,12 +66,14 @@ export const getIncomeStatement = async (
   };
 
   const response = await apiClient.get<APIResponse<LaporanLabaRugi>>(
-    '/laporan/laba-rugi',
+    "/laporan/laba-rugi",
     { params }
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch income statement');
+    throw new Error(
+      response.data.message || "Failed to fetch income statement"
+    );
   }
 
   return response.data.data;
@@ -89,7 +91,7 @@ export const getCashFlow = async (
   tanggalAkhir: string
 ): Promise<LaporanArusKas> => {
   if (!tanggalMulai || !tanggalAkhir) {
-    throw new Error('Start date and end date are required');
+    throw new Error("Start date and end date are required");
   }
 
   const params = {
@@ -98,12 +100,14 @@ export const getCashFlow = async (
   };
 
   const response = await apiClient.get<APIResponse<LaporanArusKas>>(
-    '/laporan/arus-kas',
+    "/laporan/arus-kas",
     { params }
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch cash flow statement');
+    throw new Error(
+      response.data.message || "Failed to fetch cash flow statement"
+    );
   }
 
   return response.data.data;
@@ -126,12 +130,12 @@ export const getTrialBalance = async (
   }
 
   const response = await apiClient.get<APIResponse<NeracaSaldo>>(
-    '/laporan/neraca-saldo',
+    "/laporan/neraca-saldo",
     { params }
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch trial balance');
+    throw new Error(response.data.message || "Failed to fetch trial balance");
   }
 
   return response.data.data;
@@ -153,12 +157,14 @@ export const getDailyTransactionReport = async (
   }
 
   const response = await apiClient.get<APIResponse<LaporanTransaksiHarian>>(
-    '/laporan/transaksi-harian',
+    "/laporan/transaksi-harian",
     { params }
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch daily transaction report');
+    throw new Error(
+      response.data.message || "Failed to fetch daily transaction report"
+    );
   }
 
   return response.data.data;
@@ -178,7 +184,7 @@ export const getGeneralLedger = async (
   tanggalAkhir?: string
 ): Promise<BukuBesarResponse> => {
   if (!idAkun) {
-    throw new Error('Account ID is required');
+    throw new Error("Account ID is required");
   }
 
   const params: Record<string, string> = {
@@ -194,19 +200,19 @@ export const getGeneralLedger = async (
   }
 
   const response = await apiClient.get<APIResponse<BukuBesarResponse>>(
-    '/laporan/buku-besar',
+    "/laporan/buku-besar",
     { params }
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch general ledger');
+    throw new Error(response.data.message || "Failed to fetch general ledger");
   }
 
   return response.data.data;
 };
 
 // Export all functions as default object for convenience
-export default {
+const reportsApi = {
   getBalanceSheet,
   getIncomeStatement,
   getCashFlow,
@@ -214,3 +220,5 @@ export default {
   getDailyTransactionReport,
   getGeneralLedger,
 };
+
+export default reportsApi;

@@ -3,10 +3,10 @@
 // Material-UI table with product list, filters, and CRUD operations
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -27,7 +27,7 @@ import {
   MenuItem,
   Grid,
   InputAdornment,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -35,11 +35,11 @@ import {
   Visibility as VisibilityIcon,
   Search as SearchIcon,
   Warning as WarningIcon,
-} from '@mui/icons-material';
-import { useToast } from '@/lib/context/ToastContext';
-import productApi from '@/lib/api/productApi';
-import type { Produk, ProdukListFilters } from '@/types';
-import ProductForm from '@/components/products/ProductForm';
+} from "@mui/icons-material";
+import { useToast } from "@/lib/context/ToastContext";
+import productApi from "@/lib/api/productApi";
+import type { Produk, ProdukListFilters } from "@/types";
+import ProductForm from "@/components/products/ProductForm";
 
 // ============================================================================
 // Product Page Component
@@ -51,15 +51,15 @@ export default function ProductPage() {
 
   const [products, setProducts] = useState<Produk[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Pagination & Filters
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  const [search, setSearch] = useState('');
-  const [kategori, setKategori] = useState('');
-  const [statusAktif, setStatusAktif] = useState<boolean | 'all'>('all');
+  const [search, setSearch] = useState("");
+  const [kategori, setKategori] = useState("");
+  const [statusAktif, setStatusAktif] = useState<boolean | "all">("all");
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Product form dialog
@@ -68,15 +68,15 @@ export default function ProductPage() {
 
   // Categories (in a real app, this could be fetched from backend)
   const categories = [
-    'Makanan',
-    'Minuman',
-    'Sembako',
-    'Kebutuhan Rumah Tangga',
-    'Alat Tulis',
-    'Elektronik',
-    'Pakaian',
-    'Kesehatan',
-    'Lainnya',
+    "Makanan",
+    "Minuman",
+    "Sembako",
+    "Kebutuhan Rumah Tangga",
+    "Alat Tulis",
+    "Elektronik",
+    "Pakaian",
+    "Kesehatan",
+    "Lainnya",
   ];
 
   // ============================================================================
@@ -89,14 +89,14 @@ export default function ProductPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const filters: ProdukListFilters = {
           page: page + 1, // API uses 1-based pagination
           pageSize: rowsPerPage,
           search: search || undefined,
           kategori: kategori || undefined,
-          statusAktif: statusAktif === 'all' ? undefined : statusAktif,
+          statusAktif: statusAktif === "all" ? undefined : statusAktif,
         };
 
         const response = await productApi.getProducts(filters);
@@ -107,8 +107,8 @@ export default function ProductPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch products:', err);
-          setError('Gagal memuat data produk. Silakan coba lagi.');
+          console.error("Failed to fetch products:", err);
+          setError("Gagal memuat data produk. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -139,15 +139,13 @@ export default function ProductPage() {
       setSelectedProduct(product);
       setFormOpen(true);
     } catch (err) {
-      console.error('Failed to fetch product:', err);
-      showError('Gagal memuat data produk. Silakan coba lagi.');
+      console.error("Failed to fetch product:", err);
+      showError("Gagal memuat data produk. Silakan coba lagi.");
     }
   };
 
   const handleDelete = async (id: string, namaProduk: string) => {
-    if (
-      !confirm(`Apakah Anda yakin ingin menghapus produk "${namaProduk}"?`)
-    ) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus produk "${namaProduk}"?`)) {
       return;
     }
 
@@ -156,8 +154,8 @@ export default function ProductPage() {
       showSuccess(`Produk "${namaProduk}" berhasil dihapus`);
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
-      console.error('Failed to delete product:', err);
-      showError('Gagal menghapus produk. Silakan coba lagi.');
+      console.error("Failed to delete product:", err);
+      showError("Gagal menghapus produk. Silakan coba lagi.");
     }
   };
 
@@ -192,9 +190,9 @@ export default function ProductPage() {
   // ============================================================================
 
   const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(value);
   };
@@ -212,9 +210,9 @@ export default function ProductPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
@@ -284,9 +282,7 @@ export default function ProductPage() {
               value={statusAktif}
               onChange={(e) => {
                 const value = e.target.value;
-                setStatusAktif(
-                  value === 'all' ? 'all' : value === 'true'
-                );
+                setStatusAktif(value === "all" ? "all" : value === "true");
                 setPage(0);
               }}
             >
@@ -332,8 +328,8 @@ export default function ProductPage() {
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
                     <Typography color="text.secondary">
-                      {search || kategori || statusAktif !== 'all'
-                        ? 'Tidak ada produk yang sesuai dengan filter'
+                      {search || kategori || statusAktif !== "all"
+                        ? "Tidak ada produk yang sesuai dengan filter"
                         : 'Belum ada produk. Klik "Tambah Produk" untuk mulai.'}
                     </Typography>
                   </TableCell>
@@ -356,24 +352,22 @@ export default function ProductPage() {
                         />
                       )}
                     </TableCell>
-                    <TableCell>
-                      {product.kategori || '-'}
-                    </TableCell>
+                    <TableCell>{product.kategori || "-"}</TableCell>
                     <TableCell align="right">
                       {formatCurrency(product.harga)}
                     </TableCell>
                     <TableCell align="center">
                       <Chip
                         label={product.stok}
-                        color={isLowStock(product) ? 'warning' : 'default'}
+                        color={isLowStock(product) ? "warning" : "default"}
                         size="small"
                       />
                     </TableCell>
                     <TableCell>{product.satuan}</TableCell>
                     <TableCell align="center">
                       <Chip
-                        label={product.statusAktif ? 'Aktif' : 'Nonaktif'}
-                        color={product.statusAktif ? 'success' : 'default'}
+                        label={product.statusAktif ? "Aktif" : "Nonaktif"}
+                        color={product.statusAktif ? "success" : "default"}
                         size="small"
                       />
                     </TableCell>

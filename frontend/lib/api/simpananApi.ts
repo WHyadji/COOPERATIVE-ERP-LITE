@@ -3,7 +3,7 @@
 // Type-safe API calls for share capital management
 // ============================================================================
 
-import apiClient from './client';
+import apiClient from "./client";
 import type {
   Simpanan,
   CreateSimpananRequest,
@@ -12,7 +12,7 @@ import type {
   APIResponse,
   PaginatedResponse,
   SimpananListFilters,
-} from '@/types';
+} from "@/types";
 
 // ============================================================================
 // Simpanan API Functions
@@ -29,7 +29,7 @@ export const getSimpananList = async (
     pageSize: filters?.pageSize || 20,
   };
 
-  if (filters?.tipeSimpanan && filters.tipeSimpanan !== 'all') {
+  if (filters?.tipeSimpanan && filters.tipeSimpanan !== "all") {
     params.tipeSimpanan = filters.tipeSimpanan;
   }
 
@@ -45,9 +45,12 @@ export const getSimpananList = async (
     params.tanggalAkhir = filters.tanggalAkhir;
   }
 
-  const response = await apiClient.get<PaginatedResponse<Simpanan>>('/simpanan', {
-    params,
-  });
+  const response = await apiClient.get<PaginatedResponse<Simpanan>>(
+    "/simpanan",
+    {
+      params,
+    }
+  );
 
   return response.data;
 };
@@ -58,10 +61,13 @@ export const getSimpananList = async (
 export const createSimpanan = async (
   data: CreateSimpananRequest
 ): Promise<Simpanan> => {
-  const response = await apiClient.post<APIResponse<Simpanan>>('/simpanan', data);
+  const response = await apiClient.post<APIResponse<Simpanan>>(
+    "/simpanan",
+    data
+  );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to create simpanan');
+    throw new Error(response.data.message || "Failed to create simpanan");
   }
 
   return response.data.data;
@@ -78,7 +84,7 @@ export const getSaldoAnggota = async (
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch member balance');
+    throw new Error("Failed to fetch member balance");
   }
 
   return response.data.data;
@@ -89,11 +95,11 @@ export const getSaldoAnggota = async (
  */
 export const getRingkasan = async (): Promise<RingkasanSimpanan> => {
   const response = await apiClient.get<APIResponse<RingkasanSimpanan>>(
-    '/simpanan/ringkasan'
+    "/simpanan/ringkasan"
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch simpanan summary');
+    throw new Error("Failed to fetch simpanan summary");
   }
 
   return response.data.data;
@@ -104,11 +110,11 @@ export const getRingkasan = async (): Promise<RingkasanSimpanan> => {
  */
 export const getLaporanSaldo = async (): Promise<SaldoSimpananAnggota[]> => {
   const response = await apiClient.get<APIResponse<SaldoSimpananAnggota[]>>(
-    '/simpanan/laporan-saldo'
+    "/simpanan/laporan-saldo"
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch balance report');
+    throw new Error("Failed to fetch balance report");
   }
 
   return response.data.data;

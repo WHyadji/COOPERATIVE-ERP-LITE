@@ -3,9 +3,9 @@
 // Shows sale receipt after successful transaction with print functionality
 // ============================================================================
 
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogTitle,
@@ -20,13 +20,13 @@ import {
   TableCell,
   TableRow,
   Paper,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Print as PrintIcon,
   CheckCircle as CheckIcon,
   ShoppingCart as CartIcon,
-} from '@mui/icons-material';
-import type { PenjualanResponse } from '@/types';
+} from "@mui/icons-material";
+import type { PenjualanResponse } from "@/types";
 
 // ============================================================================
 // Component Props
@@ -51,9 +51,9 @@ export default function ReceiptDialog({
 }: ReceiptDialogProps) {
   // Currency formatter
   const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -62,12 +62,12 @@ export default function ReceiptDialog({
   // Format date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
 
@@ -94,16 +94,30 @@ export default function ReceiptDialog({
       fullWidth
       PaperProps={{
         sx: {
-          '@media print': {
-            boxShadow: 'none',
+          "@media print": {
+            boxShadow: "none",
             margin: 0,
-            maxWidth: '100%',
+            maxWidth: "100%",
           },
         },
       }}
     >
-      <DialogTitle sx={{ textAlign: 'center', bgcolor: 'success.main', color: 'white', '@media print': { bgcolor: 'white', color: 'black' } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+      <DialogTitle
+        sx={{
+          textAlign: "center",
+          bgcolor: "success.main",
+          color: "white",
+          "@media print": { bgcolor: "white", color: "black" },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+          }}
+        >
           <CheckIcon sx={{ fontSize: 32 }} />
           <Typography variant="h5" component="span" fontWeight={600}>
             Transaksi Berhasil
@@ -113,7 +127,7 @@ export default function ReceiptDialog({
 
       <DialogContent sx={{ p: 3 }}>
         {/* Receipt Header */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Box sx={{ textAlign: "center", mb: 3 }}>
           <Typography variant="h6" fontWeight={700} gutterBottom>
             STRUK PEMBAYARAN
           </Typography>
@@ -156,13 +170,29 @@ export default function ReceiptDialog({
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ pt: 0, pb: index === sale.itemPenjualan.length - 1 ? 1 : 2 }}>
+                    <TableCell
+                      sx={{
+                        pt: 0,
+                        pb: index === sale.itemPenjualan.length - 1 ? 1 : 2,
+                      }}
+                    >
                       <Typography variant="caption" color="text.secondary">
                         {item.kuantitas} × {formatCurrency(item.hargaSatuan)}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ pt: 0, pb: index === sale.itemPenjualan.length - 1 ? 1 : 2 }} />
-                    <TableCell align="right" sx={{ pt: 0, pb: index === sale.itemPenjualan.length - 1 ? 1 : 2 }}>
+                    <TableCell
+                      sx={{
+                        pt: 0,
+                        pb: index === sale.itemPenjualan.length - 1 ? 1 : 2,
+                      }}
+                    />
+                    <TableCell
+                      align="right"
+                      sx={{
+                        pt: 0,
+                        pb: index === sale.itemPenjualan.length - 1 ? 1 : 2,
+                      }}
+                    >
                       <Typography variant="body2" fontWeight={600}>
                         {formatCurrency(item.subtotal)}
                       </Typography>
@@ -178,7 +208,7 @@ export default function ReceiptDialog({
 
         {/* Totals */}
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
             <Typography variant="body1" fontWeight={600}>
               TOTAL
             </Typography>
@@ -187,7 +217,7 @@ export default function ReceiptDialog({
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Bayar
             </Typography>
@@ -196,7 +226,7 @@ export default function ReceiptDialog({
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography variant="body2" color="text.secondary">
               Kembalian
             </Typography>
@@ -209,16 +239,26 @@ export default function ReceiptDialog({
         <Divider sx={{ mb: 2 }} />
 
         {/* Footer */}
-        <Box sx={{ textAlign: 'center' }}>
+        <Box sx={{ textAlign: "center" }}>
           <Typography variant="caption" color="text.secondary" display="block">
             Kasir: {sale.namaKasir}
           </Typography>
           {sale.catatan && (
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              sx={{ mt: 1 }}
+            >
               Catatan: {sale.catatan}
             </Typography>
           )}
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            sx={{ mt: 2 }}
+          >
             Terima kasih atas kunjungan Anda
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
@@ -229,7 +269,13 @@ export default function ReceiptDialog({
 
       <Divider />
 
-      <DialogActions sx={{ p: 2, justifyContent: 'space-between', '@media print': { display: 'none' } }}>
+      <DialogActions
+        sx={{
+          p: 2,
+          justifyContent: "space-between",
+          "@media print": { display: "none" },
+        }}
+      >
         <Button
           variant="outlined"
           onClick={handlePrint}
@@ -237,10 +283,8 @@ export default function ReceiptDialog({
         >
           Cetak
         </Button>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button onClick={onClose}>
-            Tutup
-          </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button onClick={onClose}>Tutup</Button>
           <Button
             variant="contained"
             onClick={handleNewSale}

@@ -3,9 +3,9 @@
 // Displays cart items, quantities, and totals for POS transactions
 // ============================================================================
 
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Box,
   Paper,
@@ -21,14 +21,14 @@ import {
   Button,
   Divider,
   Alert,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Remove as RemoveIcon,
   Delete as DeleteIcon,
   ShoppingCart as CartIcon,
-} from '@mui/icons-material';
-import type { CartItem } from '@/types';
+} from "@mui/icons-material";
+import type { CartItem } from "@/types";
 
 // ============================================================================
 // Component Props
@@ -53,9 +53,9 @@ export default function ShoppingCart({
 }: ShoppingCartProps) {
   // Currency formatter
   const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -89,8 +89,17 @@ export default function ShoppingCart({
   // Empty cart state
   if (items.length === 0) {
     return (
-      <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Paper
+        sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column" }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
           <Typography variant="h6" fontWeight={600}>
             Keranjang Belanja
           </Typography>
@@ -101,14 +110,14 @@ export default function ShoppingCart({
         <Box
           sx={{
             flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
             py: 8,
           }}
         >
-          <CartIcon sx={{ fontSize: 80, color: 'action.disabled', mb: 2 }} />
+          <CartIcon sx={{ fontSize: 80, color: "action.disabled", mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Keranjang Kosong
           </Typography>
@@ -122,9 +131,18 @@ export default function ShoppingCart({
 
   // Cart with items
   return (
-    <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper
+      sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column" }}
+    >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 2,
+        }}
+      >
         <Typography variant="h6" fontWeight={600}>
           Keranjang Belanja ({items.length} item)
         </Typography>
@@ -142,7 +160,14 @@ export default function ShoppingCart({
       <Divider sx={{ mb: 2 }} />
 
       {/* Cart Items Table */}
-      <TableContainer sx={{ flexGrow: 1, mb: 2, maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
+      <TableContainer
+        sx={{
+          flexGrow: 1,
+          mb: 2,
+          maxHeight: "calc(100vh - 400px)",
+          overflow: "auto",
+        }}
+      >
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
@@ -178,7 +203,14 @@ export default function ShoppingCart({
 
                 {/* Quantity Controls */}
                 <TableCell align="center">
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 0.5,
+                    }}
+                  >
                     <IconButton
                       size="small"
                       onClick={() => handleDecrement(item)}
@@ -192,11 +224,13 @@ export default function ShoppingCart({
                       size="small"
                       type="number"
                       value={item.quantity}
-                      onChange={(e) => handleQuantityInput(item, e.target.value)}
+                      onChange={(e) =>
+                        handleQuantityInput(item, e.target.value)
+                      }
                       inputProps={{
                         min: 1,
                         max: item.product.stok,
-                        style: { textAlign: 'center', width: '50px' },
+                        style: { textAlign: "center", width: "50px" },
                       }}
                       sx={{ mx: 0.5 }}
                     />
@@ -213,7 +247,12 @@ export default function ShoppingCart({
 
                   {/* Stock Warning */}
                   {item.quantity >= item.product.stok && (
-                    <Typography variant="caption" color="error" display="block" sx={{ mt: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      display="block"
+                      sx={{ mt: 0.5 }}
+                    >
                       Stok maksimal: {item.product.stok}
                     </Typography>
                   )}
@@ -251,7 +290,13 @@ export default function ShoppingCart({
 
       {/* Total */}
       <Divider sx={{ mb: 2 }} />
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Typography variant="h6" fontWeight={600}>
           Total
         </Typography>

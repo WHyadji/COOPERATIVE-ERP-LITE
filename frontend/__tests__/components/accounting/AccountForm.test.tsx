@@ -3,27 +3,27 @@
 // Tests for account creation and editing form
 // ============================================================================
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import AccountForm from '@/components/accounting/AccountForm';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Akun } from '@/types';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import AccountForm from "@/components/accounting/AccountForm";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Akun } from "@/types";
 
 // Mock the API
-vi.mock('@/lib/api/accountingApi');
+vi.mock("@/lib/api/accountingApi");
 
-describe('AccountForm Component', () => {
+describe("AccountForm Component", () => {
   const mockOnClose = vi.fn();
   const mockOnSuccess = vi.fn();
   const mockParentAccounts: Akun[] = [
     {
-      id: '1',
-      idKoperasi: 'kop1',
-      kodeAkun: '1000',
-      namaAkun: 'Aset',
-      tipeAkun: 'aset',
-      normalSaldo: 'debit',
+      id: "1",
+      idKoperasi: "kop1",
+      kodeAkun: "1000",
+      namaAkun: "Aset",
+      tipeAkun: "aset",
+      normalSaldo: "debit",
       statusAktif: true,
     },
   ];
@@ -36,8 +36,8 @@ describe('AccountForm Component', () => {
   // Rendering Tests
   // ============================================================================
 
-  describe('Rendering', () => {
-    it('should render create mode with correct title', () => {
+  describe("Rendering", () => {
+    it("should render create mode with correct title", () => {
       render(
         <AccountForm
           open={true}
@@ -47,17 +47,17 @@ describe('AccountForm Component', () => {
         />
       );
 
-      expect(screen.getByText('Tambah Akun Baru')).toBeInTheDocument();
+      expect(screen.getByText("Tambah Akun Baru")).toBeInTheDocument();
     });
 
-    it('should render edit mode with correct title', () => {
+    it("should render edit mode with correct title", () => {
       const mockAccount: Akun = {
-        id: '2',
-        idKoperasi: 'kop1',
-        kodeAkun: '1101',
-        namaAkun: 'Kas',
-        tipeAkun: 'aset',
-        normalSaldo: 'debit',
+        id: "2",
+        idKoperasi: "kop1",
+        kodeAkun: "1101",
+        namaAkun: "Kas",
+        tipeAkun: "aset",
+        normalSaldo: "debit",
         statusAktif: true,
       };
 
@@ -71,10 +71,10 @@ describe('AccountForm Component', () => {
         />
       );
 
-      expect(screen.getByText('Edit Akun')).toBeInTheDocument();
+      expect(screen.getByText("Edit Akun")).toBeInTheDocument();
     });
 
-    it('should render all form fields', () => {
+    it("should render all form fields", () => {
       render(
         <AccountForm
           open={true}
@@ -92,7 +92,7 @@ describe('AccountForm Component', () => {
       expect(screen.getByLabelText(/deskripsi/i)).toBeInTheDocument();
     });
 
-    it('should not render when open is false', () => {
+    it("should not render when open is false", () => {
       render(
         <AccountForm
           open={false}
@@ -102,7 +102,7 @@ describe('AccountForm Component', () => {
         />
       );
 
-      expect(screen.queryByText('Tambah Akun Baru')).not.toBeInTheDocument();
+      expect(screen.queryByText("Tambah Akun Baru")).not.toBeInTheDocument();
     });
   });
 
@@ -110,16 +110,16 @@ describe('AccountForm Component', () => {
   // Form Population Tests (Edit Mode)
   // ============================================================================
 
-  describe('Form Population', () => {
-    it('should populate form with account data in edit mode', () => {
+  describe("Form Population", () => {
+    it("should populate form with account data in edit mode", () => {
       const mockAccount: Akun = {
-        id: '2',
-        idKoperasi: 'kop1',
-        kodeAkun: '1101',
-        namaAkun: 'Kas',
-        tipeAkun: 'aset',
-        normalSaldo: 'debit',
-        deskripsi: 'Kas di tangan',
+        id: "2",
+        idKoperasi: "kop1",
+        kodeAkun: "1101",
+        namaAkun: "Kas",
+        tipeAkun: "aset",
+        normalSaldo: "debit",
+        deskripsi: "Kas di tangan",
         statusAktif: true,
       };
 
@@ -133,9 +133,9 @@ describe('AccountForm Component', () => {
         />
       );
 
-      expect(screen.getByDisplayValue('1101')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('Kas')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('Kas di tangan')).toBeInTheDocument();
+      expect(screen.getByDisplayValue("1101")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Kas")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Kas di tangan")).toBeInTheDocument();
     });
   });
 
@@ -143,8 +143,8 @@ describe('AccountForm Component', () => {
   // Validation Tests
   // ============================================================================
 
-  describe('Validation', () => {
-    it('should show error when kode akun is empty', async () => {
+  describe("Validation", () => {
+    it("should show error when kode akun is empty", async () => {
       const user = userEvent.setup();
 
       render(
@@ -156,7 +156,7 @@ describe('AccountForm Component', () => {
         />
       );
 
-      const submitButton = screen.getByText('Simpan');
+      const submitButton = screen.getByText("Simpan");
       await user.click(submitButton);
 
       await waitFor(() => {
@@ -164,7 +164,7 @@ describe('AccountForm Component', () => {
       });
     });
 
-    it('should show error when nama akun is empty', async () => {
+    it("should show error when nama akun is empty", async () => {
       const user = userEvent.setup();
 
       render(
@@ -177,9 +177,9 @@ describe('AccountForm Component', () => {
       );
 
       const kodeInput = screen.getByLabelText(/kode akun/i);
-      await user.type(kodeInput, '1101');
+      await user.type(kodeInput, "1101");
 
-      const submitButton = screen.getByText('Simpan');
+      const submitButton = screen.getByText("Simpan");
       await user.click(submitButton);
 
       await waitFor(() => {
@@ -187,7 +187,7 @@ describe('AccountForm Component', () => {
       });
     });
 
-    it('should show error when tipe akun is not selected', async () => {
+    it("should show error when tipe akun is not selected", async () => {
       const user = userEvent.setup();
 
       render(
@@ -202,14 +202,16 @@ describe('AccountForm Component', () => {
       const kodeInput = screen.getByLabelText(/kode akun/i);
       const namaInput = screen.getByLabelText(/nama akun/i);
 
-      await user.type(kodeInput, '1101');
-      await user.type(namaInput, 'Kas');
+      await user.type(kodeInput, "1101");
+      await user.type(namaInput, "Kas");
 
-      const submitButton = screen.getByText('Simpan');
+      const submitButton = screen.getByText("Simpan");
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/tipe akun harus dipilih/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/tipe akun harus dipilih/i)
+        ).toBeInTheDocument();
       });
     });
   });
@@ -218,10 +220,8 @@ describe('AccountForm Component', () => {
   // Auto-fill Normal Saldo Tests
   // ============================================================================
 
-  describe('Auto-fill Normal Saldo', () => {
-    it('should auto-set normal saldo to debit for aset', async () => {
-      const user = userEvent.setup();
-
+  describe("Auto-fill Normal Saldo", () => {
+    it("should auto-set normal saldo to debit for aset", async () => {
       render(
         <AccountForm
           open={true}
@@ -234,7 +234,7 @@ describe('AccountForm Component', () => {
       // This test verifies the auto-fill logic
       // In actual UI interaction, the user would select from dropdown
       // The component should auto-set normalSaldo based on tipeAkun
-      const form = screen.getByRole('dialog');
+      const form = screen.getByRole("dialog");
       expect(form).toBeInTheDocument();
     });
   });
@@ -243,21 +243,23 @@ describe('AccountForm Component', () => {
   // Create Account Tests
   // ============================================================================
 
-  describe('Create Account', () => {
-    it('should create account successfully', async () => {
+  describe("Create Account", () => {
+    it("should create account successfully", async () => {
       const user = userEvent.setup();
 
       const mockCreatedAccount: Akun = {
-        id: '2',
-        idKoperasi: 'kop1',
-        kodeAkun: '1101',
-        namaAkun: 'Kas',
-        tipeAkun: 'aset',
-        normalSaldo: 'debit',
+        id: "2",
+        idKoperasi: "kop1",
+        kodeAkun: "1101",
+        namaAkun: "Kas",
+        tipeAkun: "aset",
+        normalSaldo: "debit",
         statusAktif: true,
       };
 
-      vi.mocked(accountingApi.createAccount).mockResolvedValue(mockCreatedAccount);
+      vi.mocked(accountingApi.createAccount).mockResolvedValue(
+        mockCreatedAccount
+      );
 
       render(
         <AccountForm
@@ -271,20 +273,18 @@ describe('AccountForm Component', () => {
       const kodeInput = screen.getByLabelText(/kode akun/i);
       const namaInput = screen.getByLabelText(/nama akun/i);
 
-      await user.type(kodeInput, '1101');
-      await user.type(namaInput, 'Kas');
+      await user.type(kodeInput, "1101");
+      await user.type(namaInput, "Kas");
 
       // Note: In a real test, we would select from dropdown
       // For now, we verify the form structure exists
-      expect(kodeInput).toHaveValue('1101');
-      expect(namaInput).toHaveValue('Kas');
+      expect(kodeInput).toHaveValue("1101");
+      expect(namaInput).toHaveValue("Kas");
     });
 
-    it('should show error when create fails', async () => {
-      const user = userEvent.setup();
-
+    it("should show error when create fails", async () => {
       vi.mocked(accountingApi.createAccount).mockRejectedValue(
-        new Error('Kode akun sudah digunakan')
+        new Error("Kode akun sudah digunakan")
       );
 
       render(
@@ -305,24 +305,26 @@ describe('AccountForm Component', () => {
   // Update Account Tests
   // ============================================================================
 
-  describe('Update Account', () => {
-    it('should update account successfully', async () => {
+  describe("Update Account", () => {
+    it("should update account successfully", async () => {
       const mockAccount: Akun = {
-        id: '2',
-        idKoperasi: 'kop1',
-        kodeAkun: '1101',
-        namaAkun: 'Kas',
-        tipeAkun: 'aset',
-        normalSaldo: 'debit',
+        id: "2",
+        idKoperasi: "kop1",
+        kodeAkun: "1101",
+        namaAkun: "Kas",
+        tipeAkun: "aset",
+        normalSaldo: "debit",
         statusAktif: true,
       };
 
       const mockUpdatedAccount: Akun = {
         ...mockAccount,
-        namaAkun: 'Kas Updated',
+        namaAkun: "Kas Updated",
       };
 
-      vi.mocked(accountingApi.updateAccount).mockResolvedValue(mockUpdatedAccount);
+      vi.mocked(accountingApi.updateAccount).mockResolvedValue(
+        mockUpdatedAccount
+      );
 
       render(
         <AccountForm
@@ -334,7 +336,7 @@ describe('AccountForm Component', () => {
         />
       );
 
-      expect(screen.getByDisplayValue('Kas')).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Kas")).toBeInTheDocument();
     });
   });
 
@@ -342,8 +344,8 @@ describe('AccountForm Component', () => {
   // User Interaction Tests
   // ============================================================================
 
-  describe('User Interactions', () => {
-    it('should call onClose when cancel button is clicked', async () => {
+  describe("User Interactions", () => {
+    it("should call onClose when cancel button is clicked", async () => {
       const user = userEvent.setup();
 
       render(
@@ -355,13 +357,13 @@ describe('AccountForm Component', () => {
         />
       );
 
-      const cancelButton = screen.getByText('Batal');
+      const cancelButton = screen.getByText("Batal");
       await user.click(cancelButton);
 
       expect(mockOnClose).toHaveBeenCalled();
     });
 
-    it('should disable submit button when loading', async () => {
+    it("should disable submit button when loading", async () => {
       render(
         <AccountForm
           open={true}
@@ -371,7 +373,7 @@ describe('AccountForm Component', () => {
         />
       );
 
-      const submitButton = screen.getByText('Simpan');
+      const submitButton = screen.getByText("Simpan");
       expect(submitButton).toBeEnabled();
     });
   });
@@ -380,8 +382,8 @@ describe('AccountForm Component', () => {
   // Parent Account Selection Tests
   // ============================================================================
 
-  describe('Parent Account Selection', () => {
-    it('should display parent accounts in dropdown', () => {
+  describe("Parent Account Selection", () => {
+    it("should display parent accounts in dropdown", () => {
       render(
         <AccountForm
           open={true}
@@ -395,14 +397,14 @@ describe('AccountForm Component', () => {
       expect(parentSelect).toBeInTheDocument();
     });
 
-    it('should not show self as parent in edit mode', () => {
+    it("should not show self as parent in edit mode", () => {
       const mockAccount: Akun = {
-        id: '2',
-        idKoperasi: 'kop1',
-        kodeAkun: '1101',
-        namaAkun: 'Kas',
-        tipeAkun: 'aset',
-        normalSaldo: 'debit',
+        id: "2",
+        idKoperasi: "kop1",
+        kodeAkun: "1101",
+        namaAkun: "Kas",
+        tipeAkun: "aset",
+        normalSaldo: "debit",
         statusAktif: true,
       };
 

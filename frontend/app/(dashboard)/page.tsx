@@ -3,9 +3,9 @@
 // Main dashboard landing page
 // ============================================================================
 
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Box,
   Typography,
@@ -14,15 +14,15 @@ import {
   CardContent,
   CardActions,
   Button,
-} from '@mui/material';
+} from "@mui/material";
 import {
   People as PeopleIcon,
   AccountBalance as AccountBalanceIcon,
   PointOfSale as PointOfSaleIcon,
   Assessment as AssessmentIcon,
-} from '@mui/icons-material';
-import { useAuth } from '@/lib/context/AuthContext';
-import { useRouter } from 'next/navigation';
+} from "@mui/icons-material";
+import { useAuth } from "@/lib/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 // ============================================================================
 // Dashboard Page Component
@@ -38,32 +38,32 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
-      title: 'Manajemen Anggota',
-      description: 'Kelola data anggota koperasi',
-      icon: <PeopleIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      path: '/dashboard/members',
-      roles: ['admin', 'bendahara'],
+      title: "Manajemen Anggota",
+      description: "Kelola data anggota koperasi",
+      icon: <PeopleIcon sx={{ fontSize: 40, color: "primary.main" }} />,
+      path: "/dashboard/members",
+      roles: ["admin", "bendahara"],
     },
     {
-      title: 'Simpanan',
-      description: 'Kelola simpanan anggota',
-      icon: <AccountBalanceIcon sx={{ fontSize: 40, color: 'success.main' }} />,
-      path: '/dashboard/simpanan',
-      roles: ['admin', 'bendahara'],
+      title: "Simpanan",
+      description: "Kelola simpanan anggota",
+      icon: <AccountBalanceIcon sx={{ fontSize: 40, color: "success.main" }} />,
+      path: "/dashboard/simpanan",
+      roles: ["admin", "bendahara"],
     },
     {
-      title: 'Point of Sale',
-      description: 'Transaksi penjualan kasir',
-      icon: <PointOfSaleIcon sx={{ fontSize: 40, color: 'info.main' }} />,
-      path: '/dashboard/pos',
-      roles: ['admin', 'kasir'],
+      title: "Point of Sale",
+      description: "Transaksi penjualan kasir",
+      icon: <PointOfSaleIcon sx={{ fontSize: 40, color: "info.main" }} />,
+      path: "/dashboard/pos",
+      roles: ["admin", "kasir"],
     },
     {
-      title: 'Laporan',
-      description: 'Lihat laporan keuangan',
-      icon: <AssessmentIcon sx={{ fontSize: 40, color: 'warning.main' }} />,
-      path: '/dashboard/reports',
-      roles: ['admin', 'bendahara'],
+      title: "Laporan",
+      description: "Lihat laporan keuangan",
+      icon: <AssessmentIcon sx={{ fontSize: 40, color: "warning.main" }} />,
+      path: "/dashboard/reports",
+      roles: ["admin", "bendahara"],
     },
   ];
 
@@ -91,7 +91,9 @@ export default function DashboardPage() {
       <Grid container spacing={3}>
         {visibleActions.map((action) => (
           <Grid item xs={12} sm={6} md={4} key={action.path}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Card
+              sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+            >
               <CardContent sx={{ flexGrow: 1 }}>
                 <Box sx={{ mb: 2 }}>{action.icon}</Box>
                 <Typography variant="h6" gutterBottom>

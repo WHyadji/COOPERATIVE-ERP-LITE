@@ -3,10 +3,10 @@
 // Layout wrapper for member portal pages with navigation
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Box,
   AppBar,
@@ -26,7 +26,7 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Menu as MenuIcon,
   Dashboard,
@@ -35,18 +35,26 @@ import {
   Person,
   Logout,
   AccountCircle,
-} from '@mui/icons-material';
-import { useAuth, ProtectedRoute } from '@/lib/context/AuthContext';
+} from "@mui/icons-material";
+import { useAuth, ProtectedRoute } from "@/lib/context/AuthContext";
 
 // ============================================================================
 // Navigation Items
 // ============================================================================
 
 const navigationItems = [
-  { label: 'Dashboard', icon: <Dashboard />, path: '/portal' },
-  { label: 'Saldo Simpanan', icon: <AccountBalance />, path: '/portal/balance' },
-  { label: 'Riwayat Transaksi', icon: <History />, path: '/portal/transactions' },
-  { label: 'Profil Saya', icon: <Person />, path: '/portal/profile' },
+  { label: "Dashboard", icon: <Dashboard />, path: "/portal" },
+  {
+    label: "Saldo Simpanan",
+    icon: <AccountBalance />,
+    path: "/portal/balance",
+  },
+  {
+    label: "Riwayat Transaksi",
+    icon: <History />,
+    path: "/portal/transactions",
+  },
+  { label: "Profil Saya", icon: <Person />, path: "/portal/profile" },
 ];
 
 // ============================================================================
@@ -62,7 +70,7 @@ export default function MemberPortalLayout({
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -96,9 +104,16 @@ export default function MemberPortalLayout({
   // ============================================================================
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Drawer Header */}
-      <Box sx={{ p: 3, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
+      <Box
+        sx={{
+          p: 3,
+          textAlign: "center",
+          bgcolor: "primary.main",
+          color: "white",
+        }}
+      >
         <AccountCircle sx={{ fontSize: 60, mb: 1 }} />
         <Typography variant="h6" fontWeight={600}>
           Portal Anggota
@@ -122,16 +137,20 @@ export default function MemberPortalLayout({
               sx={{
                 mx: 1,
                 borderRadius: 1,
-                '&.Mui-selected': {
-                  bgcolor: 'primary.light',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    bgcolor: 'primary.main',
+                "&.Mui-selected": {
+                  bgcolor: "primary.light",
+                  color: "primary.contrastText",
+                  "&:hover": {
+                    bgcolor: "primary.main",
                   },
                 },
               }}
             >
-              <ListItemIcon sx={{ color: pathname === item.path ? 'inherit' : 'text.secondary' }}>
+              <ListItemIcon
+                sx={{
+                  color: pathname === item.path ? "inherit" : "text.secondary",
+                }}
+              >
                 {item.icon}
               </ListItemIcon>
               <ListItemText primary={item.label} />
@@ -145,7 +164,10 @@ export default function MemberPortalLayout({
       {/* Logout Button */}
       <List>
         <ListItem disablePadding>
-          <ListItemButton onClick={handleLogout} sx={{ mx: 1, borderRadius: 1 }}>
+          <ListItemButton
+            onClick={handleLogout}
+            sx={{ mx: 1, borderRadius: 1 }}
+          >
             <ListItemIcon>
               <Logout />
             </ListItemIcon>
@@ -161,19 +183,19 @@ export default function MemberPortalLayout({
   // ============================================================================
 
   // Don't show layout on login page
-  if (pathname === '/portal/login') {
+  if (pathname === "/portal/login") {
     return <>{children}</>;
   }
 
   return (
-    <ProtectedRoute requiredRoles={['anggota']}>
-      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <ProtectedRoute requiredRoles={["anggota"]}>
+      <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.50" }}>
         {/* App Bar */}
         <AppBar
           position="fixed"
           sx={{
             zIndex: theme.zIndex.drawer + 1,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           }}
         >
           <Toolbar>
@@ -181,18 +203,23 @@ export default function MemberPortalLayout({
               color="inherit"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: 'none' } }}
+              sx={{ mr: 2, display: { md: "none" } }}
             >
               <MenuIcon />
             </IconButton>
 
-            <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ flexGrow: 1 }}
+            >
               Portal Anggota Koperasi
             </Typography>
 
             {/* User Profile Menu */}
-            <IconButton onClick={handleProfileMenuOpen} sx={{ color: 'white' }}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark' }}>
+            <IconButton onClick={handleProfileMenuOpen} sx={{ color: "white" }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.dark" }}>
                 {user?.namaLengkap?.charAt(0).toUpperCase()}
               </Avatar>
             </IconButton>
@@ -201,17 +228,22 @@ export default function MemberPortalLayout({
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={handleProfileMenuClose}
-              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              transformOrigin={{ horizontal: "right", vertical: "top" }}
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
             >
               <Box sx={{ px: 2, py: 1 }}>
                 <Typography variant="subtitle2">{user?.namaLengkap}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {user?.email || 'Anggota Koperasi'}
+                  {user?.email || "Anggota Koperasi"}
                 </Typography>
               </Box>
               <Divider />
-              <MenuItem onClick={() => { handleProfileMenuClose(); router.push('/portal/profile'); }}>
+              <MenuItem
+                onClick={() => {
+                  handleProfileMenuClose();
+                  router.push("/portal/profile");
+                }}
+              >
                 <ListItemIcon>
                   <Person fontSize="small" />
                 </ListItemIcon>
@@ -231,12 +263,12 @@ export default function MemberPortalLayout({
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: 'none', md: 'block' },
+            display: { xs: "none", md: "block" },
             width: 280,
             flexShrink: 0,
-            '& .MuiDrawer-paper': {
+            "& .MuiDrawer-paper": {
               width: 280,
-              boxSizing: 'border-box',
+              boxSizing: "border-box",
             },
           }}
         >
@@ -253,10 +285,10 @@ export default function MemberPortalLayout({
             keepMounted: true, // Better mobile performance
           }}
           sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': {
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": {
               width: 280,
-              boxSizing: 'border-box',
+              boxSizing: "border-box",
             },
           }}
         >

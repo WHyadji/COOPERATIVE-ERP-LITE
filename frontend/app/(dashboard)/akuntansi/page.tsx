@@ -3,10 +3,10 @@
 // Material-UI table with account hierarchy, filters, and CRUD operations
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -26,17 +26,17 @@ import {
   Chip,
   Alert,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   PlayArrowOutlined as SeedIcon,
   AccountBalance as AccountBalanceIcon,
-} from '@mui/icons-material';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Akun, TipeAkun } from '@/types';
-import AccountForm from '@/components/accounting/AccountForm';
+} from "@mui/icons-material";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Akun, TipeAkun } from "@/types";
+import AccountForm from "@/components/accounting/AccountForm";
 
 // ============================================================================
 // Chart of Accounts Page Component
@@ -46,10 +46,10 @@ export default function ChartOfAccountsPage() {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Akun[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Filters
-  const [tipeFilter, setTipeFilter] = useState<TipeAkun | 'all'>('all');
+  const [tipeFilter, setTipeFilter] = useState<TipeAkun | "all">("all");
   const [statusFilter, setStatusFilter] = useState<boolean | undefined>(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -67,7 +67,7 @@ export default function ChartOfAccountsPage() {
     const fetchAccounts = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const data = await accountingApi.getAccounts(tipeFilter, statusFilter);
 
@@ -76,8 +76,8 @@ export default function ChartOfAccountsPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch accounts:', err);
-          setError('Gagal memuat data akun. Silakan coba lagi.');
+          console.error("Failed to fetch accounts:", err);
+          setError("Gagal memuat data akun. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -116,15 +116,15 @@ export default function ChartOfAccountsPage() {
       await accountingApi.deleteAccount(id);
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
-      console.error('Failed to delete account:', err);
-      alert('Gagal menghapus akun. Silakan coba lagi.');
+      console.error("Failed to delete account:", err);
+      alert("Gagal menghapus akun. Silakan coba lagi.");
     }
   };
 
   const handleSeedCOA = async () => {
     if (
       !confirm(
-        'Apakah Anda yakin ingin membuat Chart of Accounts default? Ini akan menambahkan akun-akun standar koperasi.'
+        "Apakah Anda yakin ingin membuat Chart of Accounts default? Ini akan menambahkan akun-akun standar koperasi."
       )
     ) {
       return;
@@ -133,10 +133,10 @@ export default function ChartOfAccountsPage() {
     try {
       await accountingApi.seedDefaultCOA();
       setRefreshKey((prev) => prev + 1);
-      alert('Chart of Accounts default berhasil dibuat!');
+      alert("Chart of Accounts default berhasil dibuat!");
     } catch (err) {
-      console.error('Failed to seed COA:', err);
-      alert('Gagal membuat Chart of Accounts. Silakan coba lagi.');
+      console.error("Failed to seed COA:", err);
+      alert("Gagal membuat Chart of Accounts. Silakan coba lagi.");
     }
   };
 
@@ -161,27 +161,27 @@ export default function ChartOfAccountsPage() {
 
   const getTipeAkunLabel = (tipe: TipeAkun): string => {
     const labels: Record<TipeAkun, string> = {
-      aset: 'Aset',
-      kewajiban: 'Kewajiban',
-      modal: 'Modal',
-      pendapatan: 'Pendapatan',
-      beban: 'Beban',
+      aset: "Aset",
+      kewajiban: "Kewajiban",
+      modal: "Modal",
+      pendapatan: "Pendapatan",
+      beban: "Beban",
     };
     return labels[tipe];
   };
 
   const getTipeAkunColor = (
     tipe: TipeAkun
-  ): 'primary' | 'error' | 'success' | 'warning' | 'info' => {
+  ): "primary" | "error" | "success" | "warning" | "info" => {
     const colors: Record<
       TipeAkun,
-      'primary' | 'error' | 'success' | 'warning' | 'info'
+      "primary" | "error" | "success" | "warning" | "info"
     > = {
-      aset: 'primary',
-      kewajiban: 'error',
-      modal: 'success',
-      pendapatan: 'info',
-      beban: 'warning',
+      aset: "primary",
+      kewajiban: "error",
+      modal: "success",
+      pendapatan: "info",
+      beban: "warning",
     };
     return colors[tipe];
   };
@@ -195,16 +195,16 @@ export default function ChartOfAccountsPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
         <Typography variant="h4" fontWeight={600}>
           Bagan Akun (Chart of Accounts)
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2 }}>
           <Button
             variant="outlined"
             startIcon={<SeedIcon />}
@@ -213,7 +213,11 @@ export default function ChartOfAccountsPage() {
           >
             Buat COA Default
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleCreate}
+          >
             Tambah Akun
           </Button>
         </Box>
@@ -221,14 +225,16 @@ export default function ChartOfAccountsPage() {
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           {/* Tipe Akun Filter */}
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Tipe Akun</InputLabel>
             <Select
               value={tipeFilter}
               label="Tipe Akun"
-              onChange={(e) => setTipeFilter(e.target.value as TipeAkun | 'all')}
+              onChange={(e) =>
+                setTipeFilter(e.target.value as TipeAkun | "all")
+              }
             >
               <MenuItem value="all">Semua Tipe</MenuItem>
               <MenuItem value="aset">Aset</MenuItem>
@@ -243,11 +249,15 @@ export default function ChartOfAccountsPage() {
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Status</InputLabel>
             <Select
-              value={statusFilter === undefined ? 'all' : statusFilter.toString()}
+              value={
+                statusFilter === undefined ? "all" : statusFilter.toString()
+              }
               label="Status"
               onChange={(e) =>
                 setStatusFilter(
-                  e.target.value === 'all' ? undefined : e.target.value === 'true'
+                  e.target.value === "all"
+                    ? undefined
+                    : e.target.value === "true"
                 )
               }
             >
@@ -292,8 +302,8 @@ export default function ChartOfAccountsPage() {
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
-                      Tidak ada data akun. Klik &quot;Buat COA Default&quot; untuk
-                      memulai.
+                      Tidak ada data akun. Klik &quot;Buat COA Default&quot;
+                      untuk memulai.
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -320,11 +330,11 @@ export default function ChartOfAccountsPage() {
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>{account.namaInduk || '-'}</TableCell>
+                    <TableCell>{account.namaInduk || "-"}</TableCell>
                     <TableCell>
                       <Chip
-                        label={account.statusAktif ? 'Aktif' : 'Non-aktif'}
-                        color={account.statusAktif ? 'success' : 'default'}
+                        label={account.statusAktif ? "Aktif" : "Non-aktif"}
+                        color={account.statusAktif ? "success" : "default"}
                         size="small"
                       />
                     </TableCell>
@@ -345,7 +355,9 @@ export default function ChartOfAccountsPage() {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(account.id, account.namaAkun)}
+                        onClick={() =>
+                          handleDelete(account.id, account.namaAkun)
+                        }
                         title="Hapus"
                         color="error"
                       >

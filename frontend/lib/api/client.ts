@@ -3,15 +3,20 @@
 // Handles authentication, error handling, and API communication
 // ============================================================================
 
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import type { APIErrorResponse } from '@/types';
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+} from "axios";
+import type { APIErrorResponse } from "@/types";
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
-const TOKEN_KEY = 'auth_token';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+const TOKEN_KEY = "auth_token";
 
 // ============================================================================
 // Token Management
@@ -25,7 +30,7 @@ let authToken: string | null = null;
 
 export const tokenManager = {
   getToken: (): string | null => {
-    if (typeof window !== 'undefined' && !authToken) {
+    if (typeof window !== "undefined" && !authToken) {
       // Fallback to localStorage for page refreshes
       authToken = localStorage.getItem(TOKEN_KEY);
     }
@@ -34,14 +39,14 @@ export const tokenManager = {
 
   setToken: (token: string): void => {
     authToken = token;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(TOKEN_KEY, token);
     }
   },
 
   removeToken: (): void => {
     authToken = null;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem(TOKEN_KEY);
     }
   },
@@ -54,7 +59,7 @@ export const tokenManager = {
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 30000, // 30 seconds
   withCredentials: false, // Set to true if using httpOnly cookies
@@ -73,17 +78,20 @@ apiClient.interceptors.request.use(
     }
 
     // Log request in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-        data: config.data,
-        params: config.params,
-      });
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `[API Request] ${config.method?.toUpperCase()} ${config.url}`,
+        {
+          data: config.data,
+          params: config.params,
+        }
+      );
     }
 
     return config;
   },
   (error) => {
-    console.error('[API Request Error]', error);
+    console.error("[API Request Error]", error);
     return Promise.reject(error);
   }
 );
@@ -95,7 +103,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => {
     // Log response in development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.log(`[API Response] ${response.config.url}`, response.data);
     }
     return response;
@@ -109,62 +117,68 @@ apiClient.interceptors.response.use(
       switch (status) {
         case 401:
           // Unauthorized - token expired or invalid
-          console.error('[API Error] Unauthorized - clearing token');
+          console.error("[API Error] Unauthorized - clearing token");
           tokenManager.removeToken();
 
           // Redirect to login if not already there
-          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.includes("/login")
+          ) {
+            window.location.href = "/login";
           }
           break;
 
         case 403:
           // Forbidden - insufficient permissions
-          console.error('[API Error] Forbidden - insufficient permissions');
+          console.error("[API Error] Forbidden - insufficient permissions");
           break;
 
         case 404:
           // Not found
-          console.error('[API Error] Resource not found');
+          console.error("[API Error] Resource not found");
           break;
 
         case 422:
           // Validation error
-          console.error('[API Error] Validation error', data?.error);
+          console.error("[API Error] Validation error", data?.error);
           break;
 
         case 500:
         case 502:
         case 503:
           // Server errors
-          console.error('[API Error] Server error', status);
+          console.error("[API Error] Server error", status);
           break;
 
         default:
-          console.error('[API Error]', status, data);
+          console.error("[API Error]", status, data);
       }
 
       // Return structured error
       return Promise.reject({
         status,
-        message: data?.message || 'An error occurred',
-        error: data?.error || { code: `HTTP_${status}`, message: error.message },
+        message: data?.message || "An error occurred",
+        error: data?.error || {
+          code: `HTTP_${status}`,
+          message: error.message,
+        },
       });
     } else if (error.request) {
       // Request made but no response received
-      console.error('[API Error] No response received', error.request);
+      console.error("[API Error] No response received", error.request);
       return Promise.reject({
         status: 0,
-        message: 'Network error - no response from server',
-        error: { code: 'NETWORK_ERROR', message: error.message },
+        message: "Network error - no response from server",
+        error: { code: "NETWORK_ERROR", message: error.message },
       });
     } else {
       // Error in request configuration
-      console.error('[API Error] Request configuration error', error.message);
+      console.error("[API Error] Request configuration error", error.message);
       return Promise.reject({
         status: 0,
-        message: 'Request configuration error',
-        error: { code: 'CONFIG_ERROR', message: error.message },
+        message: "Request configuration error",
+        error: { code: "CONFIG_ERROR", message: error.message },
       });
     }
   }

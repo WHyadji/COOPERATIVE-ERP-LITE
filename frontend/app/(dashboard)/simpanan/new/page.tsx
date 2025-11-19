@@ -3,13 +3,13 @@
 // Form with React Hook Form and Zod validation
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Box,
   Typography,
@@ -26,28 +26,28 @@ import {
   FormLabel,
   Autocomplete,
   CircularProgress,
-} from '@mui/material';
-import { Save as SaveIcon, Cancel as CancelIcon } from '@mui/icons-material';
-import simpananApi from '@/lib/api/simpananApi';
-import memberApi from '@/lib/api/memberApi';
-import type { CreateSimpananRequest, Member } from '@/types';
-import { format } from 'date-fns';
+} from "@mui/material";
+import { Save as SaveIcon, Cancel as CancelIcon } from "@mui/icons-material";
+import simpananApi from "@/lib/api/simpananApi";
+import memberApi from "@/lib/api/memberApi";
+import type { CreateSimpananRequest, Member } from "@/types";
+import { format } from "date-fns";
 
 // ============================================================================
 // Validation Schema
 // ============================================================================
 
 const simpananSchema = z.object({
-  idAnggota: z.string().min(1, 'Anggota harus dipilih'),
-  tipeSimpanan: z.enum(['pokok', 'wajib', 'sukarela'], {
-    errorMap: () => ({ message: 'Tipe simpanan harus dipilih' }),
+  idAnggota: z.string().min(1, "Anggota harus dipilih"),
+  tipeSimpanan: z.enum(["pokok", "wajib", "sukarela"], {
+    errorMap: () => ({ message: "Tipe simpanan harus dipilih" }),
   }),
-  tanggalTransaksi: z.string().min(1, 'Tanggal transaksi harus diisi'),
+  tanggalTransaksi: z.string().min(1, "Tanggal transaksi harus diisi"),
   jumlahSetoran: z
     .string()
-    .min(1, 'Jumlah setoran harus diisi')
+    .min(1, "Jumlah setoran harus diisi")
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-      message: 'Jumlah setoran harus lebih dari 0',
+      message: "Jumlah setoran harus lebih dari 0",
     }),
   keterangan: z.string().optional(),
 });
@@ -60,8 +60,8 @@ type SimpananFormData = z.infer<typeof simpananSchema>;
 
 export default function CreateSimpananPage() {
   const router = useRouter();
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
 
@@ -77,11 +77,11 @@ export default function CreateSimpananPage() {
   } = useForm<SimpananFormData>({
     resolver: zodResolver(simpananSchema),
     defaultValues: {
-      idAnggota: '',
-      tipeSimpanan: 'wajib',
-      tanggalTransaksi: format(new Date(), 'yyyy-MM-dd'),
-      jumlahSetoran: '',
-      keterangan: '',
+      idAnggota: "",
+      tipeSimpanan: "wajib",
+      tanggalTransaksi: format(new Date(), "yyyy-MM-dd"),
+      jumlahSetoran: "",
+      keterangan: "",
     },
   });
 
@@ -94,12 +94,12 @@ export default function CreateSimpananPage() {
       try {
         setLoadingMembers(true);
         const response = await memberApi.getMembers({
-          status: 'aktif',
+          status: "aktif",
           pageSize: 1000, // Get all active members
         });
         setMembers(response.data);
       } catch (err) {
-        console.error('Failed to fetch members:', err);
+        console.error("Failed to fetch members:", err);
       } finally {
         setLoadingMembers(false);
       }
@@ -114,8 +114,8 @@ export default function CreateSimpananPage() {
 
   const onSubmit = async (data: SimpananFormData) => {
     try {
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       const requestData: CreateSimpananRequest = {
         idAnggota: data.idAnggota,
@@ -127,19 +127,19 @@ export default function CreateSimpananPage() {
 
       await simpananApi.createSimpanan(requestData);
 
-      setSuccess('Setoran simpanan berhasil dicatat!');
+      setSuccess("Setoran simpanan berhasil dicatat!");
 
       // Redirect to simpanan list after 1 second
       setTimeout(() => {
-        router.push('/dashboard/simpanan');
+        router.push("/dashboard/simpanan");
       }, 1000);
     } catch (err: unknown) {
-      console.error('Failed to create simpanan:', err);
+      console.error("Failed to create simpanan:", err);
 
-      if (err && typeof err === 'object' && 'message' in err) {
+      if (err && typeof err === "object" && "message" in err) {
         setError(err.message as string);
       } else {
-        setError('Gagal mencatat setoran. Silakan coba lagi.');
+        setError("Gagal mencatat setoran. Silakan coba lagi.");
       }
     }
   };
@@ -194,12 +194,12 @@ export default function CreateSimpananPage() {
                     {...field}
                     options={members}
                     getOptionLabel={(option) =>
-                      typeof option === 'string'
+                      typeof option === "string"
                         ? option
                         : `${option.nomorAnggota} - ${option.namaLengkap}`
                     }
                     loading={loadingMembers}
-                    onChange={(_, value) => field.onChange(value?.id || '')}
+                    onChange={(_, value) => field.onChange(value?.id || "")}
                     value={members.find((m) => m.id === field.value) || null}
                     renderInput={(params) => (
                       <TextField
@@ -237,7 +237,10 @@ export default function CreateSimpananPage() {
                 name="tipeSimpanan"
                 control={control}
                 render={({ field }) => (
-                  <FormControl error={!!errors.tipeSimpanan} component="fieldset">
+                  <FormControl
+                    error={!!errors.tipeSimpanan}
+                    component="fieldset"
+                  >
                     <FormLabel component="legend">Tipe Simpanan *</FormLabel>
                     <RadioGroup {...field} row>
                       <FormControlLabel
@@ -257,7 +260,9 @@ export default function CreateSimpananPage() {
                       />
                     </RadioGroup>
                     {errors.tipeSimpanan && (
-                      <FormHelperText>{errors.tipeSimpanan.message}</FormHelperText>
+                      <FormHelperText>
+                        {errors.tipeSimpanan.message}
+                      </FormHelperText>
                     )}
                   </FormControl>
                 )}
@@ -269,7 +274,7 @@ export default function CreateSimpananPage() {
                 fullWidth
                 label="Jumlah Setoran *"
                 type="number"
-                {...register('jumlahSetoran')}
+                {...register("jumlahSetoran")}
                 error={!!errors.jumlahSetoran}
                 helperText={errors.jumlahSetoran?.message}
                 InputProps={{
@@ -283,7 +288,7 @@ export default function CreateSimpananPage() {
                 fullWidth
                 label="Tanggal Transaksi *"
                 type="date"
-                {...register('tanggalTransaksi')}
+                {...register("tanggalTransaksi")}
                 error={!!errors.tanggalTransaksi}
                 helperText={errors.tanggalTransaksi?.message}
                 InputLabelProps={{ shrink: true }}
@@ -296,7 +301,7 @@ export default function CreateSimpananPage() {
                 label="Keterangan"
                 multiline
                 rows={3}
-                {...register('keterangan')}
+                {...register("keterangan")}
                 error={!!errors.keterangan}
                 helperText={errors.keterangan?.message}
                 placeholder="Catatan tambahan (opsional)"
@@ -305,11 +310,18 @@ export default function CreateSimpananPage() {
 
             {/* Action Buttons */}
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "flex-end",
+                  mt: 2,
+                }}
+              >
                 <Button
                   variant="outlined"
                   startIcon={<CancelIcon />}
-                  onClick={() => router.push('/dashboard/simpanan')}
+                  onClick={() => router.push("/dashboard/simpanan")}
                   disabled={isSubmitting}
                 >
                   Batal
@@ -320,7 +332,7 @@ export default function CreateSimpananPage() {
                   startIcon={<SaveIcon />}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Setoran'}
+                  {isSubmitting ? "Menyimpan..." : "Simpan Setoran"}
                 </Button>
               </Box>
             </Grid>

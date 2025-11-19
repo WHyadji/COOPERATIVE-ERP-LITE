@@ -3,7 +3,7 @@
 // Type-safe API calls for point of sale and sales management
 // ============================================================================
 
-import apiClient from './client';
+import apiClient from "./client";
 import type {
   CreatePenjualanRequest,
   PenjualanResponse,
@@ -14,7 +14,7 @@ import type {
   TopProduk,
   APIResponse,
   PaginatedResponse,
-} from '@/types';
+} from "@/types";
 
 // ============================================================================
 // POS / Sales (Penjualan) API Functions
@@ -28,12 +28,12 @@ export const createSale = async (
   data: CreatePenjualanRequest
 ): Promise<PenjualanResponse> => {
   const response = await apiClient.post<APIResponse<PenjualanResponse>>(
-    '/penjualan',
+    "/penjualan",
     data
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to create sale');
+    throw new Error(response.data.message || "Failed to create sale");
   }
 
   return response.data.data;
@@ -76,12 +76,12 @@ export const getSales = async (
   }
 
   const response = await apiClient.get<PaginatedResponse<Penjualan>>(
-    '/penjualan',
+    "/penjualan",
     { params }
   );
 
   if (!response.data.success) {
-    throw new Error('Failed to fetch sales');
+    throw new Error("Failed to fetch sales");
   }
 
   return response.data;
@@ -96,7 +96,7 @@ export const getSaleById = async (id: string): Promise<Penjualan> => {
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch sale');
+    throw new Error("Failed to fetch sale");
   }
 
   return response.data.data;
@@ -111,7 +111,7 @@ export const getReceipt = async (id: string): Promise<StrukPenjualan> => {
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch receipt');
+    throw new Error("Failed to fetch receipt");
   }
 
   return response.data.data;
@@ -122,11 +122,11 @@ export const getReceipt = async (id: string): Promise<StrukPenjualan> => {
  */
 export const getTodaySummary = async (): Promise<RingkasanPenjualanHariIni> => {
   const response = await apiClient.get<APIResponse<RingkasanPenjualanHariIni>>(
-    '/penjualan/hari-ini'
+    "/penjualan/hari-ini"
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch today\'s summary');
+    throw new Error("Failed to fetch today's summary");
   }
 
   return response.data.data;
@@ -135,9 +135,7 @@ export const getTodaySummary = async (): Promise<RingkasanPenjualanHariIni> => {
 /**
  * Get top selling products
  */
-export const getTopProducts = async (
-  limit?: number
-): Promise<TopProduk[]> => {
+export const getTopProducts = async (limit?: number): Promise<TopProduk[]> => {
   const params: Record<string, string> = {};
 
   if (limit) {
@@ -145,12 +143,12 @@ export const getTopProducts = async (
   }
 
   const response = await apiClient.get<APIResponse<TopProduk[]>>(
-    '/penjualan/top-produk',
+    "/penjualan/top-produk",
     { params }
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch top products');
+    throw new Error("Failed to fetch top products");
   }
 
   return response.data.data;

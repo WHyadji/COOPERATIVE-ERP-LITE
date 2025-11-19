@@ -3,8 +3,13 @@
 // Handles member balance, transaction history, and profile
 // ============================================================================
 
-import apiClient from './client';
-import type { APIResponse, SaldoSimpananAnggota, Member, PaginatedResponse } from '@/types';
+import apiClient from "./client";
+import type {
+  APIResponse,
+  SaldoSimpananAnggota,
+  Member,
+  PaginatedResponse,
+} from "@/types";
 
 // ============================================================================
 // Member Balance API
@@ -14,12 +19,11 @@ import type { APIResponse, SaldoSimpananAnggota, Member, PaginatedResponse } fro
  * Get member's share capital balance (Pokok, Wajib, Sukarela)
  */
 export const getMemberBalance = async (): Promise<SaldoSimpananAnggota> => {
-  const response = await apiClient.get<APIResponse<SaldoSimpananAnggota>>(
-    '/portal/saldo'
-  );
+  const response =
+    await apiClient.get<APIResponse<SaldoSimpananAnggota>>("/portal/saldo");
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch member balance');
+    throw new Error(response.data.message || "Failed to fetch member balance");
   }
 
   return response.data.data;
@@ -32,14 +36,14 @@ export const getMemberBalance = async (): Promise<SaldoSimpananAnggota> => {
 export interface RiwayatTransaksiAnggota {
   id: string;
   tanggalTransaksi: string;
-  tipeSimpanan: 'pokok' | 'wajib' | 'sukarela';
+  tipeSimpanan: "pokok" | "wajib" | "sukarela";
   jumlah: number;
   keterangan: string;
   nomorReferensi: string;
 }
 
 export interface MemberTransactionFilters {
-  tipeSimpanan?: 'pokok' | 'wajib' | 'sukarela' | 'all';
+  tipeSimpanan?: "pokok" | "wajib" | "sukarela" | "all";
   tanggalMulai?: string;
   tanggalAkhir?: string;
   page?: number;
@@ -57,13 +61,14 @@ export const getMemberTransactions = async (
     pageSize: filters?.pageSize || 20,
   };
 
-  const response = await apiClient.get<PaginatedResponse<RiwayatTransaksiAnggota>>(
-    '/portal/riwayat',
-    { params }
-  );
+  const response = await apiClient.get<
+    PaginatedResponse<RiwayatTransaksiAnggota>
+  >("/portal/riwayat", { params });
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch transaction history');
+    throw new Error(
+      response.data.message || "Failed to fetch transaction history"
+    );
   }
 
   return response.data.data;
@@ -77,12 +82,10 @@ export const getMemberTransactions = async (
  * Get current member's profile
  */
 export const getMemberProfile = async (): Promise<Member> => {
-  const response = await apiClient.get<APIResponse<Member>>(
-    '/portal/profile'
-  );
+  const response = await apiClient.get<APIResponse<Member>>("/portal/profile");
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch member profile');
+    throw new Error(response.data.message || "Failed to fetch member profile");
   }
 
   return response.data.data;
@@ -98,12 +101,12 @@ export const updateMemberProfile = async (
   // This endpoint may not exist in backend - members typically cannot update their own profile
   // For now, we'll keep this but it should be reviewed
   const response = await apiClient.put<APIResponse<Member>>(
-    '/portal/profile',
+    "/portal/profile",
     data
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to update member profile');
+    throw new Error(response.data.message || "Failed to update member profile");
   }
 
   return response.data.data;

@@ -3,10 +3,10 @@
 // Material-UI table with filters, summary cards, and pagination
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -31,15 +31,15 @@ import {
   Grid,
   Card,
   CardContent,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
   Assessment as AssessmentIcon,
-} from '@mui/icons-material';
-import simpananApi from '@/lib/api/simpananApi';
-import type { Simpanan, TipeSimpanan, RingkasanSimpanan } from '@/types';
-import { format } from 'date-fns';
+} from "@mui/icons-material";
+import simpananApi from "@/lib/api/simpananApi";
+import type { Simpanan, TipeSimpanan, RingkasanSimpanan } from "@/types";
+import { format } from "date-fns";
 
 // ============================================================================
 // Simpanan List Page Component
@@ -49,16 +49,16 @@ export default function SimpananPage() {
   const router = useRouter();
   const [simpanan, setSimpanan] = useState<Simpanan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [ringkasan, setRingkasan] = useState<RingkasanSimpanan | null>(null);
 
   // Pagination & Filters
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  const [tipeFilter, setTipeFilter] = useState<TipeSimpanan | 'all'>('all');
-  const [tanggalMulai, setTanggalMulai] = useState('');
-  const [tanggalAkhir, setTanggalAkhir] = useState('');
+  const [tipeFilter, setTipeFilter] = useState<TipeSimpanan | "all">("all");
+  const [tanggalMulai, setTanggalMulai] = useState("");
+  const [tanggalAkhir, setTanggalAkhir] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   // ============================================================================
@@ -71,7 +71,7 @@ export default function SimpananPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         // Fetch transactions
         const response = await simpananApi.getSimpananList({
@@ -92,8 +92,8 @@ export default function SimpananPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch simpanan:', err);
-          setError('Gagal memuat data simpanan. Silakan coba lagi.');
+          console.error("Failed to fetch simpanan:", err);
+          setError("Gagal memuat data simpanan. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -117,7 +117,9 @@ export default function SimpananPage() {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -137,12 +139,12 @@ export default function SimpananPage() {
 
   const getTipeLabel = (tipe: TipeSimpanan): string => {
     switch (tipe) {
-      case 'pokok':
-        return 'Simpanan Pokok';
-      case 'wajib':
-        return 'Simpanan Wajib';
-      case 'sukarela':
-        return 'Simpanan Sukarela';
+      case "pokok":
+        return "Simpanan Pokok";
+      case "wajib":
+        return "Simpanan Wajib";
+      case "sukarela":
+        return "Simpanan Sukarela";
       default:
         return tipe;
     }
@@ -150,23 +152,23 @@ export default function SimpananPage() {
 
   const getTipeColor = (
     tipe: TipeSimpanan
-  ): 'primary' | 'secondary' | 'success' => {
+  ): "primary" | "secondary" | "success" => {
     switch (tipe) {
-      case 'pokok':
-        return 'primary';
-      case 'wajib':
-        return 'secondary';
-      case 'sukarela':
-        return 'success';
+      case "pokok":
+        return "primary";
+      case "wajib":
+        return "secondary";
+      case "sukarela":
+        return "success";
       default:
-        return 'primary';
+        return "primary";
     }
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -178,22 +180,29 @@ export default function SimpananPage() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" fontWeight={600}>
           Simpanan Anggota
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2 }}>
           <Button
             variant="outlined"
             startIcon={<AssessmentIcon />}
-            onClick={() => router.push('/dashboard/simpanan/saldo')}
+            onClick={() => router.push("/dashboard/simpanan/saldo")}
           >
             Laporan Saldo
           </Button>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => router.push('/dashboard/simpanan/new')}
+            onClick={() => router.push("/dashboard/simpanan/new")}
           >
             Catat Setoran
           </Button>
@@ -240,7 +249,7 @@ export default function SimpananPage() {
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
+            <Card sx={{ bgcolor: "primary.main", color: "white" }}>
               <CardContent>
                 <Typography color="inherit" gutterBottom variant="body2">
                   Total Simpanan
@@ -256,7 +265,7 @@ export default function SimpananPage() {
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           {/* Type Filter */}
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Tipe Simpanan</InputLabel>
@@ -264,7 +273,7 @@ export default function SimpananPage() {
               value={tipeFilter}
               label="Tipe Simpanan"
               onChange={(e) => {
-                setTipeFilter(e.target.value as TipeSimpanan | 'all');
+                setTipeFilter(e.target.value as TipeSimpanan | "all");
                 setPage(0);
               }}
             >
@@ -343,7 +352,7 @@ export default function SimpananPage() {
                 simpanan.map((item) => (
                   <TableRow key={item.id} hover>
                     <TableCell>
-                      {format(new Date(item.tanggalTransaksi), 'dd/MM/yyyy')}
+                      {format(new Date(item.tanggalTransaksi), "dd/MM/yyyy")}
                     </TableCell>
                     <TableCell>{item.nomorReferensi}</TableCell>
                     <TableCell>{item.nomorAnggota}</TableCell>
@@ -358,7 +367,7 @@ export default function SimpananPage() {
                     <TableCell align="right" sx={{ fontWeight: 600 }}>
                       {formatCurrency(item.jumlahSetoran)}
                     </TableCell>
-                    <TableCell>{item.keterangan || '-'}</TableCell>
+                    <TableCell>{item.keterangan || "-"}</TableCell>
                     <TableCell align="right">
                       <IconButton
                         size="small"

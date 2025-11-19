@@ -3,9 +3,9 @@
 // Autocomplete search for binding sales to members
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Autocomplete,
   TextField,
@@ -15,14 +15,11 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
-} from '@mui/material';
-import {
-  Person as PersonIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
-import { useToast } from '@/lib/context/ToastContext';
-import memberApi from '@/lib/api/memberApi';
-import type { Member } from '@/types';
+} from "@mui/material";
+import { Person as PersonIcon, Clear as ClearIcon } from "@mui/icons-material";
+import { useToast } from "@/lib/context/ToastContext";
+import memberApi from "@/lib/api/memberApi";
+import type { Member } from "@/types";
 
 // ============================================================================
 // Component Props
@@ -47,8 +44,8 @@ export default function MemberLookup({
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [inputValue, setInputValue] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Debounced search
   useEffect(() => {
@@ -71,13 +68,13 @@ export default function MemberLookup({
       try {
         const response = await memberApi.getMembers({
           search: searchTerm,
-          status: 'aktif',
+          status: "aktif",
           pageSize: 10,
         });
 
         setOptions(response.data || []);
       } catch {
-        showError('Gagal mencari anggota');
+        showError("Gagal mencari anggota");
         setOptions([]);
       } finally {
         setLoading(false);
@@ -95,21 +92,21 @@ export default function MemberLookup({
   // Handle clear
   const handleClear = () => {
     onMemberSelect(null);
-    setInputValue('');
-    setSearchTerm('');
+    setInputValue("");
+    setSearchTerm("");
   };
 
   // Get status color
-  const getStatusColor = (status: string): 'success' | 'default' | 'error' => {
+  const getStatusColor = (status: string): "success" | "default" | "error" => {
     switch (status) {
-      case 'aktif':
-        return 'success';
-      case 'nonaktif':
-        return 'default';
-      case 'diberhentikan':
-        return 'error';
+      case "aktif":
+        return "success";
+      case "nonaktif":
+        return "default";
+      case "diberhentikan":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -130,8 +127,8 @@ export default function MemberLookup({
         loading={loading}
         noOptionsText={
           searchTerm
-            ? 'Anggota tidak ditemukan'
-            : 'Ketik untuk mencari anggota (nama atau nomor)'
+            ? "Anggota tidak ditemukan"
+            : "Ketik untuk mencari anggota (nama atau nomor)"
         }
         renderInput={(params) => (
           <TextField
@@ -149,7 +146,9 @@ export default function MemberLookup({
               ),
               endAdornment: (
                 <>
-                  {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                  {loading ? (
+                    <CircularProgress color="inherit" size={20} />
+                  ) : null}
                   {selectedMember && (
                     <IconButton
                       size="small"
@@ -168,7 +167,9 @@ export default function MemberLookup({
         renderOption={(props, option) => (
           <Box component="li" {...props} key={option.id}>
             <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+              >
                 <Typography variant="body2" fontWeight={500}>
                   {option.namaLengkap}
                 </Typography>
@@ -179,7 +180,7 @@ export default function MemberLookup({
                   sx={{ height: 18 }}
                 />
               </Box>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <Typography variant="caption" color="text.secondary">
                   No: {option.nomorAnggota}
                 </Typography>
@@ -200,22 +201,30 @@ export default function MemberLookup({
           sx={{
             mt: 2,
             p: 2,
-            bgcolor: 'primary.light',
+            bgcolor: "primary.light",
             borderRadius: 2,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
           <Box>
-            <Typography variant="body2" fontWeight={600} color="primary.contrastText">
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              color="primary.contrastText"
+            >
               {selectedMember.namaLengkap}
             </Typography>
             <Typography variant="caption" color="primary.contrastText">
               Nomor Anggota: {selectedMember.nomorAnggota}
             </Typography>
             {selectedMember.noTelepon && (
-              <Typography variant="caption" color="primary.contrastText" display="block">
+              <Typography
+                variant="caption"
+                color="primary.contrastText"
+                display="block"
+              >
                 Telepon: {selectedMember.noTelepon}
               </Typography>
             )}
@@ -223,7 +232,7 @@ export default function MemberLookup({
           <IconButton
             size="small"
             onClick={handleClear}
-            sx={{ color: 'primary.contrastText' }}
+            sx={{ color: "primary.contrastText" }}
           >
             <ClearIcon />
           </IconButton>

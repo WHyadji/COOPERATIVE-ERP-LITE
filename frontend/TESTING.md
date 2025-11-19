@@ -44,10 +44,10 @@ frontend/
 ### Basic Test Example
 
 ```typescript
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-describe('Calculator', () => {
-  it('should add two numbers', () => {
+describe("Calculator", () => {
+  it("should add two numbers", () => {
     expect(1 + 1).toBe(2);
   });
 });
@@ -101,18 +101,18 @@ it('should handle form submission', async () => {
 ### API/Utility Test Example
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
-import axios from 'axios';
-import { memberApi } from '@/lib/api/memberApi';
+import { describe, it, expect, vi } from "vitest";
+import axios from "axios";
+import { memberApi } from "@/lib/api/memberApi";
 
 // Mock axios
-vi.mock('axios');
+vi.mock("axios");
 
-describe('memberApi', () => {
-  it('should fetch members successfully', async () => {
+describe("memberApi", () => {
+  it("should fetch members successfully", async () => {
     const mockMembers = [
-      { id: '1', namaLengkap: 'John Doe' },
-      { id: '2', namaLengkap: 'Jane Doe' },
+      { id: "1", namaLengkap: "John Doe" },
+      { id: "2", namaLengkap: "Jane Doe" },
     ];
 
     vi.mocked(axios.get).mockResolvedValueOnce({
@@ -122,7 +122,7 @@ describe('memberApi', () => {
     const result = await memberApi.getMembers({ page: 1, pageSize: 10 });
 
     expect(result.data).toEqual(mockMembers);
-    expect(axios.get).toHaveBeenCalledWith('/anggota', {
+    expect(axios.get).toHaveBeenCalledWith("/anggota", {
       params: { page: 1, pageSize: 10 },
     });
   });
@@ -147,16 +147,16 @@ describe('memberApi', () => {
 Use **Arrange-Act-Assert** pattern:
 
 ```typescript
-it('should update user profile', async () => {
+it("should update user profile", async () => {
   // Arrange - Set up test data and mocks
-  const mockUser = { id: '1', name: 'John' };
+  const mockUser = { id: "1", name: "John" };
   const mockUpdate = vi.fn();
 
   // Act - Perform the action
-  const result = await updateProfile(mockUser.id, { name: 'Jane' });
+  const result = await updateProfile(mockUser.id, { name: "Jane" });
 
   // Assert - Verify the outcome
-  expect(result.name).toBe('Jane');
+  expect(result.name).toBe("Jane");
   expect(mockUpdate).toHaveBeenCalledTimes(1);
 });
 ```
@@ -167,9 +167,9 @@ it('should update user profile', async () => {
 
 ```typescript
 // Already configured in vitest.setup.ts
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
-it('should navigate on click', () => {
+it("should navigate on click", () => {
   const router = useRouter();
   // router.push is already mocked
 });
@@ -178,13 +178,13 @@ it('should navigate on click', () => {
 ### Mock API Calls
 
 ```typescript
-import { vi } from 'vitest';
-import axios from 'axios';
+import { vi } from "vitest";
+import axios from "axios";
 
-vi.mock('axios');
+vi.mock("axios");
 
-it('should call API', async () => {
-  vi.mocked(axios.get).mockResolvedValue({ data: 'success' });
+it("should call API", async () => {
+  vi.mocked(axios.get).mockResolvedValue({ data: "success" });
   // Test code
 });
 ```
@@ -215,6 +215,7 @@ coverage: {
 ```
 
 View coverage report:
+
 ```bash
 npm run test:coverage
 # Opens ./coverage/index.html
@@ -249,8 +250,8 @@ npm run test:coverage
 
 ```typescript
 // Equality
-expect(value).toBe(expected);           // Strict equality (===)
-expect(value).toEqual(expected);        // Deep equality
+expect(value).toBe(expected); // Strict equality (===)
+expect(value).toEqual(expected); // Deep equality
 
 // Truthiness
 expect(value).toBeTruthy();
@@ -264,7 +265,7 @@ expect(value).toBeLessThan(5);
 
 // Strings
 expect(string).toMatch(/pattern/);
-expect(string).toContain('substring');
+expect(string).toContain("substring");
 
 // Arrays
 expect(array).toContain(item);
@@ -274,8 +275,8 @@ expect(array).toHaveLength(3);
 expect(element).toBeInTheDocument();
 expect(element).toBeVisible();
 expect(element).toBeDisabled();
-expect(element).toHaveTextContent('text');
-expect(element).toHaveAttribute('href', '/link');
+expect(element).toHaveTextContent("text");
+expect(element).toHaveAttribute("href", "/link");
 ```
 
 ## Debugging Tests
@@ -329,18 +330,21 @@ Tests run automatically in GitHub Actions:
 As per PR review findings, these tests are **CRITICAL** before production:
 
 ### Priority 1 (Critical - Before Merge)
+
 - [ ] AuthContext login/logout flows
 - [ ] API client 401 handling
 - [ ] Token refresh mechanism
 - [ ] Protected route authorization
 
 ### Priority 2 (High - Sprint 1)
+
 - [ ] Member CRUD operations
 - [ ] Form validation (Zod schemas)
 - [ ] API error handling
 - [ ] Multi-tenant data validation
 
 ### Priority 3 (Medium - Sprint 2)
+
 - [ ] Component rendering tests
 - [ ] User interaction flows
 - [ ] Edge case scenarios

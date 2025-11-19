@@ -3,9 +3,9 @@
 // Material-UI form with validation for account creation and editing
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -21,9 +21,9 @@ import {
   Grid,
   Alert,
   CircularProgress,
-} from '@mui/material';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Akun, TipeAkun, NormalSaldo, AkunFormData } from '@/types';
+} from "@mui/material";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Akun, TipeAkun, NormalSaldo, AkunFormData } from "@/types";
 
 // ============================================================================
 // Component Props
@@ -52,19 +52,19 @@ export default function AccountForm({
 
   // Form state
   const [formData, setFormData] = useState<AkunFormData>({
-    kodeAkun: '',
-    namaAkun: '',
-    tipeAkun: '',
-    idInduk: '',
-    normalSaldo: '',
-    deskripsi: '',
+    kodeAkun: "",
+    namaAkun: "",
+    tipeAkun: "",
+    idInduk: "",
+    normalSaldo: "",
+    deskripsi: "",
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [errors, setErrors] = useState<Partial<Record<keyof AkunFormData, string>>>(
-    {}
-  );
+  const [error, setError] = useState<string>("");
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof AkunFormData, string>>
+  >({});
 
   // ============================================================================
   // Initialize form data when account changes
@@ -76,21 +76,21 @@ export default function AccountForm({
         kodeAkun: account.kodeAkun,
         namaAkun: account.namaAkun,
         tipeAkun: account.tipeAkun,
-        idInduk: account.idInduk || '',
+        idInduk: account.idInduk || "",
         normalSaldo: account.normalSaldo,
-        deskripsi: account.deskripsi || '',
+        deskripsi: account.deskripsi || "",
       });
     } else {
       setFormData({
-        kodeAkun: '',
-        namaAkun: '',
-        tipeAkun: '',
-        idInduk: '',
-        normalSaldo: '',
-        deskripsi: '',
+        kodeAkun: "",
+        namaAkun: "",
+        tipeAkun: "",
+        idInduk: "",
+        normalSaldo: "",
+        deskripsi: "",
       });
     }
-    setError('');
+    setError("");
     setErrors({});
   }, [account, open]);
 
@@ -102,15 +102,15 @@ export default function AccountForm({
     const newErrors: Partial<Record<keyof AkunFormData, string>> = {};
 
     if (!formData.kodeAkun.trim()) {
-      newErrors.kodeAkun = 'Kode akun harus diisi';
+      newErrors.kodeAkun = "Kode akun harus diisi";
     }
 
     if (!formData.namaAkun.trim()) {
-      newErrors.namaAkun = 'Nama akun harus diisi';
+      newErrors.namaAkun = "Nama akun harus diisi";
     }
 
     if (!formData.tipeAkun) {
-      newErrors.tipeAkun = 'Tipe akun harus dipilih';
+      newErrors.tipeAkun = "Tipe akun harus dipilih";
     }
 
     setErrors(newErrors);
@@ -125,22 +125,22 @@ export default function AccountForm({
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error for this field
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
 
     // Auto-set normal saldo based on tipe akun
-    if (field === 'tipeAkun' && !formData.normalSaldo) {
+    if (field === "tipeAkun" && !formData.normalSaldo) {
       const tipe = value as TipeAkun;
-      let normalSaldo: NormalSaldo = 'debit';
+      let normalSaldo: NormalSaldo = "debit";
 
-      if (tipe === 'aset' || tipe === 'beban') {
-        normalSaldo = 'debit';
+      if (tipe === "aset" || tipe === "beban") {
+        normalSaldo = "debit";
       } else if (
-        tipe === 'kewajiban' ||
-        tipe === 'modal' ||
-        tipe === 'pendapatan'
+        tipe === "kewajiban" ||
+        tipe === "modal" ||
+        tipe === "pendapatan"
       ) {
-        normalSaldo = 'kredit';
+        normalSaldo = "kredit";
       }
 
       setFormData((prev) => ({ ...prev, normalSaldo }));
@@ -156,7 +156,7 @@ export default function AccountForm({
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       const requestData = {
         kodeAkun: formData.kodeAkun.trim(),
@@ -178,11 +178,11 @@ export default function AccountForm({
 
       onSuccess();
     } catch (err: unknown) {
-      console.error('Failed to save account:', err);
+      console.error("Failed to save account:", err);
       setError(
         err instanceof Error
           ? err.message
-          : 'Gagal menyimpan akun. Silakan coba lagi.'
+          : "Gagal menyimpan akun. Silakan coba lagi."
       );
     } finally {
       setLoading(false);
@@ -196,7 +196,9 @@ export default function AccountForm({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{isEditMode ? 'Edit Akun' : 'Tambah Akun Baru'}</DialogTitle>
+        <DialogTitle>
+          {isEditMode ? "Edit Akun" : "Tambah Akun Baru"}
+        </DialogTitle>
 
         <DialogContent>
           {error && (
@@ -212,9 +214,9 @@ export default function AccountForm({
                 fullWidth
                 label="Kode Akun"
                 value={formData.kodeAkun}
-                onChange={(e) => handleChange('kodeAkun', e.target.value)}
+                onChange={(e) => handleChange("kodeAkun", e.target.value)}
                 error={!!errors.kodeAkun}
-                helperText={errors.kodeAkun || 'Contoh: 1101, 2201, 3101'}
+                helperText={errors.kodeAkun || "Contoh: 1101, 2201, 3101"}
                 required
                 disabled={loading}
               />
@@ -226,7 +228,7 @@ export default function AccountForm({
                 fullWidth
                 label="Nama Akun"
                 value={formData.namaAkun}
-                onChange={(e) => handleChange('namaAkun', e.target.value)}
+                onChange={(e) => handleChange("namaAkun", e.target.value)}
                 error={!!errors.namaAkun}
                 helperText={errors.namaAkun}
                 required
@@ -241,7 +243,7 @@ export default function AccountForm({
                 <Select
                   value={formData.tipeAkun}
                   label="Tipe Akun"
-                  onChange={(e) => handleChange('tipeAkun', e.target.value)}
+                  onChange={(e) => handleChange("tipeAkun", e.target.value)}
                   disabled={loading}
                 >
                   <MenuItem value="aset">Aset</MenuItem>
@@ -263,7 +265,7 @@ export default function AccountForm({
                 <Select
                   value={formData.normalSaldo}
                   label="Normal Saldo"
-                  onChange={(e) => handleChange('normalSaldo', e.target.value)}
+                  onChange={(e) => handleChange("normalSaldo", e.target.value)}
                   disabled={loading}
                 >
                   <MenuItem value="debit">Debit</MenuItem>
@@ -282,7 +284,7 @@ export default function AccountForm({
                 <Select
                   value={formData.idInduk}
                   label="Akun Induk (Opsional)"
-                  onChange={(e) => handleChange('idInduk', e.target.value)}
+                  onChange={(e) => handleChange("idInduk", e.target.value)}
                   disabled={loading}
                 >
                   <MenuItem value="">
@@ -298,7 +300,9 @@ export default function AccountForm({
                       </MenuItem>
                     ))}
                 </Select>
-                <FormHelperText>Untuk membuat struktur hierarki akun</FormHelperText>
+                <FormHelperText>
+                  Untuk membuat struktur hierarki akun
+                </FormHelperText>
               </FormControl>
             </Grid>
 
@@ -308,7 +312,7 @@ export default function AccountForm({
                 fullWidth
                 label="Deskripsi (Opsional)"
                 value={formData.deskripsi}
-                onChange={(e) => handleChange('deskripsi', e.target.value)}
+                onChange={(e) => handleChange("deskripsi", e.target.value)}
                 multiline
                 rows={3}
                 disabled={loading}
@@ -327,7 +331,7 @@ export default function AccountForm({
             disabled={loading}
             startIcon={loading && <CircularProgress size={20} />}
           >
-            {loading ? 'Menyimpan...' : 'Simpan'}
+            {loading ? "Menyimpan..." : "Simpan"}
           </Button>
         </DialogActions>
       </form>

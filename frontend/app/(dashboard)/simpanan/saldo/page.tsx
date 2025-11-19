@@ -3,10 +3,10 @@
 // Shows breakdown of Pokok, Wajib, Sukarela for all members
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -25,14 +25,14 @@ import {
   Grid,
   TextField,
   InputAdornment,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   Search as SearchIcon,
   Download as DownloadIcon,
-} from '@mui/icons-material';
-import simpananApi from '@/lib/api/simpananApi';
-import type { SaldoSimpananAnggota } from '@/types';
+} from "@mui/icons-material";
+import simpananApi from "@/lib/api/simpananApi";
+import type { SaldoSimpananAnggota } from "@/types";
 
 // ============================================================================
 // Balance Report Page Component
@@ -41,10 +41,12 @@ import type { SaldoSimpananAnggota } from '@/types';
 export default function SaldoSimpananPage() {
   const router = useRouter();
   const [balances, setBalances] = useState<SaldoSimpananAnggota[]>([]);
-  const [filteredBalances, setFilteredBalances] = useState<SaldoSimpananAnggota[]>([]);
+  const [filteredBalances, setFilteredBalances] = useState<
+    SaldoSimpananAnggota[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // ============================================================================
   // Fetch Balance Report
@@ -54,14 +56,14 @@ export default function SaldoSimpananPage() {
     const fetchBalances = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const data = await simpananApi.getLaporanSaldo();
         setBalances(data);
         setFilteredBalances(data);
       } catch (err: unknown) {
-        console.error('Failed to fetch balance report:', err);
-        setError('Gagal memuat laporan saldo. Silakan coba lagi.');
+        console.error("Failed to fetch balance report:", err);
+        setError("Gagal memuat laporan saldo. Silakan coba lagi.");
       } finally {
         setLoading(false);
       }
@@ -94,9 +96,9 @@ export default function SaldoSimpananPage() {
   // ============================================================================
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -122,11 +124,18 @@ export default function SaldoSimpananPage() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Box>
           <Button
             startIcon={<ArrowBackIcon />}
-            onClick={() => router.push('/dashboard/simpanan')}
+            onClick={() => router.push("/dashboard/simpanan")}
             sx={{ mb: 1 }}
           >
             Kembali
@@ -141,7 +150,7 @@ export default function SaldoSimpananPage() {
         <Button
           variant="outlined"
           startIcon={<DownloadIcon />}
-          onClick={() => alert('Fitur export akan segera hadir')}
+          onClick={() => alert("Fitur export akan segera hadir")}
         >
           Export Excel
         </Button>
@@ -189,7 +198,7 @@ export default function SaldoSimpananPage() {
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
+          <Card sx={{ bgcolor: "primary.main", color: "white" }}>
             <CardContent>
               <Typography color="inherit" gutterBottom variant="body2">
                 Grand Total
@@ -257,8 +266,8 @@ export default function SaldoSimpananPage() {
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
                       {searchQuery
-                        ? 'Tidak ada data yang sesuai dengan pencarian'
-                        : 'Tidak ada data saldo simpanan'}
+                        ? "Tidak ada data yang sesuai dengan pencarian"
+                        : "Tidak ada data saldo simpanan"}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -279,14 +288,14 @@ export default function SaldoSimpananPage() {
                       </TableCell>
                       <TableCell
                         align="right"
-                        sx={{ fontWeight: 600, bgcolor: 'action.hover' }}
+                        sx={{ fontWeight: 600, bgcolor: "action.hover" }}
                       >
                         {formatCurrency(balance.totalSimpanan)}
                       </TableCell>
                     </TableRow>
                   ))}
                   {/* Totals Row */}
-                  <TableRow sx={{ bgcolor: 'primary.light' }}>
+                  <TableRow sx={{ bgcolor: "primary.light" }}>
                     <TableCell colSpan={2} sx={{ fontWeight: 600 }}>
                       TOTAL
                     </TableCell>
@@ -299,7 +308,10 @@ export default function SaldoSimpananPage() {
                     <TableCell align="right" sx={{ fontWeight: 600 }}>
                       {formatCurrency(totals.sukarela)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, fontSize: "1.1rem" }}
+                    >
                       {formatCurrency(totals.total)}
                     </TableCell>
                   </TableRow>

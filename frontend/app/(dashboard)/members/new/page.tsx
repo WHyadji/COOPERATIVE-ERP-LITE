@@ -3,13 +3,13 @@
 // Multi-section form with React Hook Form and Zod validation
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Box,
   Typography,
@@ -24,22 +24,22 @@ import {
   FormHelperText,
   Alert,
   Divider,
-} from '@mui/material';
-import { Save as SaveIcon, Cancel as CancelIcon } from '@mui/icons-material';
-import memberApi from '@/lib/api/memberApi';
-import type { CreateMemberRequest, Gender } from '@/types';
-import { format } from 'date-fns';
+} from "@mui/material";
+import { Save as SaveIcon, Cancel as CancelIcon } from "@mui/icons-material";
+import memberApi from "@/lib/api/memberApi";
+import type { CreateMemberRequest, Gender } from "@/types";
+import { format } from "date-fns";
 
 // ============================================================================
 // Validation Schema
 // ============================================================================
 
 const memberSchema = z.object({
-  namaLengkap: z.string().min(1, 'Nama lengkap harus diisi'),
+  namaLengkap: z.string().min(1, "Nama lengkap harus diisi"),
   nik: z.string().optional(),
   tanggalLahir: z.string().optional(),
   tempatLahir: z.string().optional(),
-  jenisKelamin: z.enum(['L', 'P', '']).optional(),
+  jenisKelamin: z.enum(["L", "P", ""]).optional(),
   alamat: z.string().optional(),
   rt: z.string().optional(),
   rw: z.string().optional(),
@@ -49,9 +49,9 @@ const memberSchema = z.object({
   provinsi: z.string().optional(),
   kodePos: z.string().optional(),
   noTelepon: z.string().optional(),
-  email: z.string().email('Email tidak valid').optional().or(z.literal('')),
+  email: z.string().email("Email tidak valid").optional().or(z.literal("")),
   pekerjaan: z.string().optional(),
-  tanggalBergabung: z.string().min(1, 'Tanggal bergabung harus diisi'),
+  tanggalBergabung: z.string().min(1, "Tanggal bergabung harus diisi"),
 });
 
 type MemberFormData = z.infer<typeof memberSchema>;
@@ -62,8 +62,8 @@ type MemberFormData = z.infer<typeof memberSchema>;
 
 export default function CreateMemberPage() {
   const router = useRouter();
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   // ============================================================================
   // Form Setup
@@ -77,23 +77,23 @@ export default function CreateMemberPage() {
   } = useForm<MemberFormData>({
     resolver: zodResolver(memberSchema),
     defaultValues: {
-      namaLengkap: '',
-      nik: '',
-      tanggalLahir: '',
-      tempatLahir: '',
-      jenisKelamin: '',
-      alamat: '',
-      rt: '',
-      rw: '',
-      kelurahan: '',
-      kecamatan: '',
-      kotaKabupaten: '',
-      provinsi: '',
-      kodePos: '',
-      noTelepon: '',
-      email: '',
-      pekerjaan: '',
-      tanggalBergabung: format(new Date(), 'yyyy-MM-dd'),
+      namaLengkap: "",
+      nik: "",
+      tanggalLahir: "",
+      tempatLahir: "",
+      jenisKelamin: "",
+      alamat: "",
+      rt: "",
+      rw: "",
+      kelurahan: "",
+      kecamatan: "",
+      kotaKabupaten: "",
+      provinsi: "",
+      kodePos: "",
+      noTelepon: "",
+      email: "",
+      pekerjaan: "",
+      tanggalBergabung: format(new Date(), "yyyy-MM-dd"),
     },
   });
 
@@ -103,8 +103,8 @@ export default function CreateMemberPage() {
 
   const onSubmit = async (data: MemberFormData) => {
     try {
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       // Convert form data to API request
       const requestData: CreateMemberRequest = {
@@ -112,7 +112,9 @@ export default function CreateMemberPage() {
         nik: data.nik || undefined,
         tanggalLahir: data.tanggalLahir || undefined,
         tempatLahir: data.tempatLahir || undefined,
-        jenisKelamin: (data.jenisKelamin === '' ? undefined : data.jenisKelamin) as Gender | undefined,
+        jenisKelamin: (data.jenisKelamin === ""
+          ? undefined
+          : data.jenisKelamin) as Gender | undefined,
         alamat: data.alamat || undefined,
         rt: data.rt || undefined,
         rw: data.rw || undefined,
@@ -129,19 +131,19 @@ export default function CreateMemberPage() {
 
       const newMember = await memberApi.createMember(requestData);
 
-      setSuccess('Anggota berhasil ditambahkan!');
+      setSuccess("Anggota berhasil ditambahkan!");
 
       // Redirect to member detail page after 1 second
       setTimeout(() => {
         router.push(`/dashboard/members/${newMember.id}`);
       }, 1000);
     } catch (err: unknown) {
-      console.error('Failed to create member:', err);
+      console.error("Failed to create member:", err);
 
-      if (err && typeof err === 'object' && 'message' in err) {
+      if (err && typeof err === "object" && "message" in err) {
         setError(err.message as string);
       } else {
-        setError('Gagal menambahkan anggota. Silakan coba lagi.');
+        setError("Gagal menambahkan anggota. Silakan coba lagi.");
       }
     }
   };
@@ -188,7 +190,7 @@ export default function CreateMemberPage() {
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <TextField
-                {...register('namaLengkap')}
+                {...register("namaLengkap")}
                 label="Nama Lengkap *"
                 fullWidth
                 error={!!errors.namaLengkap}
@@ -199,7 +201,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={6}>
               <TextField
-                {...register('nik')}
+                {...register("nik")}
                 label="NIK (KTP)"
                 fullWidth
                 error={!!errors.nik}
@@ -211,7 +213,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={4}>
               <TextField
-                {...register('tempatLahir')}
+                {...register("tempatLahir")}
                 label="Tempat Lahir"
                 fullWidth
                 error={!!errors.tempatLahir}
@@ -222,7 +224,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={4}>
               <TextField
-                {...register('tanggalLahir')}
+                {...register("tanggalLahir")}
                 label="Tanggal Lahir"
                 type="date"
                 fullWidth
@@ -234,7 +236,11 @@ export default function CreateMemberPage() {
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <FormControl fullWidth error={!!errors.jenisKelamin} disabled={isSubmitting}>
+              <FormControl
+                fullWidth
+                error={!!errors.jenisKelamin}
+                disabled={isSubmitting}
+              >
                 <InputLabel>Jenis Kelamin</InputLabel>
                 <Controller
                   name="jenisKelamin"
@@ -255,7 +261,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={6}>
               <TextField
-                {...register('pekerjaan')}
+                {...register("pekerjaan")}
                 label="Pekerjaan"
                 fullWidth
                 error={!!errors.pekerjaan}
@@ -266,7 +272,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={6}>
               <TextField
-                {...register('tanggalBergabung')}
+                {...register("tanggalBergabung")}
                 label="Tanggal Bergabung *"
                 type="date"
                 fullWidth
@@ -287,7 +293,7 @@ export default function CreateMemberPage() {
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
-                {...register('alamat')}
+                {...register("alamat")}
                 label="Alamat Lengkap"
                 fullWidth
                 multiline
@@ -300,7 +306,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={3}>
               <TextField
-                {...register('rt')}
+                {...register("rt")}
                 label="RT"
                 fullWidth
                 error={!!errors.rt}
@@ -311,7 +317,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={3}>
               <TextField
-                {...register('rw')}
+                {...register("rw")}
                 label="RW"
                 fullWidth
                 error={!!errors.rw}
@@ -322,7 +328,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={6}>
               <TextField
-                {...register('kelurahan')}
+                {...register("kelurahan")}
                 label="Kelurahan/Desa"
                 fullWidth
                 error={!!errors.kelurahan}
@@ -333,7 +339,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={4}>
               <TextField
-                {...register('kecamatan')}
+                {...register("kecamatan")}
                 label="Kecamatan"
                 fullWidth
                 error={!!errors.kecamatan}
@@ -344,7 +350,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={4}>
               <TextField
-                {...register('kotaKabupaten')}
+                {...register("kotaKabupaten")}
                 label="Kota/Kabupaten"
                 fullWidth
                 error={!!errors.kotaKabupaten}
@@ -355,7 +361,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={4}>
               <TextField
-                {...register('provinsi')}
+                {...register("provinsi")}
                 label="Provinsi"
                 fullWidth
                 error={!!errors.provinsi}
@@ -366,7 +372,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={4}>
               <TextField
-                {...register('kodePos')}
+                {...register("kodePos")}
                 label="Kode Pos"
                 fullWidth
                 error={!!errors.kodePos}
@@ -386,7 +392,7 @@ export default function CreateMemberPage() {
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <TextField
-                {...register('noTelepon')}
+                {...register("noTelepon")}
                 label="No. Telepon"
                 fullWidth
                 error={!!errors.noTelepon}
@@ -397,7 +403,7 @@ export default function CreateMemberPage() {
 
             <Grid item xs={12} md={6}>
               <TextField
-                {...register('email')}
+                {...register("email")}
                 label="Email"
                 type="email"
                 fullWidth
@@ -409,7 +415,9 @@ export default function CreateMemberPage() {
           </Grid>
 
           {/* Action Buttons */}
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
+          <Box
+            sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 4 }}
+          >
             <Button
               variant="outlined"
               startIcon={<CancelIcon />}
@@ -424,7 +432,7 @@ export default function CreateMemberPage() {
               startIcon={<SaveIcon />}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+              {isSubmitting ? "Menyimpan..." : "Simpan"}
             </Button>
           </Box>
         </form>

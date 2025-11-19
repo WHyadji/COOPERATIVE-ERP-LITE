@@ -3,9 +3,9 @@
 // Complete POS system with product selection, cart, and checkout
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Grid,
@@ -14,20 +14,20 @@ import {
   Button,
   Divider,
   Alert,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ShoppingCart as CartIcon,
   History as HistoryIcon,
-} from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/lib/context/ToastContext';
-import ProductSearch from '@/components/pos/ProductSearch';
-import ProductGrid from '@/components/pos/ProductGrid';
-import ShoppingCart from '@/components/pos/ShoppingCart';
-import MemberLookup from '@/components/pos/MemberLookup';
-import CheckoutModal from '@/components/pos/CheckoutModal';
-import ReceiptDialog from '@/components/pos/ReceiptDialog';
-import type { CartItem, Produk, Member, PenjualanResponse } from '@/types';
+} from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/lib/context/ToastContext";
+import ProductSearch from "@/components/pos/ProductSearch";
+import ProductGrid from "@/components/pos/ProductGrid";
+import ShoppingCart from "@/components/pos/ShoppingCart";
+import MemberLookup from "@/components/pos/MemberLookup";
+import CheckoutModal from "@/components/pos/CheckoutModal";
+import ReceiptDialog from "@/components/pos/ReceiptDialog";
+import type { CartItem, Produk, Member, PenjualanResponse } from "@/types";
 
 // ============================================================================
 // POS Main Page Component
@@ -47,7 +47,9 @@ export default function POSPage() {
   // Add product to cart
   const handleAddToCart = (product: Produk) => {
     // Check if product already in cart
-    const existingItemIndex = cart.findIndex((item) => item.product.id === product.id);
+    const existingItemIndex = cart.findIndex(
+      (item) => item.product.id === product.id
+    );
 
     if (existingItemIndex >= 0) {
       // Update quantity if product already in cart
@@ -109,13 +111,13 @@ export default function POSPage() {
   // Clear cart
   const handleClearCart = () => {
     setCart([]);
-    showInfo('Keranjang dikosongkan');
+    showInfo("Keranjang dikosongkan");
   };
 
   // Open checkout
   const handleCheckout = () => {
     if (cart.length === 0) {
-      showError('Keranjang masih kosong');
+      showError("Keranjang masih kosong");
       return;
     }
 
@@ -142,13 +144,20 @@ export default function POSPage() {
 
   // Navigate to history
   const handleViewHistory = () => {
-    router.push('/pos/riwayat');
+    router.push("/pos/riwayat");
   };
 
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" fontWeight={700}>
           Kasir / POS
         </Typography>
@@ -165,7 +174,7 @@ export default function POSPage() {
       <Grid container spacing={3}>
         {/* Left Column - Product Selection */}
         <Grid item xs={12} md={7}>
-          <Paper sx={{ p: 3, height: '100%' }}>
+          <Paper sx={{ p: 3, height: "100%" }}>
             {/* Member Lookup */}
             <Box sx={{ mb: 3 }}>
               <Typography variant="h6" gutterBottom fontWeight={600}>
@@ -199,7 +208,7 @@ export default function POSPage() {
 
         {/* Right Column - Shopping Cart */}
         <Grid item xs={12} md={5}>
-          <Box sx={{ position: 'sticky', top: 80 }}>
+          <Box sx={{ position: "sticky", top: 80 }}>
             {/* Shopping Cart */}
             <ShoppingCart
               items={cart}

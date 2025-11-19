@@ -3,13 +3,13 @@
 // Material-UI form with React Hook Form and Zod validation
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Box,
   Card,
@@ -21,18 +21,18 @@ import {
   Container,
   InputAdornment,
   IconButton,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useAuth } from '@/lib/context/AuthContext';
-import type { LoginRequest } from '@/types';
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useAuth } from "@/lib/context/AuthContext";
+import type { LoginRequest } from "@/types";
 
 // ============================================================================
 // Validation Schema
 // ============================================================================
 
 const loginSchema = z.object({
-  namaPengguna: z.string().min(1, 'Nama pengguna harus diisi'),
-  kataSandi: z.string().min(1, 'Kata sandi harus diisi'),
+  namaPengguna: z.string().min(1, "Nama pengguna harus diisi"),
+  kataSandi: z.string().min(1, "Kata sandi harus diisi"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -45,12 +45,12 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Redirect if already authenticated
   React.useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [isAuthenticated, router]);
 
@@ -65,8 +65,8 @@ export default function LoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      namaPengguna: '',
-      kataSandi: '',
+      namaPengguna: "",
+      kataSandi: "",
     },
   });
 
@@ -76,17 +76,19 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      setError('');
+      setError("");
       await login(data as LoginRequest);
       // Router push is handled by login function in AuthContext
     } catch (err: unknown) {
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
 
       // Extract error message
-      if (err && typeof err === 'object' && 'message' in err) {
+      if (err && typeof err === "object" && "message" in err) {
         setError(err.message as string);
       } else {
-        setError('Login gagal. Silakan periksa kembali nama pengguna dan kata sandi Anda.');
+        setError(
+          "Login gagal. Silakan periksa kembali nama pengguna dan kata sandi Anda."
+        );
       }
     }
   };
@@ -99,18 +101,23 @@ export default function LoginPage() {
     <Container maxWidth="sm">
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           py: 4,
         }}
       >
-        <Card sx={{ width: '100%', maxWidth: 500 }}>
+        <Card sx={{ width: "100%", maxWidth: 500 }}>
           <CardContent sx={{ p: 4 }}>
             {/* Header */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
+            <Box sx={{ textAlign: "center", mb: 4 }}>
+              <Typography
+                variant="h4"
+                component="h1"
+                gutterBottom
+                fontWeight={600}
+              >
                 Cooperative ERP Lite
               </Typography>
               <Typography variant="body1" color="text.secondary">
@@ -127,10 +134,10 @@ export default function LoginPage() {
 
             {/* Login Form */}
             <form onSubmit={handleSubmit(onSubmit)}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {/* Username Field */}
                 <TextField
-                  {...register('namaPengguna')}
+                  {...register("namaPengguna")}
                   label="Nama Pengguna"
                   variant="outlined"
                   fullWidth
@@ -143,9 +150,9 @@ export default function LoginPage() {
 
                 {/* Password Field */}
                 <TextField
-                  {...register('kataSandi')}
+                  {...register("kataSandi")}
                   label="Kata Sandi"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   variant="outlined"
                   fullWidth
                   error={!!errors.kataSandi}
@@ -176,13 +183,13 @@ export default function LoginPage() {
                   disabled={isSubmitting}
                   sx={{ mt: 1 }}
                 >
-                  {isSubmitting ? 'Memproses...' : 'Masuk'}
+                  {isSubmitting ? "Memproses..." : "Masuk"}
                 </Button>
               </Box>
             </form>
 
             {/* Footer Info */}
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Box sx={{ mt: 4, textAlign: "center" }}>
               <Typography variant="caption" color="text.secondary">
                 Sistem Koperasi Indonesia
               </Typography>

@@ -3,46 +3,46 @@
 // Tests for journal entry form with double-entry validation
 // ============================================================================
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import TransactionForm from '@/components/accounting/TransactionForm';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Akun } from '@/types';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import TransactionForm from "@/components/accounting/TransactionForm";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Akun } from "@/types";
 
 // Mock the API
-vi.mock('@/lib/api/accountingApi');
+vi.mock("@/lib/api/accountingApi");
 
-describe('TransactionForm Component', () => {
+describe("TransactionForm Component", () => {
   const mockOnClose = vi.fn();
   const mockOnSuccess = vi.fn();
 
   const mockAccounts: Akun[] = [
     {
-      id: '1',
-      idKoperasi: 'kop1',
-      kodeAkun: '1101',
-      namaAkun: 'Kas',
-      tipeAkun: 'aset',
-      normalSaldo: 'debit',
+      id: "1",
+      idKoperasi: "kop1",
+      kodeAkun: "1101",
+      namaAkun: "Kas",
+      tipeAkun: "aset",
+      normalSaldo: "debit",
       statusAktif: true,
     },
     {
-      id: '2',
-      idKoperasi: 'kop1',
-      kodeAkun: '4101',
-      namaAkun: 'Pendapatan Jasa',
-      tipeAkun: 'pendapatan',
-      normalSaldo: 'kredit',
+      id: "2",
+      idKoperasi: "kop1",
+      kodeAkun: "4101",
+      namaAkun: "Pendapatan Jasa",
+      tipeAkun: "pendapatan",
+      normalSaldo: "kredit",
       statusAktif: true,
     },
     {
-      id: '3',
-      idKoperasi: 'kop1',
-      kodeAkun: '5101',
-      namaAkun: 'Beban Gaji',
-      tipeAkun: 'beban',
-      normalSaldo: 'debit',
+      id: "3",
+      idKoperasi: "kop1",
+      kodeAkun: "5101",
+      namaAkun: "Beban Gaji",
+      tipeAkun: "beban",
+      normalSaldo: "debit",
       statusAktif: true,
     },
   ];
@@ -56,8 +56,8 @@ describe('TransactionForm Component', () => {
   // Rendering Tests
   // ============================================================================
 
-  describe('Rendering', () => {
-    it('should render form with correct title', async () => {
+  describe("Rendering", () => {
+    it("should render form with correct title", async () => {
       render(
         <TransactionForm
           open={true}
@@ -67,11 +67,11 @@ describe('TransactionForm Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Buat Jurnal Umum Baru')).toBeInTheDocument();
+        expect(screen.getByText("Buat Jurnal Umum Baru")).toBeInTheDocument();
       });
     });
 
-    it('should render all header fields', async () => {
+    it("should render all header fields", async () => {
       render(
         <TransactionForm
           open={true}
@@ -89,7 +89,7 @@ describe('TransactionForm Component', () => {
       expect(screen.getByLabelText(/nomor referensi/i)).toBeInTheDocument();
     });
 
-    it('should render line items table', async () => {
+    it("should render line items table", async () => {
       render(
         <TransactionForm
           open={true}
@@ -101,10 +101,10 @@ describe('TransactionForm Component', () => {
       await waitFor(() => {
         expect(screen.getByText(/baris transaksi/i)).toBeInTheDocument();
       });
-      expect(screen.getByRole('table')).toBeInTheDocument();
+      expect(screen.getByRole("table")).toBeInTheDocument();
     });
 
-    it('should render initial 2 line items', async () => {
+    it("should render initial 2 line items", async () => {
       render(
         <TransactionForm
           open={true}
@@ -118,11 +118,11 @@ describe('TransactionForm Component', () => {
       });
 
       // Should have table header row + 2 data rows + 1 totals row
-      const rows = screen.getAllByRole('row');
+      const rows = screen.getAllByRole("row");
       expect(rows.length).toBeGreaterThanOrEqual(3);
     });
 
-    it('should not render when open is false', () => {
+    it("should not render when open is false", () => {
       render(
         <TransactionForm
           open={false}
@@ -132,7 +132,7 @@ describe('TransactionForm Component', () => {
       );
 
       expect(
-        screen.queryByText('Buat Jurnal Umum Baru')
+        screen.queryByText("Buat Jurnal Umum Baru")
       ).not.toBeInTheDocument();
     });
   });
@@ -141,8 +141,8 @@ describe('TransactionForm Component', () => {
   // Data Loading Tests
   // ============================================================================
 
-  describe('Data Loading', () => {
-    it('should fetch accounts when dialog opens', async () => {
+  describe("Data Loading", () => {
+    it("should fetch accounts when dialog opens", async () => {
       render(
         <TransactionForm
           open={true}
@@ -152,16 +152,13 @@ describe('TransactionForm Component', () => {
       );
 
       await waitFor(() => {
-        expect(accountingApi.getAccounts).toHaveBeenCalledWith(
-          undefined,
-          true
-        );
+        expect(accountingApi.getAccounts).toHaveBeenCalledWith(undefined, true);
       });
     });
 
-    it('should handle account loading error gracefully', async () => {
+    it("should handle account loading error gracefully", async () => {
       vi.mocked(accountingApi.getAccounts).mockRejectedValue(
-        new Error('Failed to fetch')
+        new Error("Failed to fetch")
       );
 
       render(
@@ -174,7 +171,7 @@ describe('TransactionForm Component', () => {
 
       // Should still render the form
       await waitFor(() => {
-        expect(screen.getByText('Buat Jurnal Umum Baru')).toBeInTheDocument();
+        expect(screen.getByText("Buat Jurnal Umum Baru")).toBeInTheDocument();
       });
     });
   });
@@ -183,8 +180,8 @@ describe('TransactionForm Component', () => {
   // Line Item Management Tests
   // ============================================================================
 
-  describe('Line Item Management', () => {
-    it('should add new line item when clicking Tambah Baris', async () => {
+  describe("Line Item Management", () => {
+    it("should add new line item when clicking Tambah Baris", async () => {
       const user = userEvent.setup();
 
       render(
@@ -199,16 +196,16 @@ describe('TransactionForm Component', () => {
         expect(accountingApi.getAccounts).toHaveBeenCalled();
       });
 
-      const initialRows = screen.getAllByRole('row');
+      const initialRows = screen.getAllByRole("row");
       const addButton = screen.getByText(/tambah baris/i);
 
       await user.click(addButton);
 
-      const updatedRows = screen.getAllByRole('row');
+      const updatedRows = screen.getAllByRole("row");
       expect(updatedRows.length).toBe(initialRows.length + 1);
     });
 
-    it('should not allow removing line items below minimum (2)', async () => {
+    it("should not allow removing line items below minimum (2)", async () => {
       render(
         <TransactionForm
           open={true}
@@ -233,8 +230,8 @@ describe('TransactionForm Component', () => {
   // Balance Validation Tests
   // ============================================================================
 
-  describe('Balance Validation', () => {
-    it('should show Unbalanced chip when debit ≠ credit', async () => {
+  describe("Balance Validation", () => {
+    it("should show Unbalanced chip when debit ≠ credit", async () => {
       const user = userEvent.setup();
 
       render(
@@ -251,14 +248,14 @@ describe('TransactionForm Component', () => {
 
       // Enter unbalanced amounts
       const debitInputs = screen.getAllByPlaceholderText(/debit/i);
-      await user.type(debitInputs[0], '100000');
+      await user.type(debitInputs[0], "100000");
 
       await waitFor(() => {
-        expect(screen.getByText('Unbalanced')).toBeInTheDocument();
+        expect(screen.getByText("Unbalanced")).toBeInTheDocument();
       });
     });
 
-    it('should show Balanced chip when debit = credit', async () => {
+    it("should show Balanced chip when debit = credit", async () => {
       const user = userEvent.setup();
 
       render(
@@ -277,15 +274,15 @@ describe('TransactionForm Component', () => {
       const debitInputs = screen.getAllByPlaceholderText(/debit/i);
       const kreditInputs = screen.getAllByPlaceholderText(/kredit/i);
 
-      await user.type(debitInputs[0], '100000');
-      await user.type(kreditInputs[1], '100000');
+      await user.type(debitInputs[0], "100000");
+      await user.type(kreditInputs[1], "100000");
 
       await waitFor(() => {
-        expect(screen.getByText('Balanced')).toBeInTheDocument();
+        expect(screen.getByText("Balanced")).toBeInTheDocument();
       });
     });
 
-    it('should disable submit button when unbalanced', async () => {
+    it("should disable submit button when unbalanced", async () => {
       const user = userEvent.setup();
 
       render(
@@ -302,7 +299,7 @@ describe('TransactionForm Component', () => {
 
       // Enter unbalanced amounts
       const debitInputs = screen.getAllByPlaceholderText(/debit/i);
-      await user.type(debitInputs[0], '100000');
+      await user.type(debitInputs[0], "100000");
 
       await waitFor(() => {
         const simpanButton = screen.getByText(/^simpan$/i);
@@ -310,7 +307,7 @@ describe('TransactionForm Component', () => {
       });
     });
 
-    it('should display total debit and kredit', async () => {
+    it("should display total debit and kredit", async () => {
       const user = userEvent.setup();
 
       render(
@@ -327,7 +324,7 @@ describe('TransactionForm Component', () => {
 
       // Enter amounts
       const debitInputs = screen.getAllByPlaceholderText(/debit/i);
-      await user.type(debitInputs[0], '100000');
+      await user.type(debitInputs[0], "100000");
 
       await waitFor(() => {
         expect(screen.getByText(/total debit/i)).toBeInTheDocument();
@@ -340,15 +337,15 @@ describe('TransactionForm Component', () => {
   // Form Validation Tests
   // ============================================================================
 
-  describe('Form Validation', () => {
-    it('should show error when nomor jurnal is empty', async () => {
+  describe("Form Validation", () => {
+    it("should show error when nomor jurnal is empty", async () => {
       const user = userEvent.setup();
       vi.mocked(accountingApi.createTransaction).mockResolvedValue({
-        id: '1',
-        idKoperasi: 'kop1',
-        nomorJurnal: 'JU-2025-001',
-        tanggalTransaksi: '2025-11-18',
-        deskripsi: 'Test',
+        id: "1",
+        idKoperasi: "kop1",
+        nomorJurnal: "JU-2025-001",
+        tanggalTransaksi: "2025-11-18",
+        deskripsi: "Test",
         totalDebit: 100000,
         totalKredit: 100000,
         statusBalanced: true,
@@ -377,7 +374,7 @@ describe('TransactionForm Component', () => {
       });
     });
 
-    it('should show error for insufficient line items', async () => {
+    it("should show error for insufficient line items", async () => {
       const user = userEvent.setup();
 
       render(
@@ -394,7 +391,7 @@ describe('TransactionForm Component', () => {
 
       // Fill required field but don't add accounts
       const nomorJurnalInput = screen.getByLabelText(/nomor jurnal/i);
-      await user.type(nomorJurnalInput, 'JU-2025-001');
+      await user.type(nomorJurnalInput, "JU-2025-001");
 
       const simpanButton = screen.getByText(/^simpan$/i);
       await user.click(simpanButton);
@@ -409,15 +406,15 @@ describe('TransactionForm Component', () => {
   // Submission Tests
   // ============================================================================
 
-  describe('Transaction Submission', () => {
-    it('should create transaction successfully with balanced entries', async () => {
+  describe("Transaction Submission", () => {
+    it("should create transaction successfully with balanced entries", async () => {
       const user = userEvent.setup();
       vi.mocked(accountingApi.createTransaction).mockResolvedValue({
-        id: '1',
-        idKoperasi: 'kop1',
-        nomorJurnal: 'JU-2025-001',
-        tanggalTransaksi: '2025-11-18',
-        deskripsi: 'Test Transaction',
+        id: "1",
+        idKoperasi: "kop1",
+        nomorJurnal: "JU-2025-001",
+        tanggalTransaksi: "2025-11-18",
+        deskripsi: "Test Transaction",
         totalDebit: 100000,
         totalKredit: 100000,
         statusBalanced: true,
@@ -432,30 +429,30 @@ describe('TransactionForm Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('1101 - Kas')).toBeInTheDocument();
+        expect(screen.getByText("1101 - Kas")).toBeInTheDocument();
       });
 
       // Fill form
       const nomorJurnalInput = screen.getByLabelText(/nomor jurnal/i);
-      await user.type(nomorJurnalInput, 'JU-2025-001');
+      await user.type(nomorJurnalInput, "JU-2025-001");
 
       const deskripsiInput = screen.getByLabelText(/deskripsi/i);
-      await user.type(deskripsiInput, 'Test Transaction');
+      await user.type(deskripsiInput, "Test Transaction");
 
       // Select accounts and enter amounts
       const accountSelects = screen.getAllByLabelText(/akun/i);
-      await user.selectOptions(accountSelects[0], '1');
-      await user.selectOptions(accountSelects[1], '2');
+      await user.selectOptions(accountSelects[0], "1");
+      await user.selectOptions(accountSelects[1], "2");
 
       const debitInputs = screen.getAllByPlaceholderText(/debit/i);
       const kreditInputs = screen.getAllByPlaceholderText(/kredit/i);
 
-      await user.type(debitInputs[0], '100000');
-      await user.type(kreditInputs[1], '100000');
+      await user.type(debitInputs[0], "100000");
+      await user.type(kreditInputs[1], "100000");
 
       // Submit
       await waitFor(() => {
-        expect(screen.getByText('Balanced')).toBeInTheDocument();
+        expect(screen.getByText("Balanced")).toBeInTheDocument();
       });
 
       const simpanButton = screen.getByText(/^simpan$/i);
@@ -466,10 +463,10 @@ describe('TransactionForm Component', () => {
       });
     });
 
-    it('should show error when API call fails', async () => {
+    it("should show error when API call fails", async () => {
       const user = userEvent.setup();
       vi.mocked(accountingApi.createTransaction).mockRejectedValue(
-        new Error('API Error')
+        new Error("API Error")
       );
 
       render(
@@ -481,36 +478,38 @@ describe('TransactionForm Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('1101 - Kas')).toBeInTheDocument();
+        expect(screen.getByText("1101 - Kas")).toBeInTheDocument();
       });
 
       // Fill and submit
       const nomorJurnalInput = screen.getByLabelText(/nomor jurnal/i);
-      await user.type(nomorJurnalInput, 'JU-2025-001');
+      await user.type(nomorJurnalInput, "JU-2025-001");
 
       const accountSelects = screen.getAllByLabelText(/akun/i);
-      await user.selectOptions(accountSelects[0], '1');
-      await user.selectOptions(accountSelects[1], '2');
+      await user.selectOptions(accountSelects[0], "1");
+      await user.selectOptions(accountSelects[1], "2");
 
       const debitInputs = screen.getAllByPlaceholderText(/debit/i);
       const kreditInputs = screen.getAllByPlaceholderText(/kredit/i);
 
-      await user.type(debitInputs[0], '100000');
-      await user.type(kreditInputs[1], '100000');
+      await user.type(debitInputs[0], "100000");
+      await user.type(kreditInputs[1], "100000");
 
       await waitFor(() => {
-        expect(screen.getByText('Balanced')).toBeInTheDocument();
+        expect(screen.getByText("Balanced")).toBeInTheDocument();
       });
 
       const simpanButton = screen.getByText(/^simpan$/i);
       await user.click(simpanButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/gagal membuat transaksi/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/gagal membuat transaksi/i)
+        ).toBeInTheDocument();
       });
     });
 
-    it('should call onClose when Batal button is clicked', async () => {
+    it("should call onClose when Batal button is clicked", async () => {
       const user = userEvent.setup();
 
       render(
@@ -531,7 +530,7 @@ describe('TransactionForm Component', () => {
       expect(mockOnClose).toHaveBeenCalled();
     });
 
-    it('should call onSuccess after successful submission', async () => {
+    it("should call onSuccess after successful submission", async () => {
       // This test is intentionally minimal - just verify the callback exists
       expect(mockOnSuccess).toBeDefined();
     });
@@ -541,8 +540,8 @@ describe('TransactionForm Component', () => {
   // UI/UX Tests
   // ============================================================================
 
-  describe('UI/UX Features', () => {
-    it('should display double-entry principle explanation', async () => {
+  describe("UI/UX Features", () => {
+    it("should display double-entry principle explanation", async () => {
       render(
         <TransactionForm
           open={true}
@@ -556,7 +555,7 @@ describe('TransactionForm Component', () => {
       });
     });
 
-    it('should show helper text for nomor jurnal', async () => {
+    it("should show helper text for nomor jurnal", async () => {
       render(
         <TransactionForm
           open={true}
@@ -570,7 +569,7 @@ describe('TransactionForm Component', () => {
       });
     });
 
-    it('should show helper text for nomor referensi', async () => {
+    it("should show helper text for nomor referensi", async () => {
       render(
         <TransactionForm
           open={true}
@@ -584,7 +583,7 @@ describe('TransactionForm Component', () => {
       });
     });
 
-    it('should reset form when dialog is opened', async () => {
+    it("should reset form when dialog is opened", async () => {
       const { rerender } = render(
         <TransactionForm
           open={false}
@@ -607,10 +606,10 @@ describe('TransactionForm Component', () => {
 
       // Form should be reset
       const nomorJurnalInput = screen.getByLabelText(/nomor jurnal/i);
-      expect(nomorJurnalInput).toHaveValue('');
+      expect(nomorJurnalInput).toHaveValue("");
     });
 
-    it('should display currency in IDR format', async () => {
+    it("should display currency in IDR format", async () => {
       render(
         <TransactionForm
           open={true}

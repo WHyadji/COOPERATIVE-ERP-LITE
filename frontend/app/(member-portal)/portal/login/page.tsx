@@ -3,13 +3,13 @@
 // Login page specifically for cooperative members
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Box,
   Card,
@@ -21,10 +21,10 @@ import {
   Container,
   InputAdornment,
   IconButton,
-} from '@mui/material';
-import { Visibility, VisibilityOff, AccountCircle } from '@mui/icons-material';
-import apiClient, { tokenManager } from '@/lib/api/client';
-import type { APIResponse } from '@/types';
+} from "@mui/material";
+import { Visibility, VisibilityOff, AccountCircle } from "@mui/icons-material";
+import apiClient, { tokenManager } from "@/lib/api/client";
+import type { APIResponse } from "@/types";
 
 // Member Portal Login Response
 interface MemberLoginResponse {
@@ -44,8 +44,11 @@ interface MemberLoginResponse {
 // ============================================================================
 
 const loginSchema = z.object({
-  nomorAnggota: z.string().min(1, 'Nomor anggota harus diisi'),
-  pin: z.string().length(6, 'PIN harus 6 digit').regex(/^\d+$/, 'PIN harus berupa angka'),
+  nomorAnggota: z.string().min(1, "Nomor anggota harus diisi"),
+  pin: z
+    .string()
+    .length(6, "PIN harus 6 digit")
+    .regex(/^\d+$/, "PIN harus berupa angka"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -57,13 +60,13 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function MemberLoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Check if already logged in
   React.useEffect(() => {
     const token = tokenManager.getToken();
     if (token) {
-      router.push('/portal');
+      router.push("/portal");
     }
   }, [router]);
 
@@ -72,10 +75,11 @@ export default function MemberLoginPage() {
     try {
       // Note: Backend requires idKoperasi - for MVP we can use a default or env variable
       // In production, this should be determined by the domain or user selection
-      const idKoperasi = process.env.NEXT_PUBLIC_DEFAULT_KOPERASI_ID || 'default-koperasi-id';
+      const idKoperasi =
+        process.env.NEXT_PUBLIC_DEFAULT_KOPERASI_ID || "default-koperasi-id";
 
       const response = await apiClient.post<APIResponse<MemberLoginResponse>>(
-        '/portal/login',
+        "/portal/login",
         { nomorAnggota, pin },
         { params: { idKoperasi } }
       );
@@ -87,12 +91,12 @@ export default function MemberLoginPage() {
         tokenManager.setToken(token);
 
         // Redirect to portal
-        router.push('/portal');
+        router.push("/portal");
       } else {
-        throw new Error('Login failed: Invalid response');
+        throw new Error("Login failed: Invalid response");
       }
     } catch (err: unknown) {
-      console.error('Member portal login error:', err);
+      console.error("Member portal login error:", err);
       throw err;
     }
   };
@@ -108,8 +112,8 @@ export default function MemberLoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      nomorAnggota: '',
-      pin: '',
+      nomorAnggota: "",
+      pin: "",
     },
   });
 
@@ -119,19 +123,21 @@ export default function MemberLoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      setError('');
+      setError("");
       // Member portal login uses separate endpoint with nomor anggota + PIN
       await loginMemberPortal(data.nomorAnggota, data.pin);
 
       // Note: Redirect is handled in useEffect after user state is updated
     } catch (err: unknown) {
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
 
       // Extract error message
-      if (err && typeof err === 'object' && 'message' in err) {
+      if (err && typeof err === "object" && "message" in err) {
         setError(err.message as string);
       } else {
-        setError('Login gagal. Silakan periksa kembali nomor anggota dan PIN Anda.');
+        setError(
+          "Login gagal. Silakan periksa kembali nomor anggota dan PIN Anda."
+        );
       }
     }
   };
@@ -144,26 +150,33 @@ export default function MemberLoginPage() {
     <Container maxWidth="sm">
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           py: 4,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
       >
         <Card
           sx={{
-            width: '100%',
+            width: "100%",
             maxWidth: 500,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
           }}
         >
           <CardContent sx={{ p: 4 }}>
             {/* Header */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <AccountCircle sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
+            <Box sx={{ textAlign: "center", mb: 4 }}>
+              <AccountCircle
+                sx={{ fontSize: 60, color: "primary.main", mb: 2 }}
+              />
+              <Typography
+                variant="h4"
+                component="h1"
+                gutterBottom
+                fontWeight={600}
+              >
                 Portal Anggota
               </Typography>
               <Typography variant="body1" color="text.secondary">
@@ -180,15 +193,18 @@ export default function MemberLoginPage() {
 
             {/* Login Form */}
             <form onSubmit={handleSubmit(onSubmit)}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {/* Member Number Field */}
                 <TextField
-                  {...register('nomorAnggota')}
+                  {...register("nomorAnggota")}
                   label="Nomor Anggota"
                   variant="outlined"
                   fullWidth
                   error={!!errors.nomorAnggota}
-                  helperText={errors.nomorAnggota?.message || 'Masukkan nomor anggota Anda'}
+                  helperText={
+                    errors.nomorAnggota?.message ||
+                    "Masukkan nomor anggota Anda"
+                  }
                   autoComplete="off"
                   autoFocus
                   disabled={isSubmitting}
@@ -197,19 +213,21 @@ export default function MemberLoginPage() {
 
                 {/* PIN Field */}
                 <TextField
-                  {...register('pin')}
+                  {...register("pin")}
                   label="PIN (6 digit)"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   variant="outlined"
                   fullWidth
                   error={!!errors.pin}
-                  helperText={errors.pin?.message || 'Masukkan PIN 6 digit Anda'}
+                  helperText={
+                    errors.pin?.message || "Masukkan PIN 6 digit Anda"
+                  }
                   autoComplete="off"
                   disabled={isSubmitting}
                   inputProps={{
                     maxLength: 6,
-                    inputMode: 'numeric',
-                    pattern: '[0-9]*'
+                    inputMode: "numeric",
+                    pattern: "[0-9]*",
                   }}
                   InputProps={{
                     endAdornment: (
@@ -236,23 +254,30 @@ export default function MemberLoginPage() {
                   sx={{
                     mt: 1,
                     py: 1.5,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #5568d3 0%, #63408b 100%)',
-                    }
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    "&:hover": {
+                      background:
+                        "linear-gradient(135deg, #5568d3 0%, #63408b 100%)",
+                    },
                   }}
                 >
-                  {isSubmitting ? 'Memproses...' : 'Masuk'}
+                  {isSubmitting ? "Memproses..." : "Masuk"}
                 </Button>
               </Box>
             </form>
 
             {/* Footer Info */}
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Box sx={{ mt: 4, textAlign: "center" }}>
               <Typography variant="caption" color="text.secondary">
                 Portal Anggota Koperasi
               </Typography>
-              <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
+              <Typography
+                variant="caption"
+                display="block"
+                color="text.secondary"
+                sx={{ mt: 1 }}
+              >
                 Butuh bantuan? Hubungi pengurus koperasi Anda
               </Typography>
             </Box>

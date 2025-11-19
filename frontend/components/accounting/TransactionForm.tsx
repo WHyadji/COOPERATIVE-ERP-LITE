@@ -3,9 +3,9 @@
 // Material-UI form with line items and automatic double-entry validation
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -31,17 +31,17 @@ import {
   Paper,
   Divider,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
-} from '@mui/icons-material';
-import accountingApi from '@/lib/api/accountingApi';
-import type { Akun, CreateTransaksiRequest, Transaksi } from '@/types';
-import { format } from 'date-fns';
-import { useToast } from '@/lib/context/ToastContext';
+} from "@mui/icons-material";
+import accountingApi from "@/lib/api/accountingApi";
+import type { Akun, CreateTransaksiRequest, Transaksi } from "@/types";
+import { format } from "date-fns";
+import { useToast } from "@/lib/context/ToastContext";
 
 // ============================================================================
 // Component Props
@@ -75,21 +75,21 @@ export default function TransactionForm({
   const isEditMode = !!transaction;
 
   // Form state
-  const [nomorJurnal, setNomorJurnal] = useState('');
+  const [nomorJurnal, setNomorJurnal] = useState("");
   const [tanggalTransaksi, setTanggalTransaksi] = useState(
-    format(new Date(), 'yyyy-MM-dd')
+    format(new Date(), "yyyy-MM-dd")
   );
-  const [deskripsi, setDeskripsi] = useState('');
-  const [nomorReferensi, setNomorReferensi] = useState('');
+  const [deskripsi, setDeskripsi] = useState("");
+  const [nomorReferensi, setNomorReferensi] = useState("");
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
-    { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
+    { idAkun: "", jumlahDebit: "", jumlahKredit: "", keterangan: "" },
+    { idAkun: "", jumlahDebit: "", jumlahKredit: "", keterangan: "" },
   ]);
 
   const [accounts, setAccounts] = useState<Akun[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // ============================================================================
   // Fetch Accounts
@@ -102,33 +102,36 @@ export default function TransactionForm({
       // Pre-populate form if editing, otherwise reset
       if (isEditMode && transaction) {
         setNomorJurnal(transaction.nomorJurnal);
-        setTanggalTransaksi(transaction.tanggalTransaksi.split('T')[0]); // Extract date part
+        setTanggalTransaksi(transaction.tanggalTransaksi.split("T")[0]); // Extract date part
         setDeskripsi(transaction.deskripsi);
-        setNomorReferensi(transaction.nomorReferensi || '');
+        setNomorReferensi(transaction.nomorReferensi || "");
 
         // Populate line items
-        if (transaction.barisTransaksi && transaction.barisTransaksi.length > 0) {
+        if (
+          transaction.barisTransaksi &&
+          transaction.barisTransaksi.length > 0
+        ) {
           setLineItems(
             transaction.barisTransaksi.map((baris) => ({
               idAkun: baris.idAkun,
               jumlahDebit: baris.jumlahDebit.toString(),
               jumlahKredit: baris.jumlahKredit.toString(),
-              keterangan: baris.keterangan || '',
+              keterangan: baris.keterangan || "",
             }))
           );
         }
       } else {
         // Reset form for create mode
-        setNomorJurnal('');
-        setTanggalTransaksi(format(new Date(), 'yyyy-MM-dd'));
-        setDeskripsi('');
-        setNomorReferensi('');
+        setNomorJurnal("");
+        setTanggalTransaksi(format(new Date(), "yyyy-MM-dd"));
+        setDeskripsi("");
+        setNomorReferensi("");
         setLineItems([
-          { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
-        { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
-      ]);
+          { idAkun: "", jumlahDebit: "", jumlahKredit: "", keterangan: "" },
+          { idAkun: "", jumlahDebit: "", jumlahKredit: "", keterangan: "" },
+        ]);
       }
-      setError('');
+      setError("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, transaction]);
@@ -136,10 +139,10 @@ export default function TransactionForm({
   const fetchAccounts = async () => {
     try {
       setLoadingAccounts(true);
-      const data = await accountingApi.getAccounts('all', true);
+      const data = await accountingApi.getAccounts("all", true);
       setAccounts(data);
     } catch (err) {
-      console.error('Failed to fetch accounts:', err);
+      console.error("Failed to fetch accounts:", err);
     } finally {
       setLoadingAccounts(false);
     }
@@ -168,12 +171,12 @@ export default function TransactionForm({
 
   const validateForm = (): boolean => {
     if (!nomorJurnal.trim()) {
-      setError('Nomor jurnal harus diisi');
+      setError("Nomor jurnal harus diisi");
       return false;
     }
 
     if (!deskripsi.trim()) {
-      setError('Deskripsi harus diisi');
+      setError("Deskripsi harus diisi");
       return false;
     }
 
@@ -183,14 +186,14 @@ export default function TransactionForm({
     );
 
     if (filledItems.length < 2) {
-      setError('Minimal 2 baris transaksi harus diisi');
+      setError("Minimal 2 baris transaksi harus diisi");
       return false;
     }
 
     // Validate each line item
     for (const item of filledItems) {
       if (!item.idAkun) {
-        setError('Setiap baris harus memilih akun');
+        setError("Setiap baris harus memilih akun");
         return false;
       }
 
@@ -198,19 +201,19 @@ export default function TransactionForm({
       const kredit = parseFloat(item.jumlahKredit) || 0;
 
       if (debit > 0 && kredit > 0) {
-        setError('Satu baris tidak boleh memiliki debit dan kredit sekaligus');
+        setError("Satu baris tidak boleh memiliki debit dan kredit sekaligus");
         return false;
       }
 
       if (debit === 0 && kredit === 0) {
-        setError('Setiap baris harus memiliki nilai debit atau kredit');
+        setError("Setiap baris harus memiliki nilai debit atau kredit");
         return false;
       }
     }
 
     // Check if balanced
     if (!isBalanced()) {
-      setError('Total debit harus sama dengan total kredit');
+      setError("Total debit harus sama dengan total kredit");
       return false;
     }
 
@@ -224,13 +227,13 @@ export default function TransactionForm({
   const handleAddLine = () => {
     setLineItems([
       ...lineItems,
-      { idAkun: '', jumlahDebit: '', jumlahKredit: '', keterangan: '' },
+      { idAkun: "", jumlahDebit: "", jumlahKredit: "", keterangan: "" },
     ]);
   };
 
   const handleRemoveLine = (index: number) => {
     if (lineItems.length <= 2) {
-      alert('Minimal 2 baris transaksi diperlukan');
+      alert("Minimal 2 baris transaksi diperlukan");
       return;
     }
     setLineItems(lineItems.filter((_, i) => i !== index));
@@ -255,7 +258,7 @@ export default function TransactionForm({
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       // Filter only filled line items
       const filledItems = lineItems.filter(
@@ -267,7 +270,7 @@ export default function TransactionForm({
         tanggalTransaksi: tanggalTransaksi,
         deskripsi: deskripsi.trim(),
         nomorReferensi: nomorReferensi.trim() || undefined,
-        tipeTransaksi: 'manual',
+        tipeTransaksi: "manual",
         barisTransaksi: filledItems.map((item) => ({
           idAkun: item.idAkun,
           jumlahDebit: parseFloat(item.jumlahDebit) || 0,
@@ -285,11 +288,11 @@ export default function TransactionForm({
       }
       onSuccess();
     } catch (err: unknown) {
-      console.error('Failed to create transaction:', err);
+      console.error("Failed to create transaction:", err);
       setError(
         err instanceof Error
           ? err.message
-          : 'Gagal menyimpan transaksi. Silakan coba lagi.'
+          : "Gagal menyimpan transaksi. Silakan coba lagi."
       );
     } finally {
       setLoading(false);
@@ -301,9 +304,9 @@ export default function TransactionForm({
   // ============================================================================
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -320,7 +323,7 @@ export default function TransactionForm({
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <form onSubmit={handleSubmit}>
         <DialogTitle>
-          {isEditMode ? 'Edit Jurnal Umum' : 'Buat Jurnal Umum Baru'}
+          {isEditMode ? "Edit Jurnal Umum" : "Buat Jurnal Umum Baru"}
         </DialogTitle>
 
         <DialogContent>
@@ -385,9 +388,9 @@ export default function TransactionForm({
           <Box sx={{ mb: 2 }}>
             <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 mb: 2,
               }}
             >
@@ -423,7 +426,11 @@ export default function TransactionForm({
                           <Select
                             value={item.idAkun}
                             onChange={(e) =>
-                              handleLineItemChange(index, 'idAkun', e.target.value)
+                              handleLineItemChange(
+                                index,
+                                "idAkun",
+                                e.target.value
+                              )
                             }
                             disabled={loading || loadingAccounts}
                             displayEmpty
@@ -450,7 +457,11 @@ export default function TransactionForm({
                           type="number"
                           value={item.jumlahDebit}
                           onChange={(e) =>
-                            handleLineItemChange(index, 'jumlahDebit', e.target.value)
+                            handleLineItemChange(
+                              index,
+                              "jumlahDebit",
+                              e.target.value
+                            )
                           }
                           disabled={loading}
                           inputProps={{ min: 0, step: 0.01 }}
@@ -465,7 +476,7 @@ export default function TransactionForm({
                           onChange={(e) =>
                             handleLineItemChange(
                               index,
-                              'jumlahKredit',
+                              "jumlahKredit",
                               e.target.value
                             )
                           }
@@ -479,7 +490,11 @@ export default function TransactionForm({
                           size="small"
                           value={item.keterangan}
                           onChange={(e) =>
-                            handleLineItemChange(index, 'keterangan', e.target.value)
+                            handleLineItemChange(
+                              index,
+                              "keterangan",
+                              e.target.value
+                            )
                           }
                           disabled={loading}
                         />
@@ -498,7 +513,7 @@ export default function TransactionForm({
                   ))}
 
                   {/* Totals Row */}
-                  <TableRow sx={{ bgcolor: 'grey.50' }}>
+                  <TableRow sx={{ bgcolor: "grey.50" }}>
                     <TableCell>
                       <Typography fontWeight={600}>TOTAL</Typography>
                     </TableCell>
@@ -536,9 +551,9 @@ export default function TransactionForm({
 
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="body2">
-                <strong>Prinsip Double-Entry:</strong> Total Debit harus sama dengan
-                Total Kredit. Setiap baris hanya boleh memiliki nilai Debit ATAU
-                Kredit, tidak keduanya.
+                <strong>Prinsip Double-Entry:</strong> Total Debit harus sama
+                dengan Total Kredit. Setiap baris hanya boleh memiliki nilai
+                Debit ATAU Kredit, tidak keduanya.
               </Typography>
             </Alert>
           </Box>
@@ -554,7 +569,7 @@ export default function TransactionForm({
             disabled={loading || !balanced}
             startIcon={loading && <CircularProgress size={20} />}
           >
-            {loading ? 'Menyimpan...' : 'Simpan Jurnal'}
+            {loading ? "Menyimpan..." : "Simpan Jurnal"}
           </Button>
         </DialogActions>
       </form>

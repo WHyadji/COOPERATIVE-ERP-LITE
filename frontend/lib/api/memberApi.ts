@@ -3,7 +3,7 @@
 // Type-safe API calls for member management
 // ============================================================================
 
-import apiClient from './client';
+import apiClient from "./client";
 import type {
   Member,
   CreateMemberRequest,
@@ -12,7 +12,7 @@ import type {
   APIResponse,
   PaginatedResponse,
   MemberListFilters,
-} from '@/types';
+} from "@/types";
 
 // ============================================================================
 // Member API Functions
@@ -33,11 +33,11 @@ export const getMembers = async (
     params.search = filters.search;
   }
 
-  if (filters?.status && filters.status !== 'all') {
+  if (filters?.status && filters.status !== "all") {
     params.status = filters.status;
   }
 
-  const response = await apiClient.get<PaginatedResponse<Member>>('/anggota', {
+  const response = await apiClient.get<PaginatedResponse<Member>>("/anggota", {
     params,
   });
 
@@ -51,7 +51,7 @@ export const getMemberById = async (id: string): Promise<Member> => {
   const response = await apiClient.get<APIResponse<Member>>(`/anggota/${id}`);
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch member');
+    throw new Error("Failed to fetch member");
   }
 
   return response.data.data;
@@ -60,13 +60,15 @@ export const getMemberById = async (id: string): Promise<Member> => {
 /**
  * Get member by member number
  */
-export const getMemberByNumber = async (nomorAnggota: string): Promise<Member> => {
+export const getMemberByNumber = async (
+  nomorAnggota: string
+): Promise<Member> => {
   const response = await apiClient.get<APIResponse<Member>>(
     `/anggota/nomor/${nomorAnggota}`
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch member');
+    throw new Error("Failed to fetch member");
   }
 
   return response.data.data;
@@ -78,10 +80,10 @@ export const getMemberByNumber = async (nomorAnggota: string): Promise<Member> =
 export const createMember = async (
   data: CreateMemberRequest
 ): Promise<Member> => {
-  const response = await apiClient.post<APIResponse<Member>>('/anggota', data);
+  const response = await apiClient.post<APIResponse<Member>>("/anggota", data);
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to create member');
+    throw new Error("Failed to create member");
   }
 
   return response.data.data;
@@ -100,7 +102,7 @@ export const updateMember = async (
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to update member');
+    throw new Error("Failed to update member");
   }
 
   return response.data.data;
@@ -113,7 +115,7 @@ export const deleteMember = async (id: string): Promise<void> => {
   const response = await apiClient.delete<APIResponse>(`/anggota/${id}`);
 
   if (!response.data.success) {
-    throw new Error('Failed to delete member');
+    throw new Error("Failed to delete member");
   }
 };
 
@@ -121,12 +123,11 @@ export const deleteMember = async (id: string): Promise<void> => {
  * Get member statistics
  */
 export const getMemberStatistics = async (): Promise<MemberStatistics> => {
-  const response = await apiClient.get<APIResponse<MemberStatistics>>(
-    '/anggota/statistik'
-  );
+  const response =
+    await apiClient.get<APIResponse<MemberStatistics>>("/anggota/statistik");
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch member statistics');
+    throw new Error("Failed to fetch member statistics");
   }
 
   return response.data.data;
@@ -135,17 +136,13 @@ export const getMemberStatistics = async (): Promise<MemberStatistics> => {
 /**
  * Set member portal PIN
  */
-export const setMemberPin = async (
-  id: string,
-  pin: string
-): Promise<void> => {
-  const response = await apiClient.post<APIResponse>(
-    `/anggota/${id}/set-pin`,
-    { pin }
-  );
+export const setMemberPin = async (id: string, pin: string): Promise<void> => {
+  const response = await apiClient.post<APIResponse>(`/anggota/${id}/set-pin`, {
+    pin,
+  });
 
   if (!response.data.success) {
-    throw new Error('Failed to set member PIN');
+    throw new Error("Failed to set member PIN");
   }
 };
 
@@ -158,13 +155,13 @@ export const validateMemberPin = async (
 ): Promise<boolean> => {
   try {
     const response = await apiClient.post<APIResponse<{ valid: boolean }>>(
-      '/anggota/validate-pin',
+      "/anggota/validate-pin",
       { nomorAnggota, pin }
     );
 
     return response.data.data?.valid || false;
   } catch (error) {
-    console.error('PIN validation error:', error);
+    console.error("PIN validation error:", error);
     return false;
   }
 };

@@ -3,7 +3,7 @@
 // Type-safe API calls for accounting management
 // ============================================================================
 
-import apiClient from './client';
+import apiClient from "./client";
 import type {
   Akun,
   CreateAkunRequest,
@@ -15,7 +15,7 @@ import type {
   PaginatedResponse,
   TipeAkun,
   LedgerEntry,
-} from '@/types';
+} from "@/types";
 
 // ============================================================================
 // Chart of Accounts (Akun) API Functions
@@ -25,12 +25,12 @@ import type {
  * Get all accounts with optional filters
  */
 export const getAccounts = async (
-  tipeAkun?: TipeAkun | 'all',
+  tipeAkun?: TipeAkun | "all",
   statusAktif?: boolean
 ): Promise<Akun[]> => {
   const params: Record<string, string> = {};
 
-  if (tipeAkun && tipeAkun !== 'all') {
+  if (tipeAkun && tipeAkun !== "all") {
     params.tipeAkun = tipeAkun;
   }
 
@@ -38,12 +38,12 @@ export const getAccounts = async (
     params.statusAktif = statusAktif.toString();
   }
 
-  const response = await apiClient.get<APIResponse<Akun[]>>('/akun', {
+  const response = await apiClient.get<APIResponse<Akun[]>>("/akun", {
     params,
   });
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch accounts');
+    throw new Error("Failed to fetch accounts");
   }
 
   return response.data.data;
@@ -56,7 +56,7 @@ export const getAccountById = async (id: string): Promise<Akun> => {
   const response = await apiClient.get<APIResponse<Akun>>(`/akun/${id}`);
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch account');
+    throw new Error("Failed to fetch account");
   }
 
   return response.data.data;
@@ -81,7 +81,7 @@ export const getAccountBalance = async (
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch account balance');
+    throw new Error("Failed to fetch account balance");
   }
 
   return response.data.data.saldo;
@@ -91,10 +91,10 @@ export const getAccountBalance = async (
  * Create new account
  */
 export const createAccount = async (data: CreateAkunRequest): Promise<Akun> => {
-  const response = await apiClient.post<APIResponse<Akun>>('/akun', data);
+  const response = await apiClient.post<APIResponse<Akun>>("/akun", data);
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to create account');
+    throw new Error("Failed to create account");
   }
 
   return response.data.data;
@@ -110,7 +110,7 @@ export const updateAccount = async (
   const response = await apiClient.put<APIResponse<Akun>>(`/akun/${id}`, data);
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to update account');
+    throw new Error("Failed to update account");
   }
 
   return response.data.data;
@@ -123,7 +123,7 @@ export const deleteAccount = async (id: string): Promise<void> => {
   const response = await apiClient.delete<APIResponse>(`/akun/${id}`);
 
   if (!response.data.success) {
-    throw new Error('Failed to delete account');
+    throw new Error("Failed to delete account");
   }
 };
 
@@ -131,10 +131,10 @@ export const deleteAccount = async (id: string): Promise<void> => {
  * Seed default Chart of Accounts
  */
 export const seedDefaultCOA = async (): Promise<void> => {
-  const response = await apiClient.post<APIResponse>('/akun/seed-coa');
+  const response = await apiClient.post<APIResponse>("/akun/seed-coa");
 
   if (!response.data.success) {
-    throw new Error('Failed to seed Chart of Accounts');
+    throw new Error("Failed to seed Chart of Accounts");
   }
 };
 
@@ -166,7 +166,7 @@ export const getTransactions = async (
   }
 
   const response = await apiClient.get<PaginatedResponse<Transaksi>>(
-    '/transaksi',
+    "/transaksi",
     {
       params,
     }
@@ -184,7 +184,7 @@ export const getTransactionById = async (id: string): Promise<Transaksi> => {
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch transaction');
+    throw new Error("Failed to fetch transaction");
   }
 
   return response.data.data;
@@ -197,12 +197,12 @@ export const createTransaction = async (
   data: CreateTransaksiRequest
 ): Promise<Transaksi> => {
   const response = await apiClient.post<APIResponse<Transaksi>>(
-    '/transaksi',
+    "/transaksi",
     data
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to create transaction');
+    throw new Error(response.data.message || "Failed to create transaction");
   }
 
   return response.data.data;
@@ -221,7 +221,7 @@ export const updateTransaction = async (
   );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to update transaction');
+    throw new Error(response.data.message || "Failed to update transaction");
   }
 
   return response.data.data;
@@ -234,7 +234,7 @@ export const deleteTransaction = async (id: string): Promise<void> => {
   const response = await apiClient.delete<APIResponse>(`/transaksi/${id}`);
 
   if (!response.data.success) {
-    throw new Error('Failed to delete transaction');
+    throw new Error("Failed to delete transaction");
   }
 };
 
@@ -258,12 +258,15 @@ export const getAccountLedger = async (
     params.tanggalAkhir = tanggalAkhir;
   }
 
-  const response = await apiClient.get<APIResponse<LedgerEntry[]>>('/laporan/buku-besar', {
-    params,
-  });
+  const response = await apiClient.get<APIResponse<LedgerEntry[]>>(
+    "/laporan/buku-besar",
+    {
+      params,
+    }
+  );
 
   if (!response.data.success || !response.data.data) {
-    throw new Error('Failed to fetch account ledger');
+    throw new Error("Failed to fetch account ledger");
   }
 
   return response.data.data;

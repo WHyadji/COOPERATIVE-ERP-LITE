@@ -3,9 +3,9 @@
 // List of past sales with filters, search, and pagination
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -26,18 +26,18 @@ import {
   CardContent,
   Grid,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Visibility as ViewIcon,
   PointOfSale as POSIcon,
   TrendingUp as TrendingUpIcon,
   Receipt as ReceiptIcon,
   AttachMoney as MoneyIcon,
-} from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/lib/context/ToastContext';
-import posApi from '@/lib/api/posApi';
-import type { Penjualan, RingkasanPenjualanHariIni } from '@/types';
+} from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/lib/context/ToastContext";
+import posApi from "@/lib/api/posApi";
+import type { Penjualan, RingkasanPenjualanHariIni } from "@/types";
 
 // ============================================================================
 // Sales History Page Component
@@ -50,20 +50,22 @@ export default function SalesHistoryPage() {
   // State
   const [sales, setSales] = useState<Penjualan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  const [search, setSearch] = useState('');
-  const [tanggalMulai, setTanggalMulai] = useState('');
-  const [tanggalAkhir, setTanggalAkhir] = useState('');
-  const [summary, setSummary] = useState<RingkasanPenjualanHariIni | null>(null);
+  const [search, setSearch] = useState("");
+  const [tanggalMulai, setTanggalMulai] = useState("");
+  const [tanggalAkhir, setTanggalAkhir] = useState("");
+  const [summary, setSummary] = useState<RingkasanPenjualanHariIni | null>(
+    null
+  );
 
   // Currency formatter
   const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -72,12 +74,12 @@ export default function SalesHistoryPage() {
   // Format date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
 
@@ -99,7 +101,7 @@ export default function SalesHistoryPage() {
   useEffect(() => {
     const fetchSales = async () => {
       setLoading(true);
-      setError('');
+      setError("");
 
       try {
         const response = await posApi.getSales({
@@ -113,7 +115,8 @@ export default function SalesHistoryPage() {
         setSales(response.data);
         setTotalItems(response.pagination.totalItems);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Gagal memuat riwayat penjualan';
+        const errorMessage =
+          err instanceof Error ? err.message : "Gagal memuat riwayat penjualan";
         setError(errorMessage);
         showError(errorMessage);
         setSales([]);
@@ -131,7 +134,9 @@ export default function SalesHistoryPage() {
   };
 
   // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -143,13 +148,20 @@ export default function SalesHistoryPage() {
 
   // Handle back to POS
   const handleBackToPOS = () => {
-    router.push('/pos');
+    router.push("/pos");
   };
 
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" fontWeight={700}>
           Riwayat Penjualan
         </Typography>
@@ -168,8 +180,8 @@ export default function SalesHistoryPage() {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <ReceiptIcon sx={{ mr: 1, color: 'primary.main' }} />
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <ReceiptIcon sx={{ mr: 1, color: "primary.main" }} />
                   <Typography variant="body2" color="text.secondary">
                     Transaksi Hari Ini
                   </Typography>
@@ -184,8 +196,8 @@ export default function SalesHistoryPage() {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <TrendingUpIcon sx={{ mr: 1, color: 'success.main' }} />
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <TrendingUpIcon sx={{ mr: 1, color: "success.main" }} />
                   <Typography variant="body2" color="text.secondary">
                     Total Penjualan
                   </Typography>
@@ -200,8 +212,8 @@ export default function SalesHistoryPage() {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <MoneyIcon sx={{ mr: 1, color: 'info.main' }} />
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <MoneyIcon sx={{ mr: 1, color: "info.main" }} />
                   <Typography variant="body2" color="text.secondary">
                     Total Penerimaan
                   </Typography>
@@ -216,8 +228,8 @@ export default function SalesHistoryPage() {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <MoneyIcon sx={{ mr: 1, color: 'warning.main' }} />
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <MoneyIcon sx={{ mr: 1, color: "warning.main" }} />
                   <Typography variant="body2" color="text.secondary">
                     Total Kembalian
                   </Typography>
@@ -302,8 +314,8 @@ export default function SalesHistoryPage() {
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <Typography color="text.secondary">
                       {search || tanggalMulai || tanggalAkhir
-                        ? 'Tidak ada penjualan yang sesuai dengan filter'
-                        : 'Belum ada riwayat penjualan'}
+                        ? "Tidak ada penjualan yang sesuai dengan filter"
+                        : "Belum ada riwayat penjualan"}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -335,14 +347,16 @@ export default function SalesHistoryPage() {
                       )}
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="body2" fontWeight={600} color="primary">
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color="primary"
+                      >
                         {formatCurrency(sale.totalBelanja)}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">
-                        {sale.namaKasir}
-                      </Typography>
+                      <Typography variant="body2">{sale.namaKasir}</Typography>
                     </TableCell>
                     <TableCell align="center">
                       <IconButton

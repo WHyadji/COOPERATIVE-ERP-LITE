@@ -3,9 +3,9 @@
 // View and edit member profile information
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -19,7 +19,7 @@ import {
   Divider,
   Avatar,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Person,
   Edit,
@@ -31,37 +31,40 @@ import {
   Work,
   Cake,
   LocationOn,
-} from '@mui/icons-material';
-import { getMemberProfile, updateMemberProfile } from '@/lib/api/memberPortalApi';
-import type { Member } from '@/types';
+} from "@mui/icons-material";
+import {
+  getMemberProfile,
+  updateMemberProfile,
+} from "@/lib/api/memberPortalApi";
+import type { Member } from "@/types";
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 const formatDate = (dateString: string | undefined): string => {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  if (!dateString) return "-";
+  return new Date(dateString).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 };
 
-const getStatusColor = (status: string): 'success' | 'warning' | 'error' => {
-  const colors: Record<string, 'success' | 'warning' | 'error'> = {
-    aktif: 'success',
-    nonaktif: 'warning',
-    diberhentikan: 'error',
+const getStatusColor = (status: string): "success" | "warning" | "error" => {
+  const colors: Record<string, "success" | "warning" | "error"> = {
+    aktif: "success",
+    nonaktif: "warning",
+    diberhentikan: "error",
   };
-  return colors[status] || 'warning';
+  return colors[status] || "warning";
 };
 
 const getStatusLabel = (status: string): string => {
   const labels: Record<string, string> = {
-    aktif: 'Aktif',
-    nonaktif: 'Non-Aktif',
-    diberhentikan: 'Diberhentikan',
+    aktif: "Aktif",
+    nonaktif: "Non-Aktif",
+    diberhentikan: "Diberhentikan",
   };
   return labels[status] || status;
 };
@@ -73,8 +76,8 @@ const getStatusLabel = (status: string): string => {
 export default function MemberProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Member | null>(null);
   const [editedProfile, setEditedProfile] = useState<Partial<Member>>({});
@@ -87,16 +90,16 @@ export default function MemberProfilePage() {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
         const data = await getMemberProfile();
         setProfile(data);
         setEditedProfile(data);
       } catch (err: unknown) {
-        console.error('Failed to fetch profile:', err);
-        if (err && typeof err === 'object' && 'message' in err) {
+        console.error("Failed to fetch profile:", err);
+        if (err && typeof err === "object" && "message" in err) {
           setError(err.message as string);
         } else {
-          setError('Gagal memuat data profil');
+          setError("Gagal memuat data profil");
         }
       } finally {
         setLoading(false);
@@ -112,14 +115,14 @@ export default function MemberProfilePage() {
 
   const handleEdit = () => {
     setIsEditing(true);
-    setSuccess('');
-    setError('');
+    setSuccess("");
+    setError("");
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditedProfile(profile || {});
-    setError('');
+    setError("");
   };
 
   const handleChange = (field: keyof Member, value: string) => {
@@ -132,8 +135,8 @@ export default function MemberProfilePage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       // Only send editable fields
       const updateData = {
@@ -153,13 +156,13 @@ export default function MemberProfilePage() {
       setProfile(updatedProfile);
       setEditedProfile(updatedProfile);
       setIsEditing(false);
-      setSuccess('Profil berhasil diperbarui');
+      setSuccess("Profil berhasil diperbarui");
     } catch (err: unknown) {
-      console.error('Failed to update profile:', err);
-      if (err && typeof err === 'object' && 'message' in err) {
+      console.error("Failed to update profile:", err);
+      if (err && typeof err === "object" && "message" in err) {
         setError(err.message as string);
       } else {
-        setError('Gagal memperbarui profil');
+        setError("Gagal memperbarui profil");
       }
     } finally {
       setSaving(false);
@@ -172,7 +175,14 @@ export default function MemberProfilePage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 400,
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -208,12 +218,12 @@ export default function MemberProfilePage() {
 
       {/* Success/Error Messages */}
       {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess("")}>
           {success}
         </Alert>
       )}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError("")}>
           {error}
         </Alert>
       )}
@@ -222,12 +232,19 @@ export default function MemberProfilePage() {
       {profile && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 3,
+              }}
+            >
               <Avatar
                 sx={{
                   width: 100,
                   height: 100,
-                  bgcolor: 'primary.main',
+                  bgcolor: "primary.main",
                   fontSize: 40,
                 }}
               >
@@ -267,7 +284,7 @@ export default function MemberProfilePage() {
       {/* Personal Information */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
             <Person sx={{ mr: 1 }} />
             <Typography variant="h6">Informasi Pribadi</Typography>
           </Box>
@@ -278,10 +295,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="NIK"
-                value={profile?.nik || '-'}
+                value={profile?.nik || "-"}
                 disabled
                 InputProps={{
-                  startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <Person sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -290,10 +309,18 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Jenis Kelamin"
-                value={profile?.jenisKelamin === 'L' ? 'Laki-laki' : profile?.jenisKelamin === 'P' ? 'Perempuan' : '-'}
+                value={
+                  profile?.jenisKelamin === "L"
+                    ? "Laki-laki"
+                    : profile?.jenisKelamin === "P"
+                      ? "Perempuan"
+                      : "-"
+                }
                 disabled
                 InputProps={{
-                  startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <Person sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -302,10 +329,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Tempat Lahir"
-                value={profile?.tempatLahir || '-'}
+                value={profile?.tempatLahir || "-"}
                 disabled
                 InputProps={{
-                  startAdornment: <LocationOn sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <LocationOn sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -317,7 +346,9 @@ export default function MemberProfilePage() {
                 value={formatDate(profile?.tanggalLahir)}
                 disabled
                 InputProps={{
-                  startAdornment: <Cake sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <Cake sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -326,10 +357,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Pekerjaan"
-                value={profile?.pekerjaan || '-'}
+                value={profile?.pekerjaan || "-"}
                 disabled
                 InputProps={{
-                  startAdornment: <Work sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <Work sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -341,7 +374,9 @@ export default function MemberProfilePage() {
                 value={formatDate(profile?.tanggalBergabung)}
                 disabled
                 InputProps={{
-                  startAdornment: <Cake sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <Cake sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -352,7 +387,7 @@ export default function MemberProfilePage() {
       {/* Contact Information */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
             <Phone sx={{ mr: 1 }} />
             <Typography variant="h6">Informasi Kontak</Typography>
           </Box>
@@ -363,11 +398,17 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Nomor Telepon"
-                value={isEditing ? editedProfile.noTelepon || '' : profile?.noTelepon || '-'}
-                onChange={(e) => handleChange('noTelepon', e.target.value)}
+                value={
+                  isEditing
+                    ? editedProfile.noTelepon || ""
+                    : profile?.noTelepon || "-"
+                }
+                onChange={(e) => handleChange("noTelepon", e.target.value)}
                 disabled={!isEditing}
                 InputProps={{
-                  startAdornment: <Phone sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <Phone sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -377,11 +418,15 @@ export default function MemberProfilePage() {
                 fullWidth
                 label="Email"
                 type="email"
-                value={isEditing ? editedProfile.email || '' : profile?.email || '-'}
-                onChange={(e) => handleChange('email', e.target.value)}
+                value={
+                  isEditing ? editedProfile.email || "" : profile?.email || "-"
+                }
+                onChange={(e) => handleChange("email", e.target.value)}
                 disabled={!isEditing}
                 InputProps={{
-                  startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />,
+                  startAdornment: (
+                    <Email sx={{ mr: 1, color: "text.secondary" }} />
+                  ),
                 }}
               />
             </Grid>
@@ -392,7 +437,7 @@ export default function MemberProfilePage() {
       {/* Address Information */}
       <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
             <Home sx={{ mr: 1 }} />
             <Typography variant="h6">Alamat</Typography>
           </Box>
@@ -403,13 +448,26 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Alamat Lengkap"
-                value={isEditing ? editedProfile.alamat || '' : profile?.alamat || '-'}
-                onChange={(e) => handleChange('alamat', e.target.value)}
+                value={
+                  isEditing
+                    ? editedProfile.alamat || ""
+                    : profile?.alamat || "-"
+                }
+                onChange={(e) => handleChange("alamat", e.target.value)}
                 disabled={!isEditing}
                 multiline
                 rows={2}
                 InputProps={{
-                  startAdornment: <Home sx={{ mr: 1, color: 'text.secondary', alignSelf: 'flex-start', mt: 1 }} />,
+                  startAdornment: (
+                    <Home
+                      sx={{
+                        mr: 1,
+                        color: "text.secondary",
+                        alignSelf: "flex-start",
+                        mt: 1,
+                      }}
+                    />
+                  ),
                 }}
               />
             </Grid>
@@ -418,8 +476,8 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="RT"
-                value={isEditing ? editedProfile.rt || '' : profile?.rt || '-'}
-                onChange={(e) => handleChange('rt', e.target.value)}
+                value={isEditing ? editedProfile.rt || "" : profile?.rt || "-"}
+                onChange={(e) => handleChange("rt", e.target.value)}
                 disabled={!isEditing}
               />
             </Grid>
@@ -428,8 +486,8 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="RW"
-                value={isEditing ? editedProfile.rw || '' : profile?.rw || '-'}
-                onChange={(e) => handleChange('rw', e.target.value)}
+                value={isEditing ? editedProfile.rw || "" : profile?.rw || "-"}
+                onChange={(e) => handleChange("rw", e.target.value)}
                 disabled={!isEditing}
               />
             </Grid>
@@ -438,8 +496,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Kelurahan"
-                value={isEditing ? editedProfile.kelurahan || '' : profile?.kelurahan || '-'}
-                onChange={(e) => handleChange('kelurahan', e.target.value)}
+                value={
+                  isEditing
+                    ? editedProfile.kelurahan || ""
+                    : profile?.kelurahan || "-"
+                }
+                onChange={(e) => handleChange("kelurahan", e.target.value)}
                 disabled={!isEditing}
               />
             </Grid>
@@ -448,8 +510,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Kecamatan"
-                value={isEditing ? editedProfile.kecamatan || '' : profile?.kecamatan || '-'}
-                onChange={(e) => handleChange('kecamatan', e.target.value)}
+                value={
+                  isEditing
+                    ? editedProfile.kecamatan || ""
+                    : profile?.kecamatan || "-"
+                }
+                onChange={(e) => handleChange("kecamatan", e.target.value)}
                 disabled={!isEditing}
               />
             </Grid>
@@ -458,8 +524,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Kota/Kabupaten"
-                value={isEditing ? editedProfile.kotaKabupaten || '' : profile?.kotaKabupaten || '-'}
-                onChange={(e) => handleChange('kotaKabupaten', e.target.value)}
+                value={
+                  isEditing
+                    ? editedProfile.kotaKabupaten || ""
+                    : profile?.kotaKabupaten || "-"
+                }
+                onChange={(e) => handleChange("kotaKabupaten", e.target.value)}
                 disabled={!isEditing}
               />
             </Grid>
@@ -468,8 +538,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Provinsi"
-                value={isEditing ? editedProfile.provinsi || '' : profile?.provinsi || '-'}
-                onChange={(e) => handleChange('provinsi', e.target.value)}
+                value={
+                  isEditing
+                    ? editedProfile.provinsi || ""
+                    : profile?.provinsi || "-"
+                }
+                onChange={(e) => handleChange("provinsi", e.target.value)}
                 disabled={!isEditing}
               />
             </Grid>
@@ -478,8 +552,12 @@ export default function MemberProfilePage() {
               <TextField
                 fullWidth
                 label="Kode Pos"
-                value={isEditing ? editedProfile.kodePos || '' : profile?.kodePos || '-'}
-                onChange={(e) => handleChange('kodePos', e.target.value)}
+                value={
+                  isEditing
+                    ? editedProfile.kodePos || ""
+                    : profile?.kodePos || "-"
+                }
+                onChange={(e) => handleChange("kodePos", e.target.value)}
                 disabled={!isEditing}
               />
             </Grid>
@@ -487,7 +565,14 @@ export default function MemberProfilePage() {
 
           {/* Edit Actions */}
           {isEditing && (
-            <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                gap: 2,
+                justifyContent: "flex-end",
+              }}
+            >
               <Button
                 variant="outlined"
                 startIcon={<Cancel />}
@@ -502,7 +587,7 @@ export default function MemberProfilePage() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                {saving ? "Menyimpan..." : "Simpan Perubahan"}
               </Button>
             </Box>
           )}
@@ -512,8 +597,9 @@ export default function MemberProfilePage() {
       {/* Info Notice */}
       <Alert severity="info" sx={{ mt: 3 }}>
         <Typography variant="body2">
-          <strong>Catatan:</strong> Hanya informasi kontak dan alamat yang dapat diubah.
-          Untuk mengubah data pribadi lainnya, silakan hubungi pengurus koperasi.
+          <strong>Catatan:</strong> Hanya informasi kontak dan alamat yang dapat
+          diubah. Untuk mengubah data pribadi lainnya, silakan hubungi pengurus
+          koperasi.
         </Typography>
       </Alert>
     </Box>

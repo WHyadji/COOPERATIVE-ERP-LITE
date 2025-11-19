@@ -3,9 +3,9 @@
 // Material-UI form with validation for product creation and editing
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -20,10 +20,10 @@ import {
   FormControlLabel,
   Switch,
   MenuItem,
-} from '@mui/material';
-import { useToast } from '@/lib/context/ToastContext';
-import productApi from '@/lib/api/productApi';
-import type { Produk, ProdukFormData } from '@/types';
+} from "@mui/material";
+import { useToast } from "@/lib/context/ToastContext";
+import productApi from "@/lib/api/productApi";
+import type { Produk, ProdukFormData } from "@/types";
 
 // ============================================================================
 // Component Props
@@ -51,38 +51,38 @@ export default function ProductForm({
 
   // Form state
   const [formData, setFormData] = useState<ProdukFormData>({
-    kodeProduk: '',
-    namaProduk: '',
-    kategori: '',
-    deskripsi: '',
-    harga: '',
-    hargaBeli: '',
-    stok: '0',
-    stokMinimum: '0',
-    satuan: 'pcs',
-    barcode: '',
-    gambarUrl: '',
+    kodeProduk: "",
+    namaProduk: "",
+    kategori: "",
+    deskripsi: "",
+    harga: "",
+    hargaBeli: "",
+    stok: "0",
+    stokMinimum: "0",
+    satuan: "pcs",
+    barcode: "",
+    gambarUrl: "",
     statusAktif: true,
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [errors, setErrors] = useState<
     Partial<Record<keyof ProdukFormData, string>>
   >({});
 
   // Common unit options
   const satuanOptions = [
-    { value: 'pcs', label: 'Pcs (Pieces)' },
-    { value: 'kg', label: 'Kg (Kilogram)' },
-    { value: 'gram', label: 'Gram' },
-    { value: 'liter', label: 'Liter' },
-    { value: 'ml', label: 'Ml (Mililiter)' },
-    { value: 'box', label: 'Box' },
-    { value: 'pack', label: 'Pack' },
-    { value: 'lusin', label: 'Lusin' },
-    { value: 'karton', label: 'Karton' },
-    { value: 'meter', label: 'Meter' },
+    { value: "pcs", label: "Pcs (Pieces)" },
+    { value: "kg", label: "Kg (Kilogram)" },
+    { value: "gram", label: "Gram" },
+    { value: "liter", label: "Liter" },
+    { value: "ml", label: "Ml (Mililiter)" },
+    { value: "box", label: "Box" },
+    { value: "pack", label: "Pack" },
+    { value: "lusin", label: "Lusin" },
+    { value: "karton", label: "Karton" },
+    { value: "meter", label: "Meter" },
   ];
 
   // ============================================================================
@@ -95,34 +95,34 @@ export default function ProductForm({
         setFormData({
           kodeProduk: product.kodeProduk,
           namaProduk: product.namaProduk,
-          kategori: product.kategori || '',
-          deskripsi: product.deskripsi || '',
+          kategori: product.kategori || "",
+          deskripsi: product.deskripsi || "",
           harga: product.harga.toString(),
           hargaBeli: product.hargaBeli.toString(),
           stok: product.stok.toString(),
           stokMinimum: product.stokMinimum.toString(),
-          satuan: product.satuan || 'pcs',
-          barcode: product.barcode || '',
-          gambarUrl: product.gambarUrl || '',
+          satuan: product.satuan || "pcs",
+          barcode: product.barcode || "",
+          gambarUrl: product.gambarUrl || "",
           statusAktif: product.statusAktif,
         });
       } else {
         setFormData({
-          kodeProduk: '',
-          namaProduk: '',
-          kategori: '',
-          deskripsi: '',
-          harga: '',
-          hargaBeli: '',
-          stok: '0',
-          stokMinimum: '0',
-          satuan: 'pcs',
-          barcode: '',
-          gambarUrl: '',
+          kodeProduk: "",
+          namaProduk: "",
+          kategori: "",
+          deskripsi: "",
+          harga: "",
+          hargaBeli: "",
+          stok: "0",
+          stokMinimum: "0",
+          satuan: "pcs",
+          barcode: "",
+          gambarUrl: "",
           statusAktif: true,
         });
       }
-      setError('');
+      setError("");
       setErrors({});
     }
   }, [product, open]);
@@ -135,27 +135,27 @@ export default function ProductForm({
     const newErrors: Partial<Record<keyof ProdukFormData, string>> = {};
 
     if (!formData.kodeProduk.trim()) {
-      newErrors.kodeProduk = 'Kode produk harus diisi';
+      newErrors.kodeProduk = "Kode produk harus diisi";
     }
 
     if (!formData.namaProduk.trim()) {
-      newErrors.namaProduk = 'Nama produk harus diisi';
+      newErrors.namaProduk = "Nama produk harus diisi";
     }
 
     if (!formData.harga || parseFloat(formData.harga) < 0) {
-      newErrors.harga = 'Harga jual harus diisi dan >= 0';
+      newErrors.harga = "Harga jual harus diisi dan >= 0";
     }
 
     if (formData.hargaBeli && parseFloat(formData.hargaBeli) < 0) {
-      newErrors.hargaBeli = 'Harga beli harus >= 0';
+      newErrors.hargaBeli = "Harga beli harus >= 0";
     }
 
     if (formData.stok && parseInt(formData.stok) < 0) {
-      newErrors.stok = 'Stok harus >= 0';
+      newErrors.stok = "Stok harus >= 0";
     }
 
     if (formData.stokMinimum && parseInt(formData.stokMinimum) < 0) {
-      newErrors.stokMinimum = 'Stok minimum harus >= 0';
+      newErrors.stokMinimum = "Stok minimum harus >= 0";
     }
 
     setErrors(newErrors);
@@ -166,11 +166,14 @@ export default function ProductForm({
   // Handlers
   // ============================================================================
 
-  const handleChange = (field: keyof ProdukFormData, value: string | boolean) => {
+  const handleChange = (
+    field: keyof ProdukFormData,
+    value: string | boolean
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error for this field
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -182,7 +185,7 @@ export default function ProductForm({
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const requestData = {
@@ -194,7 +197,7 @@ export default function ProductForm({
         hargaBeli: formData.hargaBeli ? parseFloat(formData.hargaBeli) : 0,
         stok: formData.stok ? parseInt(formData.stok) : 0,
         stokMinimum: formData.stokMinimum ? parseInt(formData.stokMinimum) : 0,
-        satuan: formData.satuan || 'pcs',
+        satuan: formData.satuan || "pcs",
         barcode: formData.barcode.trim(),
         gambarUrl: formData.gambarUrl.trim(),
         statusAktif: formData.statusAktif,
@@ -211,9 +214,9 @@ export default function ProductForm({
       onSuccess();
       onClose();
     } catch (err) {
-      console.error('Failed to save product:', err);
+      console.error("Failed to save product:", err);
       const errorMessage =
-        err instanceof Error ? err.message : 'Gagal menyimpan produk';
+        err instanceof Error ? err.message : "Gagal menyimpan produk";
       setError(errorMessage);
       showError(errorMessage);
     } finally {
@@ -234,7 +237,7 @@ export default function ProductForm({
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {isEditMode ? 'Edit Produk' : 'Tambah Produk Baru'}
+        {isEditMode ? "Edit Produk" : "Tambah Produk Baru"}
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
@@ -253,9 +256,9 @@ export default function ProductForm({
                 required
                 label="Kode Produk"
                 value={formData.kodeProduk}
-                onChange={(e) => handleChange('kodeProduk', e.target.value)}
+                onChange={(e) => handleChange("kodeProduk", e.target.value)}
                 error={!!errors.kodeProduk}
-                helperText={errors.kodeProduk || 'Contoh: PRD-001'}
+                helperText={errors.kodeProduk || "Contoh: PRD-001"}
                 disabled={loading}
               />
             </Grid>
@@ -266,9 +269,9 @@ export default function ProductForm({
                 fullWidth
                 label="Barcode"
                 value={formData.barcode}
-                onChange={(e) => handleChange('barcode', e.target.value)}
+                onChange={(e) => handleChange("barcode", e.target.value)}
                 error={!!errors.barcode}
-                helperText={errors.barcode || 'Opsional'}
+                helperText={errors.barcode || "Opsional"}
                 disabled={loading}
               />
             </Grid>
@@ -280,7 +283,7 @@ export default function ProductForm({
                 required
                 label="Nama Produk"
                 value={formData.namaProduk}
-                onChange={(e) => handleChange('namaProduk', e.target.value)}
+                onChange={(e) => handleChange("namaProduk", e.target.value)}
                 error={!!errors.namaProduk}
                 helperText={errors.namaProduk}
                 disabled={loading}
@@ -293,9 +296,9 @@ export default function ProductForm({
                 fullWidth
                 label="Kategori"
                 value={formData.kategori}
-                onChange={(e) => handleChange('kategori', e.target.value)}
+                onChange={(e) => handleChange("kategori", e.target.value)}
                 error={!!errors.kategori}
-                helperText={errors.kategori || 'Contoh: Makanan, Minuman'}
+                helperText={errors.kategori || "Contoh: Makanan, Minuman"}
                 disabled={loading}
               />
             </Grid>
@@ -307,7 +310,7 @@ export default function ProductForm({
                 select
                 label="Satuan"
                 value={formData.satuan}
-                onChange={(e) => handleChange('satuan', e.target.value)}
+                onChange={(e) => handleChange("satuan", e.target.value)}
                 disabled={loading}
               >
                 {satuanOptions.map((option) => (
@@ -326,7 +329,7 @@ export default function ProductForm({
                 type="number"
                 label="Harga Jual"
                 value={formData.harga}
-                onChange={(e) => handleChange('harga', e.target.value)}
+                onChange={(e) => handleChange("harga", e.target.value)}
                 error={!!errors.harga}
                 helperText={errors.harga}
                 disabled={loading}
@@ -346,9 +349,9 @@ export default function ProductForm({
                 type="number"
                 label="Harga Beli (HPP)"
                 value={formData.hargaBeli}
-                onChange={(e) => handleChange('hargaBeli', e.target.value)}
+                onChange={(e) => handleChange("hargaBeli", e.target.value)}
                 error={!!errors.hargaBeli}
-                helperText={errors.hargaBeli || 'Opsional'}
+                helperText={errors.hargaBeli || "Opsional"}
                 disabled={loading}
                 InputProps={{
                   startAdornment: (
@@ -366,7 +369,7 @@ export default function ProductForm({
                 type="number"
                 label="Stok"
                 value={formData.stok}
-                onChange={(e) => handleChange('stok', e.target.value)}
+                onChange={(e) => handleChange("stok", e.target.value)}
                 error={!!errors.stok}
                 helperText={errors.stok}
                 disabled={loading}
@@ -381,10 +384,11 @@ export default function ProductForm({
                 type="number"
                 label="Stok Minimum"
                 value={formData.stokMinimum}
-                onChange={(e) => handleChange('stokMinimum', e.target.value)}
+                onChange={(e) => handleChange("stokMinimum", e.target.value)}
                 error={!!errors.stokMinimum}
                 helperText={
-                  errors.stokMinimum || 'Peringatan jika stok di bawah nilai ini'
+                  errors.stokMinimum ||
+                  "Peringatan jika stok di bawah nilai ini"
                 }
                 disabled={loading}
                 inputProps={{ min: 0, step: 1 }}
@@ -399,9 +403,9 @@ export default function ProductForm({
                 rows={3}
                 label="Deskripsi"
                 value={formData.deskripsi}
-                onChange={(e) => handleChange('deskripsi', e.target.value)}
+                onChange={(e) => handleChange("deskripsi", e.target.value)}
                 error={!!errors.deskripsi}
-                helperText={errors.deskripsi || 'Opsional'}
+                helperText={errors.deskripsi || "Opsional"}
                 disabled={loading}
               />
             </Grid>
@@ -412,9 +416,9 @@ export default function ProductForm({
                 fullWidth
                 label="URL Gambar"
                 value={formData.gambarUrl}
-                onChange={(e) => handleChange('gambarUrl', e.target.value)}
+                onChange={(e) => handleChange("gambarUrl", e.target.value)}
                 error={!!errors.gambarUrl}
-                helperText={errors.gambarUrl || 'Opsional - URL gambar produk'}
+                helperText={errors.gambarUrl || "Opsional - URL gambar produk"}
                 disabled={loading}
               />
             </Grid>
@@ -427,7 +431,7 @@ export default function ProductForm({
                     <Switch
                       checked={formData.statusAktif}
                       onChange={(e) =>
-                        handleChange('statusAktif', e.target.checked)
+                        handleChange("statusAktif", e.target.checked)
                       }
                       disabled={loading}
                     />
@@ -449,7 +453,7 @@ export default function ProductForm({
             disabled={loading}
             startIcon={loading && <CircularProgress size={20} />}
           >
-            {loading ? 'Menyimpan...' : isEditMode ? 'Simpan' : 'Tambah Produk'}
+            {loading ? "Menyimpan..." : isEditMode ? "Simpan" : "Tambah Produk"}
           </Button>
         </DialogActions>
       </form>

@@ -391,11 +391,11 @@ export interface Produk {
   namaProduk: string;
   kategori: string;
   deskripsi?: string;
-  harga: number;           // Selling price
-  hargaBeli: number;       // Cost price / HPP
+  harga: number; // Selling price
+  hargaBeli: number; // Cost price / HPP
   stok: number;
   stokMinimum: number;
-  satuan: string;          // pcs, kg, liter, etc.
+  satuan: string; // pcs, kg, liter, etc.
   barcode?: string;
   gambarUrl?: string;
   statusAktif: boolean;
@@ -461,7 +461,7 @@ export interface ItemPenjualan {
 export interface Penjualan {
   id: string;
   idKoperasi: string;
-  nomorPenjualan: string;         // Auto-generated: POS-YYYYMMDD-NNNN
+  nomorPenjualan: string; // Auto-generated: POS-YYYYMMDD-NNNN
   tanggalPenjualan: string;
   idAnggota?: string;
   namaAnggota?: string;
@@ -472,7 +472,7 @@ export interface Penjualan {
   kembalian: number;
   idKasir: string;
   namaKasir: string;
-  idTransaksi?: string;           // Link to accounting journal entry
+  idTransaksi?: string; // Link to accounting journal entry
   catatan?: string;
   itemPenjualan: ItemPenjualan[];
   createdAt?: string;
@@ -519,7 +519,7 @@ export interface PenjualanListFilters {
   tanggalAkhir?: string;
   idAnggota?: string;
   idKasir?: string;
-  search?: string;              // Search by sale number
+  search?: string; // Search by sale number
   page?: number;
   pageSize?: number;
 }
@@ -549,7 +549,7 @@ export interface RingkasanPenjualanHariIni {
   jumlahTransaksi: number;
   totalPenjualan: number;
   totalKembalian: number;
-  totalPenerimaan: number;       // jumlahBayar total
+  totalPenerimaan: number; // jumlahBayar total
 }
 
 export interface TopProduk {

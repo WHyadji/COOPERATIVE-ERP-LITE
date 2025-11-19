@@ -3,10 +3,10 @@
 // Material-UI table with search, filters, and pagination
 // ============================================================================
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -29,17 +29,17 @@ import {
   Alert,
   CircularProgress,
   InputAdornment,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Search as SearchIcon,
-} from '@mui/icons-material';
-import memberApi from '@/lib/api/memberApi';
-import type { Member, MemberStatus } from '@/types';
-import { format } from 'date-fns';
+} from "@mui/icons-material";
+import memberApi from "@/lib/api/memberApi";
+import type { Member, MemberStatus } from "@/types";
+import { format } from "date-fns";
 
 // ============================================================================
 // Member List Page Component
@@ -49,14 +49,14 @@ export default function MembersPage() {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Pagination & Filters
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<MemberStatus | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">("all");
   const [refreshKey, setRefreshKey] = useState(0); // For manual refresh triggers
 
   // ============================================================================
@@ -69,7 +69,7 @@ export default function MembersPage() {
     const fetchMembers = async () => {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
         const response = await memberApi.getMembers({
           page: page + 1, // API uses 1-based pagination
@@ -85,8 +85,8 @@ export default function MembersPage() {
         }
       } catch (err: unknown) {
         if (!ignore) {
-          console.error('Failed to fetch members:', err);
-          setError('Gagal memuat data anggota. Silakan coba lagi.');
+          console.error("Failed to fetch members:", err);
+          setError("Gagal memuat data anggota. Silakan coba lagi.");
         }
       } finally {
         if (!ignore) {
@@ -112,7 +112,7 @@ export default function MembersPage() {
   };
 
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
@@ -121,7 +121,9 @@ export default function MembersPage() {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -135,7 +137,7 @@ export default function MembersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus anggota ini?')) {
+    if (!confirm("Apakah Anda yakin ingin menghapus anggota ini?")) {
       return;
     }
 
@@ -144,8 +146,8 @@ export default function MembersPage() {
       // Trigger re-fetch by incrementing refreshKey
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
-      console.error('Failed to delete member:', err);
-      alert('Gagal menghapus anggota. Silakan coba lagi.');
+      console.error("Failed to delete member:", err);
+      alert("Gagal menghapus anggota. Silakan coba lagi.");
     }
   };
 
@@ -153,27 +155,29 @@ export default function MembersPage() {
   // Helper Functions
   // ============================================================================
 
-  const getStatusColor = (status: MemberStatus): 'success' | 'default' | 'error' => {
+  const getStatusColor = (
+    status: MemberStatus
+  ): "success" | "default" | "error" => {
     switch (status) {
-      case 'aktif':
-        return 'success';
-      case 'nonaktif':
-        return 'default';
-      case 'diberhentikan':
-        return 'error';
+      case "aktif":
+        return "success";
+      case "nonaktif":
+        return "default";
+      case "diberhentikan":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
   const getStatusLabel = (status: MemberStatus): string => {
     switch (status) {
-      case 'aktif':
-        return 'Aktif';
-      case 'nonaktif':
-        return 'Non-aktif';
-      case 'diberhentikan':
-        return 'Diberhentikan';
+      case "aktif":
+        return "Aktif";
+      case "nonaktif":
+        return "Non-aktif";
+      case "diberhentikan":
+        return "Diberhentikan";
       default:
         return status;
     }
@@ -186,14 +190,21 @@ export default function MembersPage() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" fontWeight={600}>
           Manajemen Anggota
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => router.push('/dashboard/members/new')}
+          onClick={() => router.push("/dashboard/members/new")}
         >
           Tambah Anggota
         </Button>
@@ -201,7 +212,7 @@ export default function MembersPage() {
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           {/* Search */}
           <TextField
             label="Cari Anggota"
@@ -228,7 +239,9 @@ export default function MembersPage() {
             <Select
               value={statusFilter}
               label="Status"
-              onChange={(e) => setStatusFilter(e.target.value as MemberStatus | 'all')}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as MemberStatus | "all")
+              }
             >
               <MenuItem value="all">Semua</MenuItem>
               <MenuItem value="aktif">Aktif</MenuItem>
@@ -281,12 +294,15 @@ export default function MembersPage() {
                   <TableRow key={member.id} hover>
                     <TableCell>{member.nomorAnggota}</TableCell>
                     <TableCell>{member.namaLengkap}</TableCell>
-                    <TableCell>{member.noTelepon || '-'}</TableCell>
-                    <TableCell>{member.email || '-'}</TableCell>
+                    <TableCell>{member.noTelepon || "-"}</TableCell>
+                    <TableCell>{member.email || "-"}</TableCell>
                     <TableCell>
                       {member.tanggalBergabung
-                        ? format(new Date(member.tanggalBergabung), 'dd/MM/yyyy')
-                        : '-'}
+                        ? format(
+                            new Date(member.tanggalBergabung),
+                            "dd/MM/yyyy"
+                          )
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <Chip
