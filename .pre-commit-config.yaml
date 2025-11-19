@@ -1,0 +1,108 @@
+# Pre-commit hooks for Cooperative ERP Lite
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: "^frontend/.*\\.(md|lock)$"
+      - id: end-of-file-fixer
+        exclude: "^(frontend/node_modules/|.next/|dist/)"
+      - id: check-yaml
+        args: ["--safe"]
+      - id: check-json
+        exclude: "^(frontend/tsconfig.json|frontend/package-lock.json)$"
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # Go linting with golangci-lint
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.63.4
+    hooks:
+      - id: golangci-lint
+        name: golangci-lint
+        entry: golangci-lint run --fix
+        types: [go]
+        language: system
+        pass_filenames: false
+        files: "^backend/"
+
+  # Go formatting
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+        args: ["-w"]
+        files: "^backend/"
+      - id: go-imports
+        args: ["-w"]
+        files: "^backend/"
+      - id: go-mod-tidy
+        files: "^backend/"
+
+  # Prettier for frontend
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: prettier --write --ignore-unknown
+        types_or: [javascript, jsx, ts, tsx, json, css, markdown]
+        files: "^frontend/"
+        exclude: "^(frontend/node_modules/|frontend/.next/|frontend/dist/|frontend/coverage/)"
+        additional_dependencies:
+          - prettier@3.6.2
+
+  # ESLint for frontend
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.18.0
+    hooks:
+      - id: eslint
+        name: eslint
+        files: "^frontend/.*\\.(ts|tsx|js|jsx)$"
+        exclude: "^(frontend/node_modules/|frontend/.next/|frontend/dist/)"
+        args: ["--fix"]
+        additional_dependencies:
+          - eslint@9.39.1
+          - eslint-config-next@15.5.0
+          - "@typescript-eslint/parser@8.47.0"
+          - "@typescript-eslint/eslint-plugin@8.47.0"
+
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: "^(frontend/package-lock.json|backend/go.sum)"
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint
+        args: ["--fix"]
+        exclude: "^(frontend/node_modules/|CHANGELOG.md)"
+
+  # Spell checking
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.0
+    hooks:
+      - id: codespell
+        args:
+          - --skip=*.lock,*.sum,node_modules,.git,.next,dist,coverage
+          - --ignore-words-list=koperasi,simpanan,pokok,wajib,sukarela,anggota,keuangan
+
+# CI configuration
+ci:
+  autofix_commit_msg: "style: auto-fix linting issues"
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+  skip: [golangci-lint, eslint]

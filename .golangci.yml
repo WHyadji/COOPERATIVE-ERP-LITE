@@ -1,0 +1,266 @@
+# golangci-lint configuration for Cooperative ERP Lite
+# Go 1.25.4 with comprehensive linting rules
+
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs:
+    - vendor
+    - .git
+    - node_modules
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*_generated\\.go$"
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    # Core linters
+    - errcheck          # Check for unchecked errors
+    - gosimple          # Simplify code
+    - govet             # Reports suspicious constructs
+    - ineffassign       # Detect ineffectual assignments
+    - staticcheck       # Advanced static analysis
+    - unused            # Check for unused constants, variables, functions
+    - typecheck         # Type-checking errors
+
+    # Code quality
+    - gocyclo           # Cyclomatic complexity
+    - gofmt             # Check if code is gofmt-ed
+    - goimports         # Check import order and formatting
+    - misspell          # Spell checker
+    - unconvert         # Remove unnecessary type conversions
+    - unparam           # Reports unused function parameters
+    - nakedret          # Finds naked returns in functions
+    - prealloc          # Find slice declarations that could be preallocated
+
+    # Security
+    - gosec             # Security audit
+    - exportloopref     # Checks for pointers to enclosing loop variables
+
+    # Style
+    - gofumpt           # Stricter gofmt
+    - revive            # Fast, configurable, extensible linter
+    - stylecheck        # Replacement for golint
+
+    # Error handling
+    - errorlint         # Find code that will cause problems with Go 1.13+ error wrapping
+    - goerr113          # Check error handling
+
+    # Performance
+    - bodyclose         # Check HTTP response body is closed
+    - noctx             # Find HTTP request without context
+    - rowserrcheck      # Check SQL rows.Err
+    - sqlclosecheck     # Check SQL statements are closed
+
+    # Best practices
+    - contextcheck      # Check context.Context is passed correctly
+    - dogsled           # Check for too many blank identifiers
+    - dupl              # Code clone detection
+    - exhaustive        # Check exhaustiveness of enum switch statements
+    - forbidigo         # Forbid specific identifiers
+    - funlen            # Check function length
+    - gocognit          # Check cognitive complexity
+    - goconst           # Find repeated strings that could be constants
+    - gocritic          # Opinionated Go source code analyzer
+    - godot             # Check if comments end in period
+    - goprintffuncname  # Check printf-like function names
+    - makezero          # Find slice declarations with non-zero initial length
+    - nestif            # Reports deeply nested if statements
+    - nilerr            # Find incorrect nil error return
+    - nilnil            # Check that there is no nil:nil returns
+    - nolintlint        # Reports ill-formed or insufficient nolint directives
+    - predeclared       # Find code that shadows predeclared identifiers
+    - reassign          # Check reassignment of variables
+    - thelper           # Detect test helpers without t.Helper()
+    - tparallel         # Detect inappropriate usage of t.Parallel()
+    - wastedassign      # Find wasted assignment statements
+    - whitespace        # Check for unnecessary whitespace
+
+  disable:
+    # Disabled linters (too strict for MVP or conflicts)
+    - exhaustruct       # Too strict for struct initialization
+    - varnamelen        # Too opinionated on variable naming
+    - wrapcheck         # Too strict for error wrapping
+    - paralleltest      # Not needed for all tests
+    - testpackage       # Allow tests in same package
+    - gochecknoglobals  # Global vars needed for config
+    - gochecknoinits    # Init functions are useful
+    - interfacebloat    # Can be too strict
+    - ireturn           # Allow interface returns
+    - lll               # Line length handled by editor
+    - nlreturn          # Too strict on return spacing
+    - wsl               # Too opinionated on whitespace
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    exclude-functions:
+      - io/ioutil.ReadFile
+      - io.Copy(*bytes.Buffer)
+      - io.Copy(os.Stdout)
+
+  govet:
+    enable-all: true
+    disable:
+      - shadow  # Too many false positives
+
+  gocyclo:
+    min-complexity: 15
+
+  gofumpt:
+    extra-rules: true
+    lang-version: "1.25"
+
+  revive:
+    confidence: 0.8
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+  stylecheck:
+    checks: ["all", "-ST1003"]  # Allow underscores in names for DB fields
+    dot-import-whitelist:
+      - fmt
+    initialisms: ["ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "JWT", "LHS", "QPS", "RAM", "RHS", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SAK", "ETAP", "NIK", "SHU", "POS", "QRIS"]
+    http-status-code-whitelist: ["200", "400", "404", "500"]
+
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G104  # Errors unhandled (covered by errcheck)
+    config:
+      G306: "0644"  # File permissions
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+    ignore-tests: true
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - experimental
+      - opinionated
+    disabled-checks:
+      - commentedOutCode
+      - whyNoLint
+      - unnamedResult
+
+  funlen:
+    lines: 100
+    statements: 50
+    ignore-comments: true
+
+  gocognit:
+    min-complexity: 20
+
+  nestif:
+    min-complexity: 5
+
+  dupl:
+    threshold: 100
+
+  misspell:
+    locale: US
+    ignore-words:
+      - koperasi
+      - simpanan
+      - pokok
+      - wajib
+      - sukarela
+      - indonesia
+
+  forbidigo:
+    forbid:
+      - 'fmt\.Print.*#Use logger instead of fmt.Print'
+      - 'panic#Avoid panic, use proper error handling'
+    exclude-godoc-examples: true
+
+  nolintlint:
+    allow-unused: false
+    allow-no-explanation: []
+    require-explanation: true
+    require-specific: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  # Show all issues
+  new: false
+
+  exclude-use-default: false
+
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - funlen
+        - goconst
+        - gocognit
+
+    # Exclude some linters from running on main.go
+    - path: cmd/
+      linters:
+        - gochecknoglobals
+        - gochecknoinits
+
+    # Exclude unused parameters in interface implementations
+    - text: "unused-parameter"
+      linters:
+        - revive
+      source: "^func.*\\) (ServeHTTP|Handle)"
+
+    # Exclude error wrapping suggestions for custom errors
+    - text: "error returned from interface method should be wrapped"
+      linters:
+        - wrapcheck
+
+    # Allow dots in struct tags (for GORM)
+    - text: "ST1005"
+      linters:
+        - stylecheck
+      source: "gorm:"
+
+  # Maximum count of issues with the same text
+  max-per-linter: 0
+  max-same: 0
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
