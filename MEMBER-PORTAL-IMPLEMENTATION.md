@@ -205,28 +205,144 @@ frontend/
 - [ ] Date formatting is correct
 - [ ] Role-based access control works
 
+## Integration Status
+
+### ✅ Completed
+
+1. **Frontend Implementation** - All 6 pages complete
+2. **Backend API Integration** - Updated to match existing backend
+3. **Authentication Flow** - Nomor Anggota + PIN (6 digit)
+4. **API Client** - Aligned with backend endpoints
+5. **Integration Tests** - Template created for all endpoints
+
+### Backend API Endpoints (Already Implemented)
+
+```go
+POST /api/v1/portal/login              // Login dengan nomor anggota + PIN
+GET  /api/v1/portal/profile            // Get member profile (protected)
+GET  /api/v1/portal/saldo              // Get balance (protected)
+GET  /api/v1/portal/riwayat            // Get transaction history (protected)
+PUT  /api/v1/portal/ubah-pin           // Change PIN (protected)
+```
+
+### Changes Made for Backend Integration
+
+**Frontend Updates (Commit: 68ae405)**:
+- Changed login from username/password to nomorAnggota/PIN
+- Updated API endpoints from `/member-portal/*` to `/portal/*`
+- Fixed data structures to match backend (RiwayatTransaksiAnggota)
+- Removed AuthContext dependency for member portal
+- Implemented client-side transaction filtering
+- Added PIN validation (6 digit numeric)
+
+**Backend Tests (Commit: 2c78f9d)**:
+- Created comprehensive integration test template
+- Tests for all portal endpoints
+- Success and error scenarios
+- Pagination testing
+
+### Testing Checklist
+
+#### Integration Tests (Backend)
+- [ ] Setup test database
+- [ ] Run login tests
+- [ ] Run profile tests
+- [ ] Run balance tests
+- [ ] Run transaction history tests
+- [ ] Run PIN change tests
+
+#### Manual Testing
+- [ ] Login with valid nomor anggota + PIN
+- [ ] View dashboard with balance cards
+- [ ] Check balance detail page
+- [ ] Filter transaction history
+- [ ] View member profile
+- [ ] Test mobile responsive design
+- [ ] Test error states (wrong PIN, network error)
+
+#### E2E Testing (To Be Created)
+- [ ] Complete login to dashboard flow
+- [ ] View balance and transactions
+- [ ] Filter transactions by type and date
+- [ ] Navigate between pages
+- [ ] Logout flow
+
 ## Next Steps
 
-1. Implement backend API endpoints
-2. Test with real member data
-3. Add unit tests for components
-4. Add E2E tests for user flows
-5. Implement announcements/notifications feature
-6. Add password change functionality
-7. Add transaction export (PDF/Excel)
+### Short Term (Week 9)
+1. ✅ Frontend implementation
+2. ✅ Backend integration updates
+3. ⏳ Run integration tests with test database
+4. ⏳ Manual testing with sample data
+5. ⏳ E2E testing with Playwright/Cypress
 
-## Screenshots Needed
+### Medium Term (Week 10-11)
+1. Add profile update functionality (if needed)
+2. Implement announcements/notifications feature
+3. Add transaction export (PDF/Excel)
+4. Performance testing
+5. Security audit
 
-- [ ] Login page (mobile and desktop)
-- [ ] Dashboard (mobile and desktop)
-- [ ] Balance detail page
-- [ ] Transaction history with filters
-- [ ] Member profile in edit mode
-- [ ] Navigation drawer on mobile
+### Long Term (Phase 2)
+1. Native mobile app (React Native)
+2. Offline mode support
+3. Push notifications
+4. WhatsApp integration
+5. SHU (profit sharing) calculation
+
+## Environment Variables
+
+Frontend requires:
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1
+NEXT_PUBLIC_DEFAULT_KOPERASI_ID=<koperasi-uuid>  # For MVP single tenant
+```
+
+Backend requires (already configured):
+```env
+JWT_SECRET=<secret-key>
+JWT_EXPIRATION_HOURS=24
+DATABASE_URL=postgresql://...
+```
+
+## API Response Examples
+
+**Login Response**:
+```json
+{
+  "success": true,
+  "message": "Login berhasil",
+  "data": {
+    "token": "eyJhbGc...",
+    "anggota": {
+      "id": "uuid",
+      "nomorAnggota": "A001",
+      "namaLengkap": "John Doe",
+      "status": "aktif"
+    }
+  }
+}
+```
+
+**Balance Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "idAnggota": "uuid",
+    "nomorAnggota": "A001",
+    "namaAnggota": "John Doe",
+    "simpananPokok": 1000000,
+    "simpananWajib": 500000,
+    "simpananSukarela": 200000,
+    "totalSimpanan": 1700000
+  }
+}
+```
 
 ---
 
 **Implementation Date**: November 19, 2025
 **Developer**: Claude Code
-**Framework**: Next.js 14 + Material-UI
-**Status**: ✅ Complete - Ready for backend integration
+**Framework**: Next.js 14 + Material-UI (Frontend), Go + Gin (Backend)
+**Status**: ✅ **Ready for Integration Testing**
