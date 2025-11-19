@@ -28,8 +28,7 @@ import {
   Divider,
 } from '@mui/material';
 import { FilterList, Receipt } from '@mui/icons-material';
-import { getMemberTransactions, type MemberTransactionFilters } from '@/lib/api/memberPortalApi';
-import type { Simpanan, TipeSimpanan } from '@/types';
+import { getMemberTransactions, type MemberTransactionFilters, type RiwayatTransaksiAnggota } from '@/lib/api/memberPortalApi';
 
 // ============================================================================
 // Helper Functions
@@ -76,7 +75,7 @@ const getTipeSimpananColor = (tipe: string): 'primary' | 'success' | 'info' => {
 export default function MemberTransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [transactions, setTransactions] = useState<Simpanan[]>([]);
+  const [transactions, setTransactions] = useState<RiwayatTransaksiAnggota[]>([]);
   const [filters, setFilters] = useState<MemberTransactionFilters>({
     tipeSimpanan: 'all',
     tanggalMulai: '',
@@ -92,21 +91,26 @@ export default function MemberTransactionsPage() {
       setLoading(true);
       setError('');
 
-      const filterParams: MemberTransactionFilters = {};
+      const filterParams: MemberTransactionFilters = {
+        page: 1,
+        pageSize: 100, // Get more transactions for client-side filtering
+      };
 
+      let data = await getMemberTransactions(filterParams);
+
+      // Client-side filtering since backend doesn't support these filters
       if (filters.tipeSimpanan && filters.tipeSimpanan !== 'all') {
-        filterParams.tipeSimpanan = filters.tipeSimpanan as TipeSimpanan;
+        data = data.filter(t => t.tipeSimpanan === filters.tipeSimpanan);
       }
 
       if (filters.tanggalMulai) {
-        filterParams.tanggalMulai = filters.tanggalMulai;
+        data = data.filter(t => t.tanggalTransaksi >= filters.tanggalMulai);
       }
 
       if (filters.tanggalAkhir) {
-        filterParams.tanggalAkhir = filters.tanggalAkhir;
+        data = data.filter(t => t.tanggalTransaksi <= filters.tanggalAkhir);
       }
 
-      const data = await getMemberTransactions(filterParams);
       setTransactions(data);
     } catch (err: unknown) {
       console.error('Failed to fetch transactions:', err);
@@ -154,7 +158,7 @@ export default function MemberTransactionsPage() {
   // Calculate Total
   // ============================================================================
 
-  const totalTransaksi = transactions.reduce((sum, t) => sum + t.jumlahSetoran, 0);
+  const totalTransaksi = transactions.reduce((sum, t) => sum + t.jumlah, 0);
 
   // ============================================================================
   // Render
@@ -312,7 +316,7 @@ export default function MemberTransactionsPage() {
                       <TableCell>{transaksi.keterangan || '-'}</TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" fontWeight={600} color="success.main">
-                          {formatCurrency(transaksi.jumlahSetoran)}
+                          {formatCurrency(transaksi.jumlah)}
                         </Typography>
                       </TableCell>
                     </TableRow>

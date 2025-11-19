@@ -23,16 +23,29 @@ import {
   IconButton,
 } from '@mui/material';
 import { Visibility, VisibilityOff, AccountCircle } from '@mui/icons-material';
-import { useAuth } from '@/lib/context/AuthContext';
-import type { LoginRequest } from '@/types';
+import apiClient, { tokenManager } from '@/lib/api/client';
+import type { APIResponse } from '@/types';
+
+// Member Portal Login Response
+interface MemberLoginResponse {
+  token: string;
+  anggota: {
+    id: string;
+    idKoperasi: string;
+    nomorAnggota: string;
+    namaLengkap: string;
+    email?: string;
+    status: string;
+  };
+}
 
 // ============================================================================
 // Validation Schema
 // ============================================================================
 
 const loginSchema = z.object({
-  namaPengguna: z.string().min(1, 'Nama pengguna harus diisi'),
-  kataSandi: z.string().min(1, 'Kata sandi harus diisi'),
+  nomorAnggota: z.string().min(1, 'Nomor anggota harus diisi'),
+  pin: z.string().length(6, 'PIN harus 6 digit').regex(/^\d+$/, 'PIN harus berupa angka'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -43,20 +56,46 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function MemberLoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // Redirect if already authenticated
+  // Check if already logged in
   React.useEffect(() => {
-    if (isAuthenticated && user) {
-      if (user.peran === 'anggota') {
+    const token = tokenManager.getToken();
+    if (token) {
+      router.push('/portal');
+    }
+  }, [router]);
+
+  // Member Portal Login Function
+  const loginMemberPortal = async (nomorAnggota: string, pin: string) => {
+    try {
+      // Note: Backend requires idKoperasi - for MVP we can use a default or env variable
+      // In production, this should be determined by the domain or user selection
+      const idKoperasi = process.env.NEXT_PUBLIC_DEFAULT_KOPERASI_ID || 'default-koperasi-id';
+
+      const response = await apiClient.post<APIResponse<MemberLoginResponse>>(
+        '/portal/login',
+        { nomorAnggota, pin },
+        { params: { idKoperasi } }
+      );
+
+      if (response.data.success && response.data.data) {
+        const { token } = response.data.data;
+
+        // Store token
+        tokenManager.setToken(token);
+
+        // Redirect to portal
         router.push('/portal');
       } else {
-        router.push('/dashboard');
+        throw new Error('Login failed: Invalid response');
       }
+    } catch (err: unknown) {
+      console.error('Member portal login error:', err);
+      throw err;
     }
-  }, [isAuthenticated, user, router]);
+  };
 
   // ============================================================================
   // Form Setup
@@ -69,8 +108,8 @@ export default function MemberLoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      namaPengguna: '',
-      kataSandi: '',
+      nomorAnggota: '',
+      pin: '',
     },
   });
 
@@ -81,7 +120,8 @@ export default function MemberLoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setError('');
-      await login(data as LoginRequest);
+      // Member portal login uses separate endpoint with nomor anggota + PIN
+      await loginMemberPortal(data.nomorAnggota, data.pin);
 
       // Note: Redirect is handled in useEffect after user state is updated
     } catch (err: unknown) {
@@ -91,7 +131,7 @@ export default function MemberLoginPage() {
       if (err && typeof err === 'object' && 'message' in err) {
         setError(err.message as string);
       } else {
-        setError('Login gagal. Silakan periksa kembali nama pengguna dan kata sandi Anda.');
+        setError('Login gagal. Silakan periksa kembali nomor anggota dan PIN Anda.');
       }
     }
   };
@@ -141,35 +181,41 @@ export default function MemberLoginPage() {
             {/* Login Form */}
             <form onSubmit={handleSubmit(onSubmit)}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {/* Username Field */}
+                {/* Member Number Field */}
                 <TextField
-                  {...register('namaPengguna')}
-                  label="Nama Pengguna / Nomor Anggota"
+                  {...register('nomorAnggota')}
+                  label="Nomor Anggota"
                   variant="outlined"
                   fullWidth
-                  error={!!errors.namaPengguna}
-                  helperText={errors.namaPengguna?.message}
-                  autoComplete="username"
+                  error={!!errors.nomorAnggota}
+                  helperText={errors.nomorAnggota?.message || 'Masukkan nomor anggota Anda'}
+                  autoComplete="off"
                   autoFocus
                   disabled={isSubmitting}
+                  placeholder="Contoh: A001"
                 />
 
-                {/* Password Field */}
+                {/* PIN Field */}
                 <TextField
-                  {...register('kataSandi')}
-                  label="Kata Sandi"
+                  {...register('pin')}
+                  label="PIN (6 digit)"
                   type={showPassword ? 'text' : 'password'}
                   variant="outlined"
                   fullWidth
-                  error={!!errors.kataSandi}
-                  helperText={errors.kataSandi?.message}
-                  autoComplete="current-password"
+                  error={!!errors.pin}
+                  helperText={errors.pin?.message || 'Masukkan PIN 6 digit Anda'}
+                  autoComplete="off"
                   disabled={isSubmitting}
+                  inputProps={{
+                    maxLength: 6,
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*'
+                  }}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
-                          aria-label="toggle password visibility"
+                          aria-label="toggle PIN visibility"
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
                         >

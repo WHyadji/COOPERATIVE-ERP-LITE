@@ -4,7 +4,7 @@
 // ============================================================================
 
 import apiClient from './client';
-import type { APIResponse, SaldoSimpananAnggota, Simpanan, Member } from '@/types';
+import type { APIResponse, SaldoSimpananAnggota, Member, PaginatedResponse } from '@/types';
 
 // ============================================================================
 // Member Balance API
@@ -15,7 +15,7 @@ import type { APIResponse, SaldoSimpananAnggota, Simpanan, Member } from '@/type
  */
 export const getMemberBalance = async (): Promise<SaldoSimpananAnggota> => {
   const response = await apiClient.get<APIResponse<SaldoSimpananAnggota>>(
-    '/member-portal/balance'
+    '/portal/saldo'
   );
 
   if (!response.data.success || !response.data.data) {
@@ -28,6 +28,15 @@ export const getMemberBalance = async (): Promise<SaldoSimpananAnggota> => {
 // ============================================================================
 // Transaction History API
 // ============================================================================
+
+export interface RiwayatTransaksiAnggota {
+  id: string;
+  tanggalTransaksi: string;
+  tipeSimpanan: 'pokok' | 'wajib' | 'sukarela';
+  jumlah: number;
+  keterangan: string;
+  nomorReferensi: string;
+}
 
 export interface MemberTransactionFilters {
   tipeSimpanan?: 'pokok' | 'wajib' | 'sukarela' | 'all';
@@ -42,10 +51,15 @@ export interface MemberTransactionFilters {
  */
 export const getMemberTransactions = async (
   filters?: MemberTransactionFilters
-): Promise<Simpanan[]> => {
-  const response = await apiClient.get<APIResponse<Simpanan[]>>(
-    '/member-portal/transactions',
-    { params: filters }
+): Promise<RiwayatTransaksiAnggota[]> => {
+  const params: Record<string, string | number> = {
+    page: filters?.page || 1,
+    pageSize: filters?.pageSize || 20,
+  };
+
+  const response = await apiClient.get<PaginatedResponse<RiwayatTransaksiAnggota>>(
+    '/portal/riwayat',
+    { params }
   );
 
   if (!response.data.success || !response.data.data) {
@@ -64,7 +78,7 @@ export const getMemberTransactions = async (
  */
 export const getMemberProfile = async (): Promise<Member> => {
   const response = await apiClient.get<APIResponse<Member>>(
-    '/member-portal/profile'
+    '/portal/profile'
   );
 
   if (!response.data.success || !response.data.data) {
@@ -76,12 +90,15 @@ export const getMemberProfile = async (): Promise<Member> => {
 
 /**
  * Update member profile (limited fields)
+ * Note: Member portal uses PIN authentication, profile updates may not be available
  */
 export const updateMemberProfile = async (
   data: Partial<Member>
 ): Promise<Member> => {
+  // This endpoint may not exist in backend - members typically cannot update their own profile
+  // For now, we'll keep this but it should be reviewed
   const response = await apiClient.put<APIResponse<Member>>(
-    '/member-portal/profile',
+    '/portal/profile',
     data
   );
 
@@ -98,7 +115,7 @@ export const updateMemberProfile = async (
 
 export interface MemberDashboardSummary {
   saldoSimpanan: SaldoSimpananAnggota;
-  transaksiTerbaru: Simpanan[];
+  transaksiTerbaru: RiwayatTransaksiAnggota[];
   totalTransaksi: number;
 }
 
@@ -106,13 +123,16 @@ export interface MemberDashboardSummary {
  * Get member dashboard summary
  */
 export const getMemberDashboard = async (): Promise<MemberDashboardSummary> => {
-  const response = await apiClient.get<APIResponse<MemberDashboardSummary>>(
-    '/member-portal/dashboard'
-  );
+  // Backend doesn't have a dedicated dashboard endpoint
+  // We'll fetch balance and recent transactions separately
+  const [saldoSimpanan, transaksiResponse] = await Promise.all([
+    getMemberBalance(),
+    getMemberTransactions({ page: 1, pageSize: 5 }),
+  ]);
 
-  if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.message || 'Failed to fetch dashboard data');
-  }
-
-  return response.data.data;
+  return {
+    saldoSimpanan,
+    transaksiTerbaru: transaksiResponse,
+    totalTransaksi: transaksiResponse.length,
+  };
 };

@@ -34,8 +34,7 @@ import {
   Savings,
 } from '@mui/icons-material';
 import { getMemberDashboard } from '@/lib/api/memberPortalApi';
-import type { MemberDashboardSummary, Simpanan } from '@/lib/api/memberPortalApi';
-import { useAuth } from '@/lib/context/AuthContext';
+import type { MemberDashboardSummary, RiwayatTransaksiAnggota } from '@/lib/api/memberPortalApi';
 
 // ============================================================================
 // Helper Functions
@@ -81,10 +80,10 @@ const getTipeSimpananColor = (tipe: string): 'primary' | 'success' | 'info' => {
 
 export default function MemberPortalDashboard() {
   const router = useRouter();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [dashboardData, setDashboardData] = useState<MemberDashboardSummary | null>(null);
+  const [userName, setUserName] = useState<string>('Anggota');
 
   // ============================================================================
   // Fetch Dashboard Data
@@ -97,6 +96,9 @@ export default function MemberPortalDashboard() {
         setError('');
         const data = await getMemberDashboard();
         setDashboardData(data);
+        if (data.saldoSimpanan.namaAnggota) {
+          setUserName(data.saldoSimpanan.namaAnggota);
+        }
       } catch (err: unknown) {
         console.error('Failed to fetch dashboard:', err);
         if (err && typeof err === 'object' && 'message' in err) {
@@ -145,7 +147,7 @@ export default function MemberPortalDashboard() {
       {/* Welcome Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight={600} gutterBottom>
-          Selamat Datang, {user?.namaLengkap}
+          Selamat Datang, {userName}
         </Typography>
         <Typography variant="body1" color="text.secondary">
           Berikut adalah ringkasan simpanan dan transaksi Anda
@@ -262,7 +264,7 @@ export default function MemberPortalDashboard() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {dashboardData.transaksiTerbaru.map((transaksi: Simpanan) => (
+                  {dashboardData.transaksiTerbaru.map((transaksi: RiwayatTransaksiAnggota) => (
                     <TableRow key={transaksi.id} hover>
                       <TableCell>{formatDate(transaksi.tanggalTransaksi)}</TableCell>
                       <TableCell>
@@ -275,7 +277,7 @@ export default function MemberPortalDashboard() {
                       <TableCell>{transaksi.keterangan || '-'}</TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" fontWeight={600} color="success.main">
-                          {formatCurrency(transaksi.jumlahSetoran)}
+                          {formatCurrency(transaksi.jumlah)}
                         </Typography>
                       </TableCell>
                     </TableRow>
