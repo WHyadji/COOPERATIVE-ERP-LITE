@@ -244,6 +244,7 @@ PUT  /api/v1/portal/ubah-pin           // Change PIN (protected)
 ### Testing Checklist
 
 #### Integration Tests (Backend)
+**Location**: `backend/internal/tests/integration/integration_portal_anggota_test.go`
 - [ ] Setup test database
 - [ ] Run login tests
 - [ ] Run profile tests
@@ -252,6 +253,7 @@ PUT  /api/v1/portal/ubah-pin           // Change PIN (protected)
 - [ ] Run PIN change tests
 
 #### Manual Testing
+**Guide**: See `MANUAL-TESTING-GUIDE.md` for detailed 50+ test cases
 - [ ] Login with valid nomor anggota + PIN
 - [ ] View dashboard with balance cards
 - [ ] Check balance detail page
@@ -260,21 +262,78 @@ PUT  /api/v1/portal/ubah-pin           // Change PIN (protected)
 - [ ] Test mobile responsive design
 - [ ] Test error states (wrong PIN, network error)
 
-#### E2E Testing (To Be Created)
-- [ ] Complete login to dashboard flow
-- [ ] View balance and transactions
-- [ ] Filter transactions by type and date
-- [ ] Navigate between pages
-- [ ] Logout flow
+#### E2E Testing (Playwright)
+**Location**: `frontend/e2e/member-portal.spec.ts`
+**Config**: `frontend/playwright.config.ts`
+**Test Data**: See `backend/cmd/seed-test-data/` for seeding script
+
+✅ **Implemented** - 30+ test cases across 7 test suites:
+- [x] Login Flow (6 tests) - validation, success/failure, PIN visibility
+- [x] Dashboard (4 tests) - balance cards, recent transactions, navigation
+- [x] Balance Page (3 tests) - member info, balance types, information sections
+- [x] Transactions Page (5 tests) - filters, summary, type filtering, reset, table
+- [x] Profile Page (6 tests) - sections display, edit mode, cancel
+- [x] Navigation (3 tests) - sidebar menu, logout, mobile menu
+- [x] Responsive Design (3 tests) - mobile, tablet, desktop viewports
+
+**Run E2E Tests:**
+```bash
+# 1. Seed test data first
+cd backend
+go run cmd/seed-test-data/main.go
+
+# 2. Start backend (in one terminal)
+go run cmd/api/main.go
+
+# 3. Run E2E tests (in another terminal)
+cd frontend
+npx playwright test
+
+# Run in UI mode (interactive)
+npx playwright test --ui
+
+# Run specific browser
+npx playwright test --project=chromium
+```
+
+## Test Data Seeding
+
+### Go Seeding Script (Recommended)
+**Location**: `backend/cmd/seed-test-data/main.go`
+
+Creates test data for E2E testing:
+- Test Cooperative: "Koperasi Test E2E" (TEST-E2E-001)
+- Test Member: A001 with PIN 123456
+- Initial Balance: Rp 4,000,000 total
+- 8 Sample Transactions (Pokok, Wajib, Sukarela)
+
+```bash
+cd backend
+go run cmd/seed-test-data/main.go
+```
+
+### SQL Script (Alternative)
+**Location**: `backend/cmd/seed-test-data/seed_e2e_data.sql`
+
+⚠️ Note: SQL script uses placeholder PIN hash. Use Go script for proper hashing.
+
+```bash
+psql -U postgres -d koperasi_erp -f backend/cmd/seed-test-data/seed_e2e_data.sql
+```
+
+See `backend/cmd/seed-test-data/README.md` for detailed instructions.
 
 ## Next Steps
 
 ### Short Term (Week 9)
 1. ✅ Frontend implementation
 2. ✅ Backend integration updates
-3. ⏳ Run integration tests with test database
-4. ⏳ Manual testing with sample data
-5. ⏳ E2E testing with Playwright/Cypress
+3. ✅ E2E testing framework with Playwright
+4. ✅ Test data seeding script
+5. ✅ Manual testing guide (50+ test cases)
+6. ⏳ Run integration tests with test database
+7. ⏳ Execute manual testing checklist
+8. ⏳ Run E2E tests and fix any failures
 
 ### Medium Term (Week 10-11)
 1. Add profile update functionality (if needed)
