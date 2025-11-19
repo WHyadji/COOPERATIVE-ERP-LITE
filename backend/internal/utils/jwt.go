@@ -19,6 +19,16 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
+// JWTAnggotaClaims mendefinisikan claims untuk JWT token anggota portal
+type JWTAnggotaClaims struct {
+	IDAnggota    uuid.UUID `json:"idAnggota"`
+	IDKoperasi   uuid.UUID `json:"idKoperasi"`
+	NomorAnggota string    `json:"nomorAnggota"`
+	NamaLengkap  string    `json:"namaLengkap"`
+	TipeToken    string    `json:"tipeToken"` // "anggota" untuk membedakan dari token pengguna
+	jwt.RegisteredClaims
+}
+
 // JWTUtil adalah utility untuk JWT operations
 type JWTUtil struct {
 	secretKey       string
@@ -121,4 +131,63 @@ func (j *JWTUtil) RefreshToken(tokenString string) (string, error) {
 	}
 
 	return newTokenString, nil
+}
+
+// GenerateTokenAnggota menghasilkan JWT token untuk anggota portal
+func (j *JWTUtil) GenerateTokenAnggota(anggota *models.Anggota) (string, error) {
+	// Buat claims untuk anggota
+	claims := JWTAnggotaClaims{
+		IDAnggota:    anggota.ID,
+		IDKoperasi:   anggota.IDKoperasi,
+		NomorAnggota: anggota.NomorAnggota,
+		NamaLengkap:  anggota.NamaLengkap,
+		TipeToken:    "anggota",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(j.expirationHours))),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "cooperative-erp-lite-portal",
+			Subject:   anggota.ID.String(),
+		},
+	}
+
+	// Buat token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Sign token dengan secret key
+	tokenString, err := token.SignedString([]byte(j.secretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// ValidateTokenAnggota memvalidasi JWT token anggota dan mengembalikan claims
+func (j *JWTUtil) ValidateTokenAnggota(tokenString string) (*JWTAnggotaClaims, error) {
+	// Parse token
+	token, err := jwt.ParseWithClaims(tokenString, &JWTAnggotaClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Validasi signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("metode signing token tidak valid")
+		}
+		return []byte(j.secretKey), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Ekstrak claims
+	claims, ok := token.Claims.(*JWTAnggotaClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("token tidak valid")
+	}
+
+	// Validasi tipe token
+	if claims.TipeToken != "anggota" {
+		return nil, errors.New("tipe token tidak valid")
+	}
+
+	return claims, nil
 }

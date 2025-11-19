@@ -113,3 +113,43 @@ func OptionalAuth(jwtUtil *utils.JWTUtil) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// AuthAnggotaMiddleware adalah middleware untuk validasi JWT token anggota portal
+func AuthAnggotaMiddleware(jwtUtil *utils.JWTUtil) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Ambil Authorization header
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			utils.UnauthorizedResponse(c, "Token autentikasi tidak ditemukan")
+			c.Abort()
+			return
+		}
+
+		// Cek format: Bearer <token>
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			utils.UnauthorizedResponse(c, "Format token tidak valid")
+			c.Abort()
+			return
+		}
+
+		tokenString := parts[1]
+
+		// Validasi token anggota
+		claims, err := jwtUtil.ValidateTokenAnggota(tokenString)
+		if err != nil {
+			utils.UnauthorizedResponse(c, "Token tidak valid atau sudah kadaluarsa")
+			c.Abort()
+			return
+		}
+
+		// Set member info ke context untuk digunakan di handler
+		c.Set("idAnggota", claims.IDAnggota)
+		c.Set("idKoperasi", claims.IDKoperasi)
+		c.Set("nomorAnggota", claims.NomorAnggota)
+		c.Set("namaLengkap", claims.NamaLengkap)
+		c.Set("tipeToken", claims.TipeToken)
+
+		c.Next()
+	}
+}

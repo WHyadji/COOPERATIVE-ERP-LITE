@@ -72,6 +72,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	simpananService := services.NewSimpananService(db, transaksiService)
 	penjualanService := services.NewPenjualanService(db, produkService, transaksiService)
 	laporanService := services.NewLaporanService(db, akunService, simpananService, penjualanService)
+	portalAnggotaService := services.NewPortalAnggotaService(db, jwtUtil)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
@@ -84,6 +85,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	penjualanHandler := handlers.NewPenjualanHandler(penjualanService)
 	penggunaHandler := handlers.NewPenggunaHandler(penggunaService)
 	laporanHandler := handlers.NewLaporanHandler(laporanService)
+	portalAnggotaHandler := handlers.NewPortalAnggotaHandler(portalAnggotaService)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -208,6 +210,23 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 				laporan.GET("/neraca", laporanHandler.GetNeraca)
 				laporan.GET("/laba-rugi", laporanHandler.GetLabaRugi)
 				laporan.GET("/buku-besar", laporanHandler.GetBukuBesar)
+			}
+		}
+
+		// Portal Anggota routes
+		portal := v1.Group("/portal")
+		{
+			// Public route - Login portal anggota
+			portal.POST("/login", portalAnggotaHandler.Login)
+
+			// Protected routes - Require member authentication
+			portalProtected := portal.Group("")
+			portalProtected.Use(middleware.AuthAnggotaMiddleware(jwtUtil))
+			{
+				portalProtected.GET("/profile", portalAnggotaHandler.GetProfile)
+				portalProtected.GET("/saldo", portalAnggotaHandler.GetSaldo)
+				portalProtected.GET("/riwayat", portalAnggotaHandler.GetRiwayat)
+				portalProtected.PUT("/ubah-pin", portalAnggotaHandler.UbahPIN)
 			}
 		}
 	}
