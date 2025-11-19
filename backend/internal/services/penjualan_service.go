@@ -82,11 +82,12 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 	// Hitung kembalian
 	kembalian := req.JumlahBayar - totalBelanja
 
-	// Proses dalam transaction
+	// Proses semua operasi dalam satu transaction untuk memastikan atomicity.
+	// Jika salah satu step gagal, semua perubahan akan di-rollback otomatis.
 	var penjualan models.Penjualan
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		// 1. Buat record penjualan
+		// Step 1: Buat record penjualan
 		penjualan = models.Penjualan{
 			IDKoperasi:       idKoperasi,
 			NomorPenjualan:   nomorPenjualan,
@@ -104,19 +105,19 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 			return errors.New("gagal membuat penjualan")
 		}
 
-		// 2. Buat item penjualan dan kurangi stok
+		// Step 2: Buat item penjualan dan update stok
 		for _, itemReq := range req.Items {
-			// Dapatkan produk untuk nama
+			// Dapatkan produk untuk snapshot nama
 			var produk models.Produk
 			if err := tx.Where("id = ?", itemReq.IDProduk).First(&produk).Error; err != nil {
 				return fmt.Errorf("produk %s tidak ditemukan", itemReq.IDProduk)
 			}
 
-			// Buat item penjualan
+			// Buat item penjualan dengan snapshot nama produk
 			item := models.ItemPenjualan{
 				IDPenjualan: penjualan.ID,
 				IDProduk:    itemReq.IDProduk,
-				NamaProduk:  produk.NamaProduk, // Snapshot nama
+				NamaProduk:  produk.NamaProduk,
 				Kuantitas:   itemReq.Kuantitas,
 				HargaSatuan: itemReq.HargaSatuan,
 			}
@@ -125,10 +126,15 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 				return errors.New("gagal membuat item penjualan")
 			}
 
-			// Kurangi stok produk
-			if err := s.produkService.KurangiStok(itemReq.IDProduk, itemReq.Kuantitas); err != nil {
+			// Kurangi stok dalam transaction yang sama untuk atomicity
+			if err := s.produkService.KurangiStokWithTx(tx, itemReq.IDProduk, itemReq.Kuantitas); err != nil {
 				return fmt.Errorf("gagal mengurangi stok: %w", err)
 			}
+		}
+
+		// Step 3: Posting otomatis ke jurnal akuntansi dalam transaction yang sama
+		if err := s.transaksiService.PostingOtomatisPenjualanWithTx(tx, idKoperasi, idKasir, penjualan.ID); err != nil {
+			return fmt.Errorf("gagal posting ke jurnal: %w", err)
 		}
 
 		return nil
@@ -136,14 +142,6 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 
 	if err != nil {
 		return nil, err
-	}
-
-	// 3. Auto-posting ke jurnal akuntansi
-	err = s.transaksiService.PostingOtomatisPenjualan(idKoperasi, idKasir, penjualan.ID)
-	if err != nil {
-		// Warning: penjualan sudah tersimpan tapi posting gagal
-		// Bisa di-handle dengan background job untuk retry
-		return nil, fmt.Errorf("penjualan berhasil, tetapi posting gagal: %w", err)
 	}
 
 	// Reload dengan relasi

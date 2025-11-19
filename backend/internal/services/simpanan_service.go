@@ -91,18 +91,24 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 		DibuatOleh:       idPengguna,
 	}
 
-	// Simpan ke database
-	err = s.db.Create(simpanan).Error
-	if err != nil {
-		return nil, errors.New("gagal mencatat setoran simpanan")
-	}
+	// Proses pembuatan simpanan dan posting jurnal dalam satu transaction.
+	// Jika salah satu operasi gagal, semua perubahan akan di-rollback otomatis oleh GORM.
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		// Step 1: Simpan record simpanan
+		if err := tx.Create(simpanan).Error; err != nil {
+			return errors.New("gagal mencatat setoran simpanan")
+		}
 
-	// Auto-posting ke jurnal akuntansi
-	err = s.transaksiService.PostingOtomatisSimpanan(idKoperasi, idPengguna, simpanan.ID)
+		// Step 2: Posting otomatis ke jurnal akuntansi dalam transaction yang sama
+		if err := s.transaksiService.PostingOtomatisSimpananWithTx(tx, idKoperasi, idPengguna, simpanan.ID); err != nil {
+			return fmt.Errorf("gagal posting ke jurnal: %w", err)
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		// Rollback simpanan jika posting gagal
-		s.db.Delete(simpanan)
-		return nil, fmt.Errorf("gagal posting ke jurnal: %w", err)
+		return nil, err
 	}
 
 	// Reload dengan relasi

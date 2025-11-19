@@ -4,6 +4,7 @@ import (
 	"cooperative-erp-lite/internal/models"
 	"cooperative-erp-lite/pkg/validasi"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -332,27 +333,57 @@ func (s *ProdukService) HapusProduk(idKoperasi, id uuid.UUID) error {
 	return nil
 }
 
-// KurangiStok mengurangi stok produk
-func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
+// KurangiStokWithTx mengurangi stok produk menggunakan transaction yang diberikan.
+//
+// Method ini dirancang untuk dipanggil dalam transaction yang sama dengan operasi lain
+// (seperti pembuatan penjualan atau adjustment stok), sehingga memastikan atomicity.
+// Jika terjadi error pada operasi berikutnya, pengurangan stok akan di-rollback.
+//
+// Parameters:
+//   - tx: Database transaction yang sedang aktif
+//   - id: ID produk yang akan dikurangi stoknya
+//   - jumlah: Jumlah stok yang akan dikurangi
+//
+// Returns error jika:
+//   - Produk tidak ditemukan
+//   - Stok tidak mencukupi
+//   - Gagal menyimpan perubahan stok
+func (s *ProdukService) KurangiStokWithTx(tx *gorm.DB, id uuid.UUID, jumlah int) error {
 	var produk models.Produk
-	err := s.db.Where("id = ?", id).First(&produk).Error
+	err := tx.Where("id = ?", id).First(&produk).Error
 	if err != nil {
 		return errors.New("produk tidak ditemukan")
 	}
 
 	// Validasi stok cukup
 	if produk.Stok < jumlah {
-		return errors.New("stok tidak mencukupi")
+		return fmt.Errorf("stok tidak mencukupi (tersedia: %d, diminta: %d)", produk.Stok, jumlah)
 	}
 
 	// Kurangi stok
 	produk.Stok -= jumlah
-	err = s.db.Save(&produk).Error
+	err = tx.Save(&produk).Error
 	if err != nil {
 		return errors.New("gagal mengurangi stok")
 	}
 
 	return nil
+}
+
+// KurangiStok mengurangi stok produk dengan membuat transaction otomatis.
+//
+// Method ini adalah wrapper convenience untuk KurangiStokWithTx yang membuat transaction sendiri.
+// Untuk operasi production yang memerlukan atomicity dengan operasi lain (seperti penjualan),
+// gunakan KurangiStokWithTx agar bisa di-rollback bersama-sama jika terjadi error.
+//
+// Use case method ini:
+//   - Unit testing yang tidak memerlukan transaction
+//   - Operasi standalone adjustment stok manual
+//   - Operasi yang tidak memerlukan atomicity dengan operasi lain
+func (s *ProdukService) KurangiStok(id uuid.UUID, jumlah int) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		return s.KurangiStokWithTx(tx, id, jumlah)
+	})
 }
 
 // TambahStok menambah stok produk
