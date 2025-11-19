@@ -18,6 +18,10 @@ const (
 	PeranAnggota   PeranPengguna = "anggota"   // Anggota - akses portal (read-only)
 )
 
+// BcryptCost adalah cost factor untuk bcrypt hashing
+// Cost 8 = ~60ms (balanced performance + security)
+const BcryptCost = 8
+
 // Pengguna merepresentasikan user/pengguna sistem
 type Pengguna struct {
 	ID                    uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
@@ -48,7 +52,7 @@ func (p *Pengguna) BeforeCreate(tx *gorm.DB) error {
 
 // SetKataSandi meng-hash password dan menyimpannya
 func (p *Pengguna) SetKataSandi(kataSandi string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(kataSandi), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(kataSandi), BcryptCost)
 	if err != nil {
 		return err
 	}
