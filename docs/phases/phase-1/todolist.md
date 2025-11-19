@@ -11,9 +11,9 @@
 |----------|-------|------|-------------|---------|
 | **Backend** | 45 | 45 | 0 | 0 |
 | **Frontend** | 52 | 50 | 0 | 2 |
-| **Testing** | 20 | 12 | 0 | 8 |
+| **Testing** | 36 | 12 | 0 | 24 |
 | **Deployment** | 21 | 6 | 0 | 15 |
-| **TOTAL** | **138** | **113 (82%)** | **0 (0%)** | **25 (18%)** |
+| **TOTAL** | **154** | **113 (73%)** | **0 (0%)** | **41 (27%)** |
 
 ---
 
@@ -314,11 +314,16 @@ psql --version   # Should show: 17.2
 
 ## Week 8: Member Portal
 
-### Backend
-- [ ] Member authentication API
-- [ ] Member info endpoint
-- [ ] Member balance endpoint
-- [ ] Member transaction history endpoint
+### Backend ✅
+- [x] Member authentication API (PIN-based, 6-digit)
+- [x] Member info endpoint (GET /api/v1/portal/profile)
+- [x] Member balance endpoint (GET /api/v1/portal/saldo)
+- [x] Member transaction history endpoint (GET /api/v1/portal/riwayat)
+- [x] Change PIN endpoint (PUT /api/v1/portal/ubah-pin)
+- [x] JWT token support for members (separate from staff)
+- [x] Multi-tenant isolation for member portal
+- [x] Comprehensive test suite (29 tests, 100% coverage)
+- [x] API documentation (MEMBER_PORTAL_API.md)
 
 ### Frontend
 - [ ] Member portal login page
@@ -328,7 +333,7 @@ psql --version   # Should show: 17.2
 - [ ] Mobile-responsive design
 - [ ] Member profile view
 
-**Week 8 Completion:** ⏳ 0% (0/10 tasks)
+**Week 8 Completion:** 🔄 56% (9/16 tasks) - Backend Complete ✅, Frontend Pending
 
 ---
 
@@ -359,13 +364,36 @@ psql --version   # Should show: 17.2
 - [ ] POS transaction flow
 - [ ] Report generation flow
 
+### Load Testing (Member Portal API)
+- [ ] Smoke tests (verify basic functionality under minimal load)
+- [ ] Stress tests (find breaking point, gradually increase load)
+- [ ] Spike tests (sudden traffic surge simulation)
+- [ ] Soak tests (sustained load over extended period)
+- [ ] Tools: k6, Apache JMeter, or Gatling
+
+### Performance Testing
+- [ ] API response time benchmarks (target: < 200ms)
+- [ ] Database query optimization (slow query analysis)
+- [ ] Frontend rendering performance (Lighthouse audit)
+- [ ] Concurrent user testing (100+ simultaneous users)
+- [ ] Memory leak detection (long-running sessions)
+
+### Security Testing
+- [ ] Authentication bypass attempts
+- [ ] Multi-tenant isolation validation (cross-cooperative access)
+- [ ] SQL injection vulnerability tests
+- [ ] XSS (Cross-Site Scripting) tests
+- [ ] CSRF token validation
+- [ ] Rate limiting tests (prevent brute force)
+- [ ] Weak PIN detection (123456, 000000, etc.)
+
 ### Bug Fixing
 - [x] Fix build errors ✅ (Resolved Nov 17, 2025)
 - [ ] Fix critical bugs (P0)
 - [ ] Fix major bugs (P1)
 - [ ] Address minor bugs (P2)
 
-**Week 9 Completion:** 🔄 60% (12/20 tasks) - Unit Tests Complete ✅
+**Week 9 Completion:** 🔄 33% (12/36 tasks) - Unit Tests Complete ✅, Load/Performance/Security Testing Pending
 
 ---
 
