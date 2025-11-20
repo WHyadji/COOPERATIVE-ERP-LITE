@@ -80,6 +80,11 @@ func LoadConfig() (*Config, error) {
 		},
 	}
 
+	// Validate configuration before returning
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("configuration validation failed: %w", err)
+	}
+
 	return config, nil
 }
 
@@ -94,6 +99,75 @@ func (c *Config) GetDSN() string {
 		c.Database.DBName,
 		c.Database.SSLMode,
 	)
+}
+
+// Validate checks that critical configuration values are properly set
+// This prevents running in production with insecure default values
+func (c *Config) Validate() error {
+	// Check if running in production mode
+	isProduction := c.Server.GinMode == "release" || os.Getenv("APP_ENV") == "production"
+
+	// In production, enforce strict security requirements
+	if isProduction {
+		// JWT Secret must not be the default value
+		defaultJWTSecret := "your-super-secret-jwt-key-change-this-in-production"
+		if c.JWT.Secret == defaultJWTSecret {
+			return fmt.Errorf("JWT_SECRET must be changed from default value in production")
+		}
+
+		// JWT Secret must be at least 32 characters (256 bits)
+		if len(c.JWT.Secret) < 32 {
+			return fmt.Errorf("JWT_SECRET must be at least 32 characters long in production (current: %d)", len(c.JWT.Secret))
+		}
+
+		// Database password must not be the default value
+		if c.Database.Password == "postgres" {
+			return fmt.Errorf("DB_PASSWORD must be changed from default value in production")
+		}
+
+		// Database password must be strong (at least 12 characters)
+		if len(c.Database.Password) < 12 {
+			return fmt.Errorf("DB_PASSWORD must be at least 12 characters long in production (current: %d)", len(c.Database.Password))
+		}
+
+		// SSL must be enabled in production
+		if c.Database.SSLMode == "disable" {
+			log.Println("WARNING: Database SSL is disabled in production. This is not recommended.")
+		}
+
+		// CORS origins must not include localhost
+		for _, origin := range c.CORS.AllowedOrigins {
+			if origin == "http://localhost:3000" || origin == "http://localhost:8080" {
+				return fmt.Errorf("ALLOWED_ORIGINS must not include localhost URLs in production (found: %s)", origin)
+			}
+		}
+	}
+
+	// Always validate that critical values are not empty
+	if c.JWT.Secret == "" {
+		return fmt.Errorf("JWT_SECRET cannot be empty")
+	}
+
+	if c.Database.Host == "" {
+		return fmt.Errorf("DB_HOST cannot be empty")
+	}
+
+	if c.Database.DBName == "" {
+		return fmt.Errorf("DB_NAME cannot be empty")
+	}
+
+	if c.JWT.ExpirationHours <= 0 {
+		return fmt.Errorf("JWT_EXPIRATION_HOURS must be positive (current: %d)", c.JWT.ExpirationHours)
+	}
+
+	// Log configuration status
+	if isProduction {
+		log.Println("✓ Configuration validation passed (PRODUCTION mode)")
+	} else {
+		log.Println("✓ Configuration validation passed (DEVELOPMENT mode)")
+	}
+
+	return nil
 }
 
 // getEnv mengambil nilai environment variable atau menggunakan default value

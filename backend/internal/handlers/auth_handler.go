@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"cooperative-erp-lite/internal/middleware"
 	"cooperative-erp-lite/internal/services"
 	"cooperative-erp-lite/internal/utils"
 	"net/http"
@@ -41,11 +42,35 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	// Get client IP for rate limiting
+	ip := c.ClientIP()
+
+	// Get login rate limiter from context (if middleware is enabled)
+	limiterInterface, limiterExists := c.Get("loginLimiter")
+
 	// Panggil service login
 	response, err := h.authService.Login(req.NamaPengguna, req.KataSandi)
 	if err != nil {
+		// Record failed login attempt if rate limiter is enabled
+		if limiterExists {
+			if limiter, ok := limiterInterface.(*middleware.LoginRateLimiter); ok {
+				// Record failed attempt for both IP and username
+				limiter.RecordAttempt(ip)
+				limiter.RecordAttempt(req.NamaPengguna)
+			}
+		}
+
 		utils.UnauthorizedResponse(c, "Nama pengguna atau kata sandi salah")
 		return
+	}
+
+	// Clear login attempts on successful login
+	if limiterExists {
+		if limiter, ok := limiterInterface.(*middleware.LoginRateLimiter); ok {
+			// Clear attempts for both IP and username
+			limiter.ClearAttempts(ip)
+			limiter.ClearAttempts(req.NamaPengguna)
+		}
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Login berhasil", response)

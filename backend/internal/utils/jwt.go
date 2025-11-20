@@ -94,7 +94,49 @@ func (j *JWTUtil) ValidateToken(tokenString string) (*JWTClaims, error) {
 		return nil, errors.New("token tidak valid")
 	}
 
+	// Validasi claims yang diperlukan
+	if err := j.validateClaims(claims); err != nil {
+		return nil, err
+	}
+
 	return claims, nil
+}
+
+// validateClaims memvalidasi bahwa semua claims yang diperlukan ada dan valid
+func (j *JWTUtil) validateClaims(claims *JWTClaims) error {
+	// Validasi ID Pengguna tidak kosong
+	if claims.IDPengguna == uuid.Nil {
+		return errors.New("IDPengguna tidak boleh kosong")
+	}
+
+	// Validasi ID Koperasi tidak kosong
+	if claims.IDKoperasi == uuid.Nil {
+		return errors.New("IDKoperasi tidak boleh kosong")
+	}
+
+	// Validasi Peran tidak kosong
+	if claims.Peran == "" {
+		return errors.New("Peran tidak boleh kosong")
+	}
+
+	// Validasi Peran adalah salah satu dari yang diizinkan
+	validRoles := map[models.PeranPengguna]bool{
+		models.PeranAdmin:     true,
+		models.PeranBendahara: true,
+		models.PeranKasir:     true,
+		models.PeranAnggota:   true,
+	}
+
+	if !validRoles[claims.Peran] {
+		return errors.New("Peran tidak valid")
+	}
+
+	// Validasi NamaPengguna tidak kosong
+	if claims.NamaPengguna == "" {
+		return errors.New("NamaPengguna tidak boleh kosong")
+	}
+
+	return nil
 }
 
 // RefreshToken menghasilkan token baru dari token yang sudah ada
@@ -189,5 +231,35 @@ func (j *JWTUtil) ValidateTokenAnggota(tokenString string) (*JWTAnggotaClaims, e
 		return nil, errors.New("tipe token tidak valid")
 	}
 
+	// Validasi claims yang diperlukan
+	if err := j.validateAnggotaClaims(claims); err != nil {
+		return nil, err
+	}
+
 	return claims, nil
+}
+
+// validateAnggotaClaims memvalidasi bahwa semua claims anggota yang diperlukan ada dan valid
+func (j *JWTUtil) validateAnggotaClaims(claims *JWTAnggotaClaims) error {
+	// Validasi ID Anggota tidak kosong
+	if claims.IDAnggota == uuid.Nil {
+		return errors.New("IDAnggota tidak boleh kosong")
+	}
+
+	// Validasi ID Koperasi tidak kosong
+	if claims.IDKoperasi == uuid.Nil {
+		return errors.New("IDKoperasi tidak boleh kosong")
+	}
+
+	// Validasi Nomor Anggota tidak kosong
+	if claims.NomorAnggota == "" {
+		return errors.New("NomorAnggota tidak boleh kosong")
+	}
+
+	// Validasi Tipe Token
+	if claims.TipeToken != "anggota" {
+		return errors.New("TipeToken harus 'anggota'")
+	}
+
+	return nil
 }
