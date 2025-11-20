@@ -7,9 +7,25 @@ const TEST_MEMBER = {
   namaLengkap: "Test Member Portal",
 };
 
+// Helper function to wait for React hydration
+async function waitForHydration(page: Page) {
+  // Wait for the page to be fully loaded
+  await page.waitForLoadState('networkidle');
+
+  // Wait for the form to be visible
+  await page.waitForSelector('form', { state: 'visible' });
+
+  // Give React generous time to hydrate and attach event handlers
+  // In production builds, this can take longer than in development
+  await page.waitForTimeout(3000);
+}
+
 // Helper function to login
 async function loginMember(page: Page) {
   await page.goto("/portal/login");
+
+  // Wait for React hydration before interacting with form
+  await waitForHydration(page);
 
   // Fill login form
   await page.fill('input[name="nomorAnggota"]', TEST_MEMBER.nomorAnggota);
@@ -24,6 +40,10 @@ async function loginMember(page: Page) {
 
 test.describe("Member Portal - Login Flow", () => {
   test("should display login page correctly", async ({ page }) => {
+    // Capture console logs and errors
+    page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+    page.on('pageerror', err => console.error('BROWSER ERROR:', err.message));
+
     await page.goto("/portal/login");
 
     // Check page title and elements
@@ -41,6 +61,9 @@ test.describe("Member Portal - Login Flow", () => {
   test("should show validation errors for empty fields", async ({ page }) => {
     await page.goto("/portal/login");
 
+    // Wait for React hydration
+    await waitForHydration(page);
+
     // Click submit without filling fields
     await page.click('button[type="submit"]');
 
@@ -51,6 +74,9 @@ test.describe("Member Portal - Login Flow", () => {
 
   test("should show error for invalid PIN format", async ({ page }) => {
     await page.goto("/portal/login");
+
+    // Wait for React hydration
+    await waitForHydration(page);
 
     await page.fill('input[name="nomorAnggota"]', "A001");
     await page.fill('input[name="pin"]', "12345"); // Only 5 digits
@@ -75,6 +101,9 @@ test.describe("Member Portal - Login Flow", () => {
   test("should show error for invalid credentials", async ({ page }) => {
     await page.goto("/portal/login");
 
+    // Wait for React hydration
+    await waitForHydration(page);
+
     await page.fill('input[name="nomorAnggota"]', "A001");
     await page.fill('input[name="pin"]', "999999"); // Wrong PIN
 
@@ -86,6 +115,9 @@ test.describe("Member Portal - Login Flow", () => {
 
   test("should toggle PIN visibility", async ({ page }) => {
     await page.goto("/portal/login");
+
+    // Wait for React hydration
+    await waitForHydration(page);
 
     const pinInput = page.locator('input[name="pin"]');
 
