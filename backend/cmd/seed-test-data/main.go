@@ -27,6 +27,10 @@ const (
 	DBPort     = "5432"
 )
 
+// Fixed test cooperative UUID for E2E testing
+// This UUID is used in frontend .env.local as NEXT_PUBLIC_DEFAULT_KOPERASI_ID
+const TestKoperasiUUID = "550e8400-e29b-41d4-a716-446655440001"
+
 func main() {
 	fmt.Println("===========================================")
 	fmt.Println("E2E Test Data Seeding Script")
@@ -109,16 +113,23 @@ func main() {
 func createTestKoperasi(db *gorm.DB) *models.Koperasi {
 	var koperasi models.Koperasi
 
-	// Try to find existing test cooperative by name
-	err := db.Where("nama_koperasi = ?", "Koperasi Test E2E").First(&koperasi).Error
+	// Parse the fixed test UUID
+	testUUID, err := uuid.Parse(TestKoperasiUUID)
+	if err != nil {
+		log.Fatalf("Invalid test UUID: %v", err)
+	}
+
+	// Try to find existing test cooperative by ID
+	err = db.Where("id = ?", testUUID).First(&koperasi).Error
 	if err == nil {
 		fmt.Println("   → Using existing test cooperative")
+		fmt.Printf("   → ID: %s\n", koperasi.ID)
 		return &koperasi
 	}
 
-	// Create new test cooperative
+	// Create new test cooperative with fixed UUID
 	koperasi = models.Koperasi{
-		ID:            uuid.New(),
+		ID:            testUUID,
 		NamaKoperasi:  "Koperasi Test E2E",
 		Alamat:        "Jl. Test E2E No. 123, Jakarta",
 		NoTelepon:     "08123456789",
@@ -131,6 +142,8 @@ func createTestKoperasi(db *gorm.DB) *models.Koperasi {
 	if err := db.Create(&koperasi).Error; err != nil {
 		log.Fatalf("Failed to create test cooperative: %v", err)
 	}
+
+	fmt.Printf("   → Created with fixed ID: %s\n", koperasi.ID)
 
 	return &koperasi
 }
