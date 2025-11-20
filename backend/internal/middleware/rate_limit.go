@@ -8,6 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	// MaxRateLimitEntries limits the number of IPs tracked to prevent memory exhaustion
+	MaxRateLimitEntries = 10000
+)
+
 // RateLimiter tracks request rates per IP address
 type RateLimiter struct {
 	requests map[string][]time.Time
@@ -66,6 +71,11 @@ func (rl *RateLimiter) Allow(ip string) bool {
 	// Get existing timestamps for this IP
 	times, exists := rl.requests[ip]
 	if !exists {
+		// Prevent memory exhaustion by limiting max tracked IPs
+		if len(rl.requests) >= MaxRateLimitEntries {
+			// Reject request when storage is full to prevent DoS
+			return false
+		}
 		rl.requests[ip] = []time.Time{now}
 		return true
 	}
@@ -111,21 +121,21 @@ func RateLimitMiddleware(limit int, window time.Duration) gin.HandlerFunc {
 
 // LoginRateLimiter is a specialized rate limiter for login endpoints
 type LoginRateLimiter struct {
-	attempts map[string][]time.Time
-	mu       sync.RWMutex
-	maxAttempts int
-	window      time.Duration
+	attempts        map[string][]time.Time
+	mu              sync.RWMutex
+	maxAttempts     int
+	window          time.Duration
 	lockoutDuration time.Duration
-	lockedOut   map[string]time.Time
+	lockedOut       map[string]time.Time
 }
 
 // NewLoginRateLimiter creates a rate limiter specifically for login attempts
 func NewLoginRateLimiter(maxAttempts int, window time.Duration, lockoutDuration time.Duration) *LoginRateLimiter {
 	lrl := &LoginRateLimiter{
-		attempts: make(map[string][]time.Time),
-		lockedOut: make(map[string]time.Time),
-		maxAttempts: maxAttempts,
-		window: window,
+		attempts:        make(map[string][]time.Time),
+		lockedOut:       make(map[string]time.Time),
+		maxAttempts:     maxAttempts,
+		window:          window,
 		lockoutDuration: lockoutDuration,
 	}
 
@@ -204,6 +214,12 @@ func (lrl *LoginRateLimiter) RecordAttempt(identifier string) bool {
 	now := time.Now()
 	times, exists := lrl.attempts[identifier]
 	if !exists {
+		// Prevent memory exhaustion by limiting max tracked identifiers
+		if len(lrl.attempts) >= MaxRateLimitEntries {
+			// Lock out when storage is full to prevent DoS
+			lrl.lockedOut[identifier] = now
+			return false
+		}
 		lrl.attempts[identifier] = []time.Time{now}
 		return true
 	}

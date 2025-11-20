@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -119,6 +120,10 @@ func GenerateCSRFTokenEndpoint(c *gin.Context) {
 		return
 	}
 
+	// Determine if secure cookies should be used based on environment
+	// In production (HTTPS), cookies should only be sent over secure connections
+	secure := os.Getenv("SECURE_COOKIES") == "true" || os.Getenv("APP_ENV") == "production"
+
 	// Set as cookie for browser clients
 	c.SetCookie(
 		CSRFTokenCookie,
@@ -126,8 +131,8 @@ func GenerateCSRFTokenEndpoint(c *gin.Context) {
 		86400, // 24 hours
 		"/",
 		"",
-		false, // secure (set to true in production with HTTPS)
-		true,  // httpOnly
+		secure, // true in production with HTTPS, false in development
+		true,   // httpOnly - prevents JavaScript access
 	)
 
 	c.JSON(http.StatusOK, gin.H{
