@@ -117,6 +117,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 		// Protected routes - Require authentication
 		protected := v1.Group("")
 		protected.Use(middleware.AuthMiddleware(jwtUtil))
+		protected.Use(middleware.RLSMiddleware()) // Set RLS context for multi-tenant isolation
 		{
 			// Koperasi routes - Admin only
 			koperasi := protected.Group("/koperasi")
@@ -222,6 +223,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 			// Protected routes - Require member authentication
 			portalProtected := portal.Group("")
 			portalProtected.Use(middleware.AuthAnggotaMiddleware(jwtUtil))
+			portalProtected.Use(middleware.RLSMiddleware()) // Set RLS context for members
 			{
 				portalProtected.GET("/profile", portalAnggotaHandler.GetProfile)
 				portalProtected.GET("/saldo", portalAnggotaHandler.GetSaldo)
