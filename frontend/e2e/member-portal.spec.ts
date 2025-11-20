@@ -27,7 +27,7 @@ test.describe("Member Portal - Login Flow", () => {
     await page.goto("/portal/login");
 
     // Check page title and elements
-    await expect(page.getByText("Portal Anggota")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Portal Anggota" })).toBeVisible();
     await expect(
       page.getByText("Masuk ke portal anggota koperasi")
     ).toBeVisible();
@@ -44,8 +44,8 @@ test.describe("Member Portal - Login Flow", () => {
     // Click submit without filling fields
     await page.click('button[type="submit"]');
 
-    // Check for validation messages
-    await expect(page.getByText("Nomor anggota harus diisi")).toBeVisible();
+    // Wait for validation to trigger and check for validation messages
+    await expect(page.getByText("Nomor anggota harus diisi", { exact: false })).toBeVisible();
     await expect(page.getByText(/PIN harus 6 digit/i)).toBeVisible();
   });
 
@@ -87,7 +87,7 @@ test.describe("Member Portal - Login Flow", () => {
   test("should toggle PIN visibility", async ({ page }) => {
     await page.goto("/portal/login");
 
-    const pinInput = page.getByLabel(/PIN.*6 digit/i);
+    const pinInput = page.locator('input[name="pin"]');
 
     // Initially should be password type
     await expect(pinInput).toHaveAttribute("type", "password");
@@ -95,12 +95,12 @@ test.describe("Member Portal - Login Flow", () => {
     // Click visibility toggle
     await page.click('button[aria-label="toggle PIN visibility"]');
 
-    // Should change to text type
-    await expect(pinInput).toHaveAttribute("type", "text");
+    // Wait for React to update and check type changed to text
+    await expect(pinInput).toHaveAttribute("type", "text", { timeout: 2000 });
 
     // Click again to hide
     await page.click('button[aria-label="toggle PIN visibility"]');
-    await expect(pinInput).toHaveAttribute("type", "password");
+    await expect(pinInput).toHaveAttribute("type", "password", { timeout: 2000 });
   });
 });
 
