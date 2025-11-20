@@ -503,26 +503,26 @@ Roles:
 
 ### 7.3 Security Hardening
 
-**Rate Limiting**
+**Rate Limiting Algorithm**
+
+The system uses **Token Bucket algorithm** for rate limiting, providing:
+- **Memory efficiency**: ~24 bytes/IP vs ~200 bytes for sliding window
+- **Burst support**: Allows legitimate burst traffic (e.g., page load = 10 requests)
+- **O(1) complexity**: Constant time per request vs O(n) for sliding window
+- **Graceful degradation**: Smooth refill prevents sudden blocks
+
 ```go
-// backend/internal/middleware/rate_limit.go
-import "github.com/ulule/limiter/v3"
-
-func RateLimitMiddleware() gin.HandlerFunc {
-    rate := limiter.Rate{
-        Period: 1 * time.Minute,
-        Limit:  100, // 100 requests per minute per IP
-    }
-
-    store := memory.NewStore()
-    instance := limiter.New(store, rate)
+// backend/internal/middleware/rate_limit_token_bucket.go
+func TokenBucketMiddleware(requestsPerMinute int, burstSize int) gin.HandlerFunc {
+    limiter := NewRateLimiterTokenBucket(requestsPerMinute, burstSize)
 
     return func(c *gin.Context) {
-        limiterCtx := limiter.NewContext(c, c.ClientIP())
-        context, err := instance.Get(limiterCtx, limiterCtx.Key)
+        ip := c.ClientIP()
 
-        if err != nil || context.Reached {
-            c.JSON(429, gin.H{"error": "Rate limit exceeded"})
+        if !limiter.Allow(ip) {
+            c.JSON(429, gin.H{
+                "error": "Rate limit exceeded. Please try again later.",
+            })
             c.Abort()
             return
         }
@@ -530,6 +530,46 @@ func RateLimitMiddleware() gin.HandlerFunc {
         c.Next()
     }
 }
+
+// Usage examples:
+// General API: 100 requests/min with burst of 20
+router.Use(TokenBucketMiddleware(100, 20))
+
+// Login endpoint: 20 requests/min with burst of 3
+authGroup.Use(TokenBucketMiddleware(20, 3))
+```
+
+**Multi-Instance Strategy (Phase 1-2)**
+
+For MVP deployment with 1-3 Fly.io instances, we use **sticky sessions** (session affinity) to ensure requests from the same IP are routed to the same instance. This allows in-memory rate limiting to work correctly across multiple instances without Redis.
+
+Configuration in `fly.toml`:
+```toml
+[http_service.concurrency]
+  type = "connections"
+  hard_limit = 100  # Max connections per instance
+  soft_limit = 80   # Start new instance at 80 connections
+
+# Fly.io automatically provides sticky routing based on connection limits
+# Requests from same IP → same instance (until soft_limit reached)
+```
+
+**Benefits**:
+- ✅ $0 cost (no Redis needed for Phase 1-2)
+- ✅ Low latency (in-memory lookups)
+- ✅ Simple deployment (no additional services)
+- ✅ Works for 0-200 cooperatives
+
+**Limitations & Migration Path**:
+- ⚠️ Not perfect (some requests may route to different instances)
+- ⚠️ State lost on instance restart (acceptable - users get fresh rate limit)
+- ✅ Phase 3 migration: Switch to Redis for true distributed rate limiting (1 line config change)
+
+**Monitoring**:
+```go
+// Get rate limiter metrics
+metrics := limiter.GetMetrics()
+// Returns: tracked_ips, utilization, refill_rate, burst_size
 ```
 
 **Security Headers**
@@ -817,6 +857,8 @@ CMD ["./main"]
 
 ```toml
 # fly.toml - Fly.io configuration
+# Updated: 2025-11-20
+# Includes: Sticky sessions for in-memory rate limiting
 
 app = "cooperative-erp-api"
 primary_region = "sin"  # Singapore (closest to Indonesia)
@@ -842,10 +884,22 @@ primary_region = "sin"  # Singapore (closest to Indonesia)
     timeout = "5s"
     path = "/health"
 
+  # IMPORTANT: Session affinity for in-memory rate limiting
+  # When multiple instances run, this ensures same IP → same instance
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100  # Max concurrent connections per instance
+    soft_limit = 80   # Start spawning new instance at 80 connections
+
 [vm]
   memory = '256mb'  # Free tier
   cpu_kind = 'shared'
   cpus = 1
+
+# Scaling configuration
+[scaling]
+  min_count = 0  # Scale to zero when idle
+  max_count = 3  # Free tier allows up to 3 VMs
 
 [[services]]
   protocol = "tcp"
