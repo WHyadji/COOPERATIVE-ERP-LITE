@@ -26,7 +26,7 @@ This directory contains End-to-End (E2E) tests for the Cooperative ERP system us
 
 **Status:** ✅ Complete
 
-**Test Scenarios:** 35+ test cases covering:
+**Test Scenarios:** 35 test cases covering:
 - ✅ Product list display
 - ✅ Create/update/delete products
 - ✅ Product search and filtering
@@ -46,6 +46,38 @@ This directory contains End-to-End (E2E) tests for the Cooperative ERP system us
 - ✅ Transaction detail view
 - ✅ Sales report export
 - ✅ Cashier vs Admin access control
+
+### 3. `accounting.spec.ts`
+**Test Coverage:**
+- Chart of Accounts management (CRUD operations)
+- Journal Entry creation with double-entry validation
+- Transaction listing and filtering
+- Account Ledger (Buku Besar) with running balance
+- Trial Balance (Neraca Saldo) generation
+- Role-based access control (Treasurer, Admin, Cashier)
+
+**Status:** ✅ Complete
+
+**Test Scenarios:** 34 test cases covering:
+- ✅ Display chart of accounts with categories
+- ✅ Create/update accounts with validation
+- ✅ Search and filter accounts by type
+- ✅ Prevent deleting accounts with transactions
+- ✅ Create balanced journal entries (Debit = Credit)
+- ✅ Validate unbalanced journal entries
+- ✅ Add/remove multiple journal lines
+- ✅ Calculate running totals (Debit/Credit)
+- ✅ Auto-generate journal numbers
+- ✅ Filter transactions by date range and type
+- ✅ Search transactions by description/reference
+- ✅ View transaction details with journal lines
+- ✅ Export transactions to Excel
+- ✅ Display account ledger with running balance
+- ✅ Show opening and closing balance
+- ✅ Generate trial balance report
+- ✅ Verify total debit equals total credit
+- ✅ Export trial balance to PDF/Excel
+- ✅ Role-based access (Treasurer full access, Cashier no access)
 
 ---
 
@@ -375,18 +407,22 @@ use: {
 | **POS - Stock** | 3 tests | ✅ Complete |
 | **POS - Sales History** | 4 tests | ✅ Complete |
 | **POS - Access Control** | 2 tests | ✅ Complete |
-| **Accounting** | 0 tests | ⏳ Pending |
+| **Accounting - Chart of Accounts** | 9 tests | ✅ Complete |
+| **Accounting - Journal Entry** | 8 tests | ✅ Complete |
+| **Accounting - Transactions** | 6 tests | ✅ Complete |
+| **Accounting - Account Ledger** | 4 tests | ✅ Complete |
+| **Accounting - Trial Balance** | 4 tests | ✅ Complete |
+| **Accounting - Access Control** | 3 tests | ✅ Complete |
 | **Reports** | 0 tests | ⏳ Pending |
 | **Share Capital** | 0 tests | ⏳ Pending |
 
-**Total E2E Tests: 41 test cases**
+**Total E2E Tests: 81 test cases** (up from 47)
 
 ### Next Test Files to Create
 
-1. `accounting.spec.ts` - Chart of accounts, journal entries
-2. `reports.spec.ts` - Financial reports generation
-3. `share-capital.spec.ts` - Member share capital transactions
-4. `admin.spec.ts` - Admin panel, user management, settings
+1. `reports.spec.ts` - Financial reports generation (~10 tests)
+2. `share-capital.spec.ts` - Member share capital transactions (~12 tests)
+3. `admin.spec.ts` - Admin panel, user management, settings (~8 tests)
 
 ---
 
