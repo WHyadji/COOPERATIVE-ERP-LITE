@@ -73,8 +73,8 @@ func setupChartOfAccounts(db *gorm.DB, koperasiID uuid.UUID) {
 			IDKoperasi:  koperasiID,
 			KodeAkun:    "1101",
 			NamaAkun:    "Kas",
-			TipeAkun:    models.AkunAset,
-			NormalSaldo: "debit",
+			TipeAkun:    models.AkunAktiva,
+			NormalSaldo: "DEBIT",
 			Deskripsi:   "Kas dan setara kas",
 		},
 		{
@@ -82,7 +82,7 @@ func setupChartOfAccounts(db *gorm.DB, koperasiID uuid.UUID) {
 			KodeAkun:    "3101",
 			NamaAkun:    "Modal Simpanan Pokok",
 			TipeAkun:    models.AkunModal,
-			NormalSaldo: "kredit",
+			NormalSaldo: "KREDIT",
 			Deskripsi:   "Modal dari simpanan pokok anggota",
 		},
 		{
@@ -90,7 +90,7 @@ func setupChartOfAccounts(db *gorm.DB, koperasiID uuid.UUID) {
 			KodeAkun:    "3102",
 			NamaAkun:    "Modal Simpanan Wajib",
 			TipeAkun:    models.AkunModal,
-			NormalSaldo: "kredit",
+			NormalSaldo: "KREDIT",
 			Deskripsi:   "Modal dari simpanan wajib anggota",
 		},
 		{
@@ -98,7 +98,7 @@ func setupChartOfAccounts(db *gorm.DB, koperasiID uuid.UUID) {
 			KodeAkun:    "3103",
 			NamaAkun:    "Modal Simpanan Sukarela",
 			TipeAkun:    models.AkunModal,
-			NormalSaldo: "kredit",
+			NormalSaldo: "KREDIT",
 			Deskripsi:   "Modal dari simpanan sukarela anggota",
 		},
 	}

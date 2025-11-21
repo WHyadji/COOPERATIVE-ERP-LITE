@@ -26,8 +26,10 @@ func setupTestDB(t *testing.T) *gorm.DB {
 		&models.Akun{},
 		&models.Simpanan{},
 		&models.Transaksi{},
+		&models.BarisTransaksi{},
 		&models.Produk{},
 		&models.Penjualan{},
+		&models.ItemPenjualan{},
 	)
 	if err != nil {
 		t.Fatalf("Failed to migrate models: %v", err)
@@ -38,18 +40,32 @@ func setupTestDB(t *testing.T) *gorm.DB {
 }
 
 // cleanupTestDB cleans up test database
+// Uses Unscoped() to delete soft-deleted records and respects foreign key constraints
 func cleanupTestDB(t *testing.T, db *gorm.DB) {
 	if db == nil {
 		return
 	}
 
-	// Clean up all test data
-	db.Exec("DELETE FROM penjualan")
-	db.Exec("DELETE FROM produk")
-	db.Exec("DELETE FROM transaksi")
-	db.Exec("DELETE FROM simpanan")
-	db.Exec("DELETE FROM akun")
-	db.Exec("DELETE FROM anggota")
-	db.Exec("DELETE FROM pengguna")
-	db.Exec("DELETE FROM koperasi")
+	// Clean up in correct order to respect foreign key constraints
+	// Unscoped() ensures we delete soft-deleted records too (prevents duplicate key errors)
+
+	// 1. Delete child records first (those with FKs to other tables)
+	db.Exec("DELETE FROM item_penjualan")
+	db.Unscoped().Delete(&models.Penjualan{})
+	db.Exec("DELETE FROM baris_transaksi")
+	db.Unscoped().Delete(&models.Simpanan{})
+
+	// 2. Delete transaction and product records
+	db.Unscoped().Delete(&models.Transaksi{})
+	db.Unscoped().Delete(&models.Produk{})
+
+	// 3. Delete accounting records
+	db.Unscoped().Delete(&models.Akun{})
+
+	// 4. Delete member and user records
+	db.Unscoped().Delete(&models.Anggota{})
+	db.Unscoped().Delete(&models.Pengguna{})
+
+	// 5. Finally delete the cooperative itself
+	db.Unscoped().Delete(&models.Koperasi{})
 }
