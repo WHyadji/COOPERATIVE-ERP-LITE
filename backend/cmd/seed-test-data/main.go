@@ -88,10 +88,10 @@ func main() {
 			totalSukarela += t.JumlahSetoran
 		}
 	}
-	fmt.Printf("   ✓ Simpanan Pokok: Rp %,.0f\n", totalPokok)
-	fmt.Printf("   ✓ Simpanan Wajib: Rp %,.0f\n", totalWajib)
-	fmt.Printf("   ✓ Simpanan Sukarela: Rp %,.0f\n", totalSukarela)
-	fmt.Printf("   ✓ Total Simpanan: Rp %,.0f\n", totalPokok+totalWajib+totalSukarela)
+	fmt.Printf("   ✓ Simpanan Pokok: Rp %.0f\n", totalPokok)
+	fmt.Printf("   ✓ Simpanan Wajib: Rp %.0f\n", totalWajib)
+	fmt.Printf("   ✓ Simpanan Sukarela: Rp %.0f\n", totalSukarela)
+	fmt.Printf("   ✓ Total Simpanan: Rp %.0f\n", totalPokok+totalWajib+totalSukarela)
 
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
