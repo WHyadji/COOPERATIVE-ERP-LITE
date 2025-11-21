@@ -11,7 +11,7 @@ This is a RESTful API built with Go and the Gin framework, providing backend ser
 ## Prerequisites
 
 - **Go**: 1.25.4 or later ([Download](https://golang.org/dl/))
-- **PostgreSQL**: 15 or later
+- **PostgreSQL**: 16 or later (recommended 16.11)
 - **Docker**: Optional, for running PostgreSQL in a container
 - **Air**: Optional, for hot-reload during development
   ```bash
@@ -109,7 +109,7 @@ docker run --name koperasi-postgres \
   -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=koperasi_erp \
   -p 5432:5432 \
-  -d postgres:15
+  -d postgres:16-alpine
 
 # Verify it's running
 docker ps
@@ -117,7 +117,7 @@ docker ps
 
 **Option B: Local PostgreSQL Installation**
 
-Install PostgreSQL 15 and create a database named `koperasi_erp`.
+Install PostgreSQL 16 and create a database named `koperasi_erp`.
 
 ### 4. Configure Environment
 

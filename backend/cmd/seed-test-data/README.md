@@ -269,7 +269,7 @@ docker run -d --name test-postgres \
   -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=koperasi_erp \
   -p 5432:5432 \
-  postgres:15
+  postgres:16-alpine
 
 # 2. Wait for PostgreSQL to be ready
 sleep 5
