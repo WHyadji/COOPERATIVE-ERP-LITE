@@ -101,7 +101,7 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 			Catatan:          req.Catatan,
 		}
 
-		if err := tx.Create(&penjualan).Error; err != nil {
+		if createErr := tx.Create(&penjualan).Error; createErr != nil {
 			return errors.New("gagal membuat penjualan")
 		}
 
