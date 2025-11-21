@@ -109,7 +109,7 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 		for _, itemReq := range req.Items {
 			// Dapatkan produk untuk snapshot nama
 			var produk models.Produk
-			if err := tx.Where("id = ?", itemReq.IDProduk).First(&produk).Error; err != nil {
+			if findErr := tx.Where("id = ?", itemReq.IDProduk).First(&produk).Error; findErr != nil {
 				return fmt.Errorf("produk %s tidak ditemukan", itemReq.IDProduk)
 			}
 
@@ -122,19 +122,19 @@ func (s *PenjualanService) ProsesPenjualan(idKoperasi, idKasir uuid.UUID, req *P
 				HargaSatuan: itemReq.HargaSatuan,
 			}
 
-			if err := tx.Create(&item).Error; err != nil {
+			if itemErr := tx.Create(&item).Error; itemErr != nil {
 				return errors.New("gagal membuat item penjualan")
 			}
 
 			// Kurangi stok dalam transaction yang sama untuk atomicity
-			if err := s.produkService.KurangiStokWithTx(tx, itemReq.IDProduk, itemReq.Kuantitas); err != nil {
-				return fmt.Errorf("gagal mengurangi stok: %w", err)
+			if stokErr := s.produkService.KurangiStokWithTx(tx, itemReq.IDProduk, itemReq.Kuantitas); stokErr != nil {
+				return fmt.Errorf("gagal mengurangi stok: %w", stokErr)
 			}
 		}
 
 		// Step 3: Posting otomatis ke jurnal akuntansi dalam transaction yang sama
-		if err := s.transaksiService.PostingOtomatisPenjualanWithTx(tx, idKoperasi, idKasir, penjualan.ID); err != nil {
-			return fmt.Errorf("gagal posting ke jurnal: %w", err)
+		if postErr := s.transaksiService.PostingOtomatisPenjualanWithTx(tx, idKoperasi, idKasir, penjualan.ID); postErr != nil {
+			return fmt.Errorf("gagal posting ke jurnal: %w", postErr)
 		}
 
 		return nil
