@@ -502,7 +502,7 @@ func (s *TransaksiService) DapatkanBukuBesar(idAkun uuid.UUID, tanggalMulai, tan
 
 	for _, baris := range barisTransaksiList {
 		// Update saldo
-		if akun.NormalSaldo == "debit" {
+		if akun.NormalSaldo == "DEBIT" {
 			saldo += baris.JumlahDebit - baris.JumlahKredit
 		} else {
 			saldo += baris.JumlahKredit - baris.JumlahDebit
