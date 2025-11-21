@@ -320,8 +320,8 @@ func TestPerbaruiAkun_CrossTenantBlocked(t *testing.T) {
 		IDKoperasi:  koperasiA,
 		KodeAkun:    "1101",
 		NamaAkun:    "Kas",
-		TipeAkun:    models.AkunAset,
-		NormalSaldo: "debit",
+		TipeAkun:    models.AkunAktiva,
+		NormalSaldo: "DEBIT",
 		StatusAktif: true,
 	}
 	db.Create(akunA)
@@ -368,8 +368,8 @@ func TestHapusAkun_CrossTenantBlocked(t *testing.T) {
 		IDKoperasi:  koperasiA,
 		KodeAkun:    "1101",
 		NamaAkun:    "Kas",
-		TipeAkun:    models.AkunAset,
-		NormalSaldo: "debit",
+		TipeAkun:    models.AkunAktiva,
+		NormalSaldo: "DEBIT",
 		StatusAktif: true,
 	}
 	db.Create(akunA)
@@ -624,8 +624,8 @@ func TestMultiTenant_ComprehensiveSecurity(t *testing.T) {
 			IDKoperasi:  koopID,
 			KodeAkun:    fmt.Sprintf("110%d", i+1),
 			NamaAkun:    fmt.Sprintf("Cash %d", i+1),
-			TipeAkun:    models.AkunAset,
-			NormalSaldo: "debit",
+			TipeAkun:    models.AkunAktiva,
+			NormalSaldo: "DEBIT",
 			StatusAktif: true,
 		}
 		db.Create(akun)

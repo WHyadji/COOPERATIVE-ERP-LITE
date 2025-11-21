@@ -64,7 +64,7 @@ func TestBuatAkun_Success(t *testing.T) {
 	req := &BuatAkunRequest{
 		KodeAkun: "1101",
 		NamaAkun: "Kas",
-		TipeAkun: models.AkunAset,
+		TipeAkun: models.AkunAktiva,
 		Deskripsi: "Kas di tangan",
 	}
 
@@ -74,8 +74,8 @@ func TestBuatAkun_Success(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, "1101", result.KodeAkun)
 	assert.Equal(t, "Kas", result.NamaAkun)
-	assert.Equal(t, models.AkunAset, result.TipeAkun)
-	assert.Equal(t, "debit", result.NormalSaldo) // Auto-set berdasarkan tipe
+	assert.Equal(t, models.AkunAktiva, result.TipeAkun)
+	assert.Equal(t, "DEBIT", result.NormalSaldo) // Auto-set berdasarkan tipe
 	assert.True(t, result.StatusAktif)
 }
 
@@ -100,7 +100,7 @@ func TestBuatAkun_ValidationErrors(t *testing.T) {
 			req: &BuatAkunRequest{
 				KodeAkun: "ABC1",
 				NamaAkun: "Test Account",
-				TipeAkun: models.AkunAset,
+				TipeAkun: models.AkunAktiva,
 			},
 			wantErr: true,
 		},
@@ -109,7 +109,7 @@ func TestBuatAkun_ValidationErrors(t *testing.T) {
 			req: &BuatAkunRequest{
 				KodeAkun: "1101",
 				NamaAkun: "AB",
-				TipeAkun: models.AkunAset,
+				TipeAkun: models.AkunAktiva,
 			},
 			wantErr: true,
 		},
@@ -118,7 +118,7 @@ func TestBuatAkun_ValidationErrors(t *testing.T) {
 			req: &BuatAkunRequest{
 				KodeAkun: "1101",
 				NamaAkun: "Valid Account",
-				TipeAkun: models.AkunAset,
+				TipeAkun: models.AkunAktiva,
 			},
 			wantErr: false,
 		},
@@ -152,7 +152,7 @@ func TestBuatAkun_DuplicateCode(t *testing.T) {
 	req1 := &BuatAkunRequest{
 		KodeAkun: "1101",
 		NamaAkun: "Kas",
-		TipeAkun: models.AkunAset,
+		TipeAkun: models.AkunAktiva,
 	}
 	_, err := service.BuatAkun(koperasi.ID, req1)
 	assert.NoError(t, err)
@@ -161,7 +161,7 @@ func TestBuatAkun_DuplicateCode(t *testing.T) {
 	req2 := &BuatAkunRequest{
 		KodeAkun: "1101",
 		NamaAkun: "Bank",
-		TipeAkun: models.AkunAset,
+		TipeAkun: models.AkunAktiva,
 	}
 	_, err = service.BuatAkun(koperasi.ID, req2)
 	assert.Error(t, err)
@@ -183,7 +183,7 @@ func TestBuatAkun_WithParent(t *testing.T) {
 	parentReq := &BuatAkunRequest{
 		KodeAkun: "1100",
 		NamaAkun: "Aset Lancar",
-		TipeAkun: models.AkunAset,
+		TipeAkun: models.AkunAktiva,
 	}
 	parent, err := service.BuatAkun(koperasi.ID, parentReq)
 	assert.NoError(t, err)
@@ -192,7 +192,7 @@ func TestBuatAkun_WithParent(t *testing.T) {
 	childReq := &BuatAkunRequest{
 		KodeAkun: "1101",
 		NamaAkun: "Kas",
-		TipeAkun: models.AkunAset,
+		TipeAkun: models.AkunAktiva,
 		IDInduk:  &parent.ID,
 	}
 	child, err := service.BuatAkun(koperasi.ID, childReq)
@@ -216,7 +216,7 @@ func TestBuatAkun_InvalidParent(t *testing.T) {
 	req := &BuatAkunRequest{
 		KodeAkun: "1101",
 		NamaAkun: "Kas",
-		TipeAkun: models.AkunAset,
+		TipeAkun: models.AkunAktiva,
 		IDInduk:  &invalidParentID,
 	}
 
@@ -241,11 +241,11 @@ func TestBuatAkun_AutoSetNormalSaldo(t *testing.T) {
 		tipeAkun        models.TipeAkun
 		expectedNormal  string
 	}{
-		{"aset should be debit", models.AkunAset, "debit"},
-		{"beban should be debit", models.AkunBeban, "debit"},
-		{"kewajiban should be kredit", models.AkunKewajiban, "kredit"},
-		{"modal should be kredit", models.AkunModal, "kredit"},
-		{"pendapatan should be kredit", models.AkunPendapatan, "kredit"},
+		{"aset should be debit", models.AkunAktiva, "DEBIT"},
+		{"beban should be debit", models.AkunBeban, "DEBIT"},
+		{"kewajiban should be kredit", models.AkunKewajiban, "KREDIT"},
+		{"modal should be kredit", models.AkunModal, "KREDIT"},
+		{"pendapatan should be kredit", models.AkunPendapatan, "KREDIT"},
 	}
 
 	for i, tt := range tests {
@@ -276,8 +276,8 @@ func TestDapatkanSemuaAkun(t *testing.T) {
 
 	// Create test accounts
 	accounts := []BuatAkunRequest{
-		{KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAset},
-		{KodeAkun: "1102", NamaAkun: "Bank", TipeAkun: models.AkunAset},
+		{KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAktiva},
+		{KodeAkun: "1102", NamaAkun: "Bank", TipeAkun: models.AkunAktiva},
 		{KodeAkun: "2101", NamaAkun: "Hutang", TipeAkun: models.AkunKewajiban},
 		{KodeAkun: "4101", NamaAkun: "Pendapatan", TipeAkun: models.AkunPendapatan},
 	}
@@ -293,7 +293,7 @@ func TestDapatkanSemuaAkun(t *testing.T) {
 	})
 
 	t.Run("filter by tipe aset", func(t *testing.T) {
-		results, err := service.DapatkanSemuaAkun(koperasi.ID, string(models.AkunAset), nil)
+		results, err := service.DapatkanSemuaAkun(koperasi.ID, string(models.AkunAktiva), nil)
 		assert.NoError(t, err)
 		assert.Len(t, results, 2)
 	})
@@ -320,7 +320,7 @@ func TestPerbaruiAkun(t *testing.T) {
 	createReq := &BuatAkunRequest{
 		KodeAkun: "1101",
 		NamaAkun: "Original Name",
-		TipeAkun: models.AkunAset,
+		TipeAkun: models.AkunAktiva,
 	}
 	akun, _ := service.BuatAkun(koperasi.ID, createReq)
 
@@ -359,7 +359,7 @@ func TestHapusAkun(t *testing.T) {
 		createReq := &BuatAkunRequest{
 			KodeAkun: "1101",
 			NamaAkun: "Kas",
-			TipeAkun: models.AkunAset,
+			TipeAkun: models.AkunAktiva,
 		}
 		akun, _ := service.BuatAkun(koperasi.ID, createReq)
 
@@ -376,7 +376,7 @@ func TestHapusAkun(t *testing.T) {
 		parentReq := &BuatAkunRequest{
 			KodeAkun: "1200",
 			NamaAkun: "Aset Lancar",
-			TipeAkun: models.AkunAset,
+			TipeAkun: models.AkunAktiva,
 		}
 		parent, err := service.BuatAkun(koperasi.ID, parentReq)
 		assert.NoError(t, err)
@@ -386,7 +386,7 @@ func TestHapusAkun(t *testing.T) {
 		childReq := &BuatAkunRequest{
 			KodeAkun: "1201",
 			NamaAkun: "Kas",
-			TipeAkun: models.AkunAset,
+			TipeAkun: models.AkunAktiva,
 			IDInduk:  &parent.ID,
 		}
 		child, err := service.BuatAkun(koperasi.ID, childReq)
@@ -426,8 +426,8 @@ func TestInisialisasiCOADefault(t *testing.T) {
 		akun, err := service.DapatkanAkunByKode(koperasi.ID, "1000")
 		assert.NoError(t, err)
 		assert.Equal(t, "ASET", akun.NamaAkun)
-		assert.Equal(t, models.AkunAset, akun.TipeAkun)
-		assert.Equal(t, "debit", akun.NormalSaldo)
+		assert.Equal(t, models.AkunAktiva, akun.TipeAkun)
+		assert.Equal(t, "DEBIT", akun.NormalSaldo)
 	})
 
 	t.Run("verify Kas account exists", func(t *testing.T) {
@@ -441,7 +441,7 @@ func TestInisialisasiCOADefault(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "Simpanan Pokok", akun.NamaAkun)
 		assert.Equal(t, models.AkunModal, akun.TipeAkun)
-		assert.Equal(t, "kredit", akun.NormalSaldo)
+		assert.Equal(t, "KREDIT", akun.NormalSaldo)
 	})
 
 	t.Run("verify Penjualan account exists", func(t *testing.T) {
@@ -452,7 +452,7 @@ func TestInisialisasiCOADefault(t *testing.T) {
 	})
 
 	t.Run("verify all account types exist", func(t *testing.T) {
-		aset, _ := service.DapatkanSemuaAkun(koperasi.ID, string(models.AkunAset), nil)
+		aset, _ := service.DapatkanSemuaAkun(koperasi.ID, string(models.AkunAktiva), nil)
 		kewajiban, _ := service.DapatkanSemuaAkun(koperasi.ID, string(models.AkunKewajiban), nil)
 		modal, _ := service.DapatkanSemuaAkun(koperasi.ID, string(models.AkunModal), nil)
 		pendapatan, _ := service.DapatkanSemuaAkun(koperasi.ID, string(models.AkunPendapatan), nil)
@@ -531,8 +531,8 @@ func TestMultiTenant_AccountIsolation(t *testing.T) {
 	defer cleanupTestData(db, koperasi2.ID)
 
 	// Create accounts in both cooperatives with same code
-	req1 := &BuatAkunRequest{KodeAkun: "1101", NamaAkun: "Kas Koperasi 1", TipeAkun: models.AkunAset}
-	req2 := &BuatAkunRequest{KodeAkun: "1101", NamaAkun: "Kas Koperasi 2", TipeAkun: models.AkunAset}
+	req1 := &BuatAkunRequest{KodeAkun: "1101", NamaAkun: "Kas Koperasi 1", TipeAkun: models.AkunAktiva}
+	req2 := &BuatAkunRequest{KodeAkun: "1101", NamaAkun: "Kas Koperasi 2", TipeAkun: models.AkunAktiva}
 
 	akun1, err := service.BuatAkun(koperasi1.ID, req1)
 	assert.NoError(t, err)
@@ -587,7 +587,7 @@ func BenchmarkBuatAkun(b *testing.B) {
 		req := &BuatAkunRequest{
 			KodeAkun: fmt.Sprintf("%04d", i),
 			NamaAkun: fmt.Sprintf("Account %d", i),
-			TipeAkun: models.AkunAset,
+			TipeAkun: models.AkunAktiva,
 		}
 		_, _ = service.BuatAkun(koperasi.ID, req)
 	}

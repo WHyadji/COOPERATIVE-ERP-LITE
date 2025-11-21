@@ -111,7 +111,7 @@ func (s *LaporanService) GenerateLaporanPosisiKeuangan(idKoperasi uuid.UUID, tan
 	for _, balance := range balances {
 		// Calculate balance based on normal balance
 		var saldo float64
-		if balance.NormalSaldo == "debit" {
+		if balance.NormalSaldo == "DEBIT" {
 			saldo = balance.TotalDebit - balance.TotalKredit
 		} else {
 			saldo = balance.TotalKredit - balance.TotalDebit
@@ -130,7 +130,7 @@ func (s *LaporanService) GenerateLaporanPosisiKeuangan(idKoperasi uuid.UUID, tan
 
 		// Categorize by account type (Aset, Kewajiban, Modal only for Balance Sheet)
 		switch balance.TipeAkun {
-		case models.AkunAset:
+		case models.AkunAktiva:
 			laporan.Aset = append(laporan.Aset, item)
 			laporan.TotalAset += saldo
 		case models.AkunKewajiban:
@@ -215,7 +215,7 @@ func (s *LaporanService) GenerateLaporanLabaRugi(idKoperasi uuid.UUID, tanggalMu
 	for _, balance := range balances {
 		// Calculate balance based on normal balance
 		var saldoPeriode float64
-		if balance.NormalSaldo == "debit" {
+		if balance.NormalSaldo == "DEBIT" {
 			saldoPeriode = balance.TotalDebit - balance.TotalKredit
 		} else {
 			saldoPeriode = balance.TotalKredit - balance.TotalDebit
@@ -535,7 +535,7 @@ func (s *LaporanService) GenerateBukuBesar(idKoperasi, idAkun uuid.UUID, tanggal
 	// Process each transaction
 	for _, row := range rows {
 		// Update running balance
-		if akun.NormalSaldo == "debit" {
+		if akun.NormalSaldo == "DEBIT" {
 			runningBalance += row.Debit - row.Kredit
 		} else {
 			runningBalance += row.Kredit - row.Debit
@@ -595,7 +595,7 @@ func (s *LaporanService) GenerateNeracaSaldo(idKoperasi uuid.UUID, tanggalPer st
 		}
 
 		if saldo > 0 {
-			if akun.NormalSaldo == "debit" {
+			if akun.NormalSaldo == "DEBIT" {
 				item.SaldoDebit = saldo
 				totalDebit += saldo
 			} else {

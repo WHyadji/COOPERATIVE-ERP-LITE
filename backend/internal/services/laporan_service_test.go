@@ -68,12 +68,12 @@ func createTestKoperasiForLaporan(_ *testing.T, db *gorm.DB) (*models.Koperasi, 
 
 	// Create basic COA
 	accounts := []models.Akun{
-		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "1102", NamaAkun: "Bank", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "2101", NamaAkun: "Utang", TipeAkun: models.AkunKewajiban, NormalSaldo: "kredit"},
-		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "3101", NamaAkun: "Modal", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
-		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "4101", NamaAkun: "Pendapatan Penjualan", TipeAkun: models.AkunPendapatan, NormalSaldo: "kredit"},
-		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "5101", NamaAkun: "Beban Gaji", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
+		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "1102", NamaAkun: "Bank", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "2101", NamaAkun: "Utang", TipeAkun: models.AkunKewajiban, NormalSaldo: "KREDIT"},
+		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "3101", NamaAkun: "Modal", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
+		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "4101", NamaAkun: "Pendapatan Penjualan", TipeAkun: models.AkunPendapatan, NormalSaldo: "KREDIT"},
+		{ID: uuid.New(), IDKoperasi: koperasi.ID, KodeAkun: "5101", NamaAkun: "Beban Gaji", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
 	}
 
 	for _, akun := range accounts {

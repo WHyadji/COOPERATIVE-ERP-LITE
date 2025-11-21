@@ -274,7 +274,7 @@ func (s *AkunService) HitungSaldoAkun(idAkun uuid.UUID, tanggalAkhir string) (fl
 
 	// Hitung saldo berdasarkan normal saldo
 	var saldo float64
-	if akun.NormalSaldo == "debit" {
+	if akun.NormalSaldo == "DEBIT" {
 		saldo = hasil.TotalDebit - hasil.TotalKredit
 	} else {
 		saldo = hasil.TotalKredit - hasil.TotalDebit
@@ -288,44 +288,44 @@ func (s *AkunService) InisialisasiCOADefault(idKoperasi uuid.UUID) error {
 	// COA Default untuk Koperasi Indonesia
 	coaDefault := []models.Akun{
 		// ASET
-		{IDKoperasi: idKoperasi, KodeAkun: "1000", NamaAkun: "ASET", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "1100", NamaAkun: "Aset Lancar", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "1102", NamaAkun: "Bank", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "1200", NamaAkun: "Piutang", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "1201", NamaAkun: "Piutang Anggota", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "1300", NamaAkun: "Persediaan", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "1301", NamaAkun: "Persediaan Barang Dagangan", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1000", NamaAkun: "ASET", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1100", NamaAkun: "Aset Lancar", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1102", NamaAkun: "Bank", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1200", NamaAkun: "Piutang", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1201", NamaAkun: "Piutang Anggota", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1300", NamaAkun: "Persediaan", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "1301", NamaAkun: "Persediaan Barang Dagangan", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
 
 		// KEWAJIBAN
-		{IDKoperasi: idKoperasi, KodeAkun: "2000", NamaAkun: "KEWAJIBAN", TipeAkun: models.AkunKewajiban, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "2100", NamaAkun: "Kewajiban Jangka Pendek", TipeAkun: models.AkunKewajiban, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "2101", NamaAkun: "Hutang Usaha", TipeAkun: models.AkunKewajiban, NormalSaldo: "kredit"},
+		{IDKoperasi: idKoperasi, KodeAkun: "2000", NamaAkun: "KEWAJIBAN", TipeAkun: models.AkunKewajiban, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "2100", NamaAkun: "Kewajiban Jangka Pendek", TipeAkun: models.AkunKewajiban, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "2101", NamaAkun: "Hutang Usaha", TipeAkun: models.AkunKewajiban, NormalSaldo: "KREDIT"},
 
 		// MODAL
-		{IDKoperasi: idKoperasi, KodeAkun: "3000", NamaAkun: "MODAL", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "3100", NamaAkun: "Modal Koperasi", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "3101", NamaAkun: "Simpanan Pokok", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "3102", NamaAkun: "Simpanan Wajib", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "3103", NamaAkun: "Simpanan Sukarela", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "3200", NamaAkun: "Sisa Hasil Usaha (SHU)", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "3201", NamaAkun: "SHU Tahun Berjalan", TipeAkun: models.AkunModal, NormalSaldo: "kredit"},
+		{IDKoperasi: idKoperasi, KodeAkun: "3000", NamaAkun: "MODAL", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "3100", NamaAkun: "Modal Koperasi", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "3101", NamaAkun: "Simpanan Pokok", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "3102", NamaAkun: "Simpanan Wajib", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "3103", NamaAkun: "Simpanan Sukarela", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "3200", NamaAkun: "Sisa Hasil Usaha (SHU)", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "3201", NamaAkun: "SHU Tahun Berjalan", TipeAkun: models.AkunModal, NormalSaldo: "KREDIT"},
 
 		// PENDAPATAN
-		{IDKoperasi: idKoperasi, KodeAkun: "4000", NamaAkun: "PENDAPATAN", TipeAkun: models.AkunPendapatan, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "4100", NamaAkun: "Pendapatan Usaha", TipeAkun: models.AkunPendapatan, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "4101", NamaAkun: "Penjualan", TipeAkun: models.AkunPendapatan, NormalSaldo: "kredit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "4200", NamaAkun: "Pendapatan Lain-lain", TipeAkun: models.AkunPendapatan, NormalSaldo: "kredit"},
+		{IDKoperasi: idKoperasi, KodeAkun: "4000", NamaAkun: "PENDAPATAN", TipeAkun: models.AkunPendapatan, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "4100", NamaAkun: "Pendapatan Usaha", TipeAkun: models.AkunPendapatan, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "4101", NamaAkun: "Penjualan", TipeAkun: models.AkunPendapatan, NormalSaldo: "KREDIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "4200", NamaAkun: "Pendapatan Lain-lain", TipeAkun: models.AkunPendapatan, NormalSaldo: "KREDIT"},
 
 		// BEBAN
-		{IDKoperasi: idKoperasi, KodeAkun: "5000", NamaAkun: "BEBAN", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "5100", NamaAkun: "Beban Operasional", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "5101", NamaAkun: "Beban Gaji", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "5102", NamaAkun: "Beban Listrik", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "5103", NamaAkun: "Beban Air", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "5104", NamaAkun: "Beban Telepon & Internet", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "5200", NamaAkun: "Harga Pokok Penjualan", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: idKoperasi, KodeAkun: "5201", NamaAkun: "HPP", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5000", NamaAkun: "BEBAN", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5100", NamaAkun: "Beban Operasional", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5101", NamaAkun: "Beban Gaji", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5102", NamaAkun: "Beban Listrik", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5103", NamaAkun: "Beban Air", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5104", NamaAkun: "Beban Telepon & Internet", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5200", NamaAkun: "Harga Pokok Penjualan", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: idKoperasi, KodeAkun: "5201", NamaAkun: "HPP", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
 	}
 
 	// Insert semua akun dalam satu transaction
@@ -445,7 +445,7 @@ func (s *AkunService) GetBukuBesar(idKoperasi, idAkun uuid.UUID, tanggalMulai, t
 	// Calculate running balance
 	saldo := 0.0
 	for i := range entries {
-		if akun.NormalSaldo == "debit" {
+		if akun.NormalSaldo == "DEBIT" {
 			saldo += entries[i].JumlahDebit - entries[i].JumlahKredit
 		} else {
 			saldo += entries[i].JumlahKredit - entries[i].JumlahDebit

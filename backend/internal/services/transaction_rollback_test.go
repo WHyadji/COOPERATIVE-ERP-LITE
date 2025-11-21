@@ -165,8 +165,8 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 		IDKoperasi:  koperasi.ID,
 		KodeAkun:    "1101",
 		NamaAkun:    "Kas",
-		TipeAkun:    models.AkunAset,
-		NormalSaldo: "debit",
+		TipeAkun:    models.AkunAktiva,
+		NormalSaldo: "DEBIT",
 	}
 	db.Create(akunKas)
 
@@ -175,7 +175,7 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 		KodeAkun:    "3101",
 		NamaAkun:    "Simpanan Pokok",
 		TipeAkun:    models.AkunModal,
-		NormalSaldo: "kredit",
+		NormalSaldo: "KREDIT",
 	}
 	db.Create(akunSimpananPokok)
 
@@ -378,10 +378,10 @@ func TestPenjualanService_ProsesPenjualan_CommitOnSuccess(t *testing.T) {
 
 	// Create required accounts
 	accounts := []models.Akun{
-		{IDKoperasi: koperasi.ID, KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
-		{IDKoperasi: koperasi.ID, KodeAkun: "4101", NamaAkun: "Penjualan", TipeAkun: models.AkunPendapatan, NormalSaldo: "kredit"},
-		{IDKoperasi: koperasi.ID, KodeAkun: "5201", NamaAkun: "HPP", TipeAkun: models.AkunBeban, NormalSaldo: "debit"},
-		{IDKoperasi: koperasi.ID, KodeAkun: "1301", NamaAkun: "Persediaan", TipeAkun: models.AkunAset, NormalSaldo: "debit"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "1101", NamaAkun: "Kas", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "4101", NamaAkun: "Penjualan", TipeAkun: models.AkunPendapatan, NormalSaldo: "KREDIT"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "5201", NamaAkun: "HPP", TipeAkun: models.AkunBeban, NormalSaldo: "DEBIT"},
+		{IDKoperasi: koperasi.ID, KodeAkun: "1301", NamaAkun: "Persediaan", TipeAkun: models.AkunAktiva, NormalSaldo: "DEBIT"},
 	}
 	for _, akun := range accounts {
 		db.Create(&akun)

@@ -370,8 +370,8 @@ func TestConcurrentTransactionCreation_FirstOfDay(t *testing.T) {
 		IDKoperasi:  koperasi.ID,
 		KodeAkun:    "1101",
 		NamaAkun:    "Kas",
-		TipeAkun:    models.AkunAset,
-		NormalSaldo: "debit",
+		TipeAkun:    models.AkunAktiva,
+		NormalSaldo: "DEBIT",
 	}
 	akunModal := models.Akun{
 		ID:          uuid.New(),
@@ -379,7 +379,7 @@ func TestConcurrentTransactionCreation_FirstOfDay(t *testing.T) {
 		KodeAkun:    "3101",
 		NamaAkun:    "Simpanan Pokok",
 		TipeAkun:    models.AkunModal,
-		NormalSaldo: "kredit",
+		NormalSaldo: "KREDIT",
 	}
 	db.Create(&akunKas)
 	db.Create(&akunModal)
@@ -490,8 +490,8 @@ func TestConcurrentTransactionCreation_RaceConditionFix(t *testing.T) {
 		IDKoperasi:  koperasi.ID,
 		KodeAkun:    "1101",
 		NamaAkun:    "Kas",
-		TipeAkun:    models.AkunAset,
-		NormalSaldo: "debit",
+		TipeAkun:    models.AkunAktiva,
+		NormalSaldo: "DEBIT",
 	}
 	akunModal := models.Akun{
 		ID:          uuid.New(),
@@ -499,7 +499,7 @@ func TestConcurrentTransactionCreation_RaceConditionFix(t *testing.T) {
 		KodeAkun:    "3101",
 		NamaAkun:    "Simpanan Pokok",
 		TipeAkun:    models.AkunModal,
-		NormalSaldo: "kredit",
+		NormalSaldo: "KREDIT",
 	}
 	if err := db.Create(&akunKas).Error; err != nil {
 		t.Fatalf("Failed to create kas account: %v", err)

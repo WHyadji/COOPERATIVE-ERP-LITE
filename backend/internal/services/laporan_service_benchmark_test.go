@@ -59,11 +59,11 @@ func seedAccounts(db *gorm.DB, idKoperasi uuid.UUID, count int) []models.Akun {
 		prefix string
 		normal string
 	}{
-		{models.AkunAset, "1", "debit"},
-		{models.AkunKewajiban, "2", "kredit"},
-		{models.AkunModal, "3", "kredit"},
-		{models.AkunPendapatan, "4", "kredit"},
-		{models.AkunBeban, "5", "debit"},
+		{models.AkunAktiva, "1", "DEBIT"},
+		{models.AkunKewajiban, "2", "KREDIT"},
+		{models.AkunModal, "3", "KREDIT"},
+		{models.AkunPendapatan, "4", "KREDIT"},
+		{models.AkunBeban, "5", "DEBIT"},
 	}
 
 	for i := 0; i < count; i++ {
