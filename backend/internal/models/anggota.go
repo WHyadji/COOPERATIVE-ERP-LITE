@@ -11,9 +11,9 @@ import (
 type StatusAnggota string
 
 const (
-	StatusAktif     StatusAnggota = "aktif"     // Anggota aktif
-	StatusNonAktif  StatusAnggota = "nonaktif"  // Anggota tidak aktif
-	StatusDiberhentikan StatusAnggota = "diberhentikan" // Anggota diberhentikan
+	StatusAktif     StatusAnggota = "AKTIF"     // Anggota aktif
+	StatusNonAktif  StatusAnggota = "NONAKTIF"  // Anggota tidak aktif
+	StatusKeluar    StatusAnggota = "KELUAR"    // Anggota keluar
 )
 
 // Anggota merepresentasikan anggota koperasi

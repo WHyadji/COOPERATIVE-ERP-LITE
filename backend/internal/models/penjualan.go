@@ -11,7 +11,9 @@ import (
 type MetodePembayaran string
 
 const (
-	PembayaranTunai MetodePembayaran = "tunai" // Cash only untuk MVP
+	PembayaranTunai    MetodePembayaran = "TUNAI"    // Cash only untuk MVP
+	PembayaranTransfer MetodePembayaran = "TRANSFER" // Transfer bank (Phase 2+)
+	PembayaranQRIS     MetodePembayaran = "QRIS"     // QRIS payment (Phase 2+)
 )
 
 // Penjualan merepresentasikan transaksi penjualan di POS

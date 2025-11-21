@@ -12,10 +12,10 @@ import (
 type PeranPengguna string
 
 const (
-	PeranAdmin     PeranPengguna = "admin"     // Admin koperasi - akses penuh
-	PeranBendahara PeranPengguna = "bendahara" // Bendahara - akses keuangan
-	PeranKasir     PeranPengguna = "kasir"     // Kasir - akses POS
-	PeranAnggota   PeranPengguna = "anggota"   // Anggota - akses portal (read-only)
+	PeranAdmin     PeranPengguna = "ADMIN"     // Admin koperasi - akses penuh
+	PeranBendahara PeranPengguna = "BENDAHARA" // Bendahara - akses keuangan
+	PeranKasir     PeranPengguna = "KASIR"     // Kasir - akses POS
+	PeranAnggota   PeranPengguna = "ANGGOTA"   // Anggota - akses portal (read-only)
 )
 
 // BcryptCost adalah cost factor untuk bcrypt hashing
@@ -30,7 +30,7 @@ type Pengguna struct {
 	NamaPengguna          string         `gorm:"type:varchar(100);not null;uniqueIndex:idx_koperasi_username" json:"namaPengguna" validate:"required,min=3"`
 	Email                 string         `gorm:"type:varchar(100);not null" json:"email" validate:"required,email"`
 	KataSandiHash         string         `gorm:"type:varchar(255);not null" json:"-"` // Password hash, tidak di-export ke JSON
-	Peran                 PeranPengguna  `gorm:"type:varchar(20);not null" json:"peran" validate:"required,oneof=admin bendahara kasir anggota"`
+	Peran                 PeranPengguna  `gorm:"type:varchar(20);not null" json:"peran" validate:"required,oneof=ADMIN BENDAHARA KASIR ANGGOTA"`
 	StatusAktif           bool           `gorm:"type:boolean;default:true" json:"statusAktif"`
 	RequirePasswordChange bool           `gorm:"type:boolean;default:false" json:"requirePasswordChange"` // Flag untuk memaksa user mengubah password
 	FirstLoginAt          *time.Time     `gorm:"type:timestamp" json:"firstLoginAt"`                       // Timestamp login pertama kali

@@ -11,9 +11,9 @@ import (
 type TipeSimpanan string
 
 const (
-	SimpananPokok     TipeSimpanan = "pokok"     // Simpanan pokok - dibayar sekali saat bergabung
-	SimpananWajib     TipeSimpanan = "wajib"     // Simpanan wajib - dibayar rutin (bulanan)
-	SimpananSukarela  TipeSimpanan = "sukarela"  // Simpanan sukarela - opsional
+	SimpananPokok     TipeSimpanan = "POKOK"     // Simpanan pokok - dibayar sekali saat bergabung
+	SimpananWajib     TipeSimpanan = "WAJIB"     // Simpanan wajib - dibayar rutin (bulanan)
+	SimpananSukarela  TipeSimpanan = "SUKARELA"  // Simpanan sukarela - opsional
 )
 
 // Simpanan merepresentasikan transaksi simpanan anggota
@@ -21,7 +21,7 @@ type Simpanan struct {
 	ID                uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
 	IDKoperasi        uuid.UUID      `gorm:"type:uuid;not null;index" json:"idKoperasi" validate:"required"`
 	IDAnggota         uuid.UUID      `gorm:"type:uuid;not null;index" json:"idAnggota" validate:"required"`
-	TipeSimpanan      TipeSimpanan   `gorm:"type:varchar(20);not null" json:"tipeSimpanan" validate:"required,oneof=pokok wajib sukarela"`
+	TipeSimpanan      TipeSimpanan   `gorm:"type:varchar(20);not null" json:"tipeSimpanan" validate:"required,oneof=POKOK WAJIB SUKARELA"`
 	TanggalTransaksi  time.Time      `gorm:"type:date;not null;index" json:"tanggalTransaksi" validate:"required"`
 	JumlahSetoran     float64        `gorm:"type:decimal(15,2);not null" json:"jumlahSetoran" validate:"required,gt=0"`
 	Keterangan        string         `gorm:"type:text" json:"keterangan"`

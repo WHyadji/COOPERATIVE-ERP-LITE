@@ -14,6 +14,14 @@ const (
 	EpsilonTolerance = 0.01
 )
 
+// Jenis transaksi akuntansi
+const (
+	TipeTransaksiJurnalUmum = "JURNAL_UMUM"  // Manual journal entry
+	TipeTransaksiSimpanan   = "SIMPANAN"     // Savings transaction
+	TipeTransaksiPenjualan  = "PENJUALAN"    // Sales transaction
+	TipeTransaksiPembelian  = "PEMBELIAN"    // Purchase transaction (Phase 2+)
+)
+
 // Transaksi merepresentasikan jurnal transaksi akuntansi (header)
 type Transaksi struct {
 	ID                uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`

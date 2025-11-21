@@ -11,11 +11,11 @@ import (
 type TipeAkun string
 
 const (
-	AkunAset      TipeAkun = "aset"      // Aset/Harta
-	AkunKewajiban TipeAkun = "kewajiban" // Kewajiban/Hutang
-	AkunModal     TipeAkun = "modal"     // Modal/Ekuitas
-	AkunPendapatan TipeAkun = "pendapatan" // Pendapatan
-	AkunBeban     TipeAkun = "beban"     // Beban/Biaya
+	AkunAktiva     TipeAkun = "AKTIVA"     // Aktiva/Aset/Harta
+	AkunKewajiban  TipeAkun = "KEWAJIBAN"  // Kewajiban/Hutang
+	AkunModal      TipeAkun = "MODAL"      // Modal/Ekuitas
+	AkunPendapatan TipeAkun = "PENDAPATAN" // Pendapatan
+	AkunBeban      TipeAkun = "BEBAN"      // Beban/Biaya
 )
 
 // Akun merepresentasikan Chart of Accounts (Bagan Akun)
@@ -24,9 +24,9 @@ type Akun struct {
 	IDKoperasi        uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:idx_koperasi_kode_akun" json:"idKoperasi" validate:"required"`
 	KodeAkun          string         `gorm:"type:varchar(20);not null;uniqueIndex:idx_koperasi_kode_akun" json:"kodeAkun" validate:"required"`
 	NamaAkun          string         `gorm:"type:varchar(255);not null" json:"namaAkun" validate:"required"`
-	TipeAkun          TipeAkun       `gorm:"type:varchar(20);not null" json:"tipeAkun" validate:"required,oneof=aset kewajiban modal pendapatan beban"`
+	TipeAkun          TipeAkun       `gorm:"type:varchar(20);not null" json:"tipeAkun" validate:"required,oneof=AKTIVA KEWAJIBAN MODAL PENDAPATAN BEBAN"`
 	IDInduk           *uuid.UUID     `gorm:"type:uuid;index" json:"idInduk"` // Parent account untuk hierarchical COA
-	NormalSaldo       string         `gorm:"type:varchar(6);not null" json:"normalSaldo" validate:"oneof=debit kredit"` // debit atau kredit
+	NormalSaldo       string         `gorm:"type:varchar(6);not null" json:"normalSaldo" validate:"oneof=DEBIT KREDIT"` // DEBIT atau KREDIT
 	Deskripsi         string         `gorm:"type:text" json:"deskripsi"`
 	StatusAktif       bool           `gorm:"type:boolean;default:true" json:"statusAktif"`
 	TanggalDibuat     time.Time      `gorm:"autoCreateTime" json:"tanggalDibuat"`
@@ -49,10 +49,10 @@ func (a *Akun) BeforeCreate(tx *gorm.DB) error {
 	// Set normal saldo berdasarkan tipe akun jika belum diset
 	if a.NormalSaldo == "" {
 		switch a.TipeAkun {
-		case AkunAset, AkunBeban:
-			a.NormalSaldo = "debit"
+		case AkunAktiva, AkunBeban:
+			a.NormalSaldo = "DEBIT"
 		case AkunKewajiban, AkunModal, AkunPendapatan:
-			a.NormalSaldo = "kredit"
+			a.NormalSaldo = "KREDIT"
 		}
 	}
 
