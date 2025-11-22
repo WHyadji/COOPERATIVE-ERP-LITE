@@ -79,6 +79,38 @@ This directory contains End-to-End (E2E) tests for the Cooperative ERP system us
 - ✅ Export trial balance to PDF/Excel
 - ✅ Role-based access (Treasurer full access, Cashier no access)
 
+### 4. `reports.spec.ts`
+**Test Coverage:**
+- Balance Sheet (Neraca) report generation
+- Income Statement (Laba Rugi / P&L) report generation
+- Cash Flow Statement report
+- Member Balance Report with share capital breakdown
+- Daily Transaction Summary
+- Report export functionality (PDF/Excel)
+- Role-based report access control
+
+**Status:** ✅ Complete
+
+**Test Scenarios:** 23 test cases covering:
+- ✅ Display and generate Balance Sheet report
+- ✅ Verify balance sheet equation (Assets = Liabilities + Equity)
+- ✅ Display and generate Income Statement report
+- ✅ Calculate net income (Revenue - Expenses)
+- ✅ Show revenue breakdown by category
+- ✅ Display and generate Cash Flow report
+- ✅ Show cash flow sections (Operating, Investing, Financing)
+- ✅ Display and generate Member Balance report
+- ✅ Show share capital breakdown (Pokok, Wajib, Sukarela)
+- ✅ Display and generate Daily Transaction Summary
+- ✅ Export balance sheet to PDF
+- ✅ Export income statement to PDF
+- ✅ Export member balance to Excel
+- ✅ Consistent export buttons across all reports
+- ✅ Support PDF format for financial reports
+- ✅ Support Excel format for data-heavy reports
+- ✅ Treasurer and Admin access all reports
+- ✅ Cashier has limited report access
+
 ---
 
 ## Prerequisites
@@ -413,16 +445,20 @@ use: {
 | **Accounting - Account Ledger** | 4 tests | ✅ Complete |
 | **Accounting - Trial Balance** | 4 tests | ✅ Complete |
 | **Accounting - Access Control** | 3 tests | ✅ Complete |
-| **Reports** | 0 tests | ⏳ Pending |
+| **Reports - Balance Sheet** | 4 tests | ✅ Complete |
+| **Reports - Income Statement** | 5 tests | ✅ Complete |
+| **Reports - Cash Flow** | 2 tests | ✅ Complete |
+| **Reports - Member Balance** | 4 tests | ✅ Complete |
+| **Reports - Daily Summary** | 2 tests | ✅ Complete |
+| **Reports - Access & Export** | 6 tests | ✅ Complete |
 | **Share Capital** | 0 tests | ⏳ Pending |
 
-**Total E2E Tests: 81 test cases** (up from 47)
+**Total E2E Tests: 104 test cases** (up from 81)
 
 ### Next Test Files to Create
 
-1. `reports.spec.ts` - Financial reports generation (~10 tests)
-2. `share-capital.spec.ts` - Member share capital transactions (~12 tests)
-3. `admin.spec.ts` - Admin panel, user management, settings (~8 tests)
+1. `share-capital.spec.ts` - Member share capital transactions (~12 tests)
+2. `admin.spec.ts` - Admin panel, user management, settings (~8 tests)
 
 ---
 
