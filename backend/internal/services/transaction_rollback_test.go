@@ -58,6 +58,7 @@ func TestSimpananService_CatatSetoran_RollbackOnPostingFailure(t *testing.T) {
 		IDKoperasi:       koperasi.ID,
 		NomorAnggota:     "001",
 		NamaLengkap:      "Test Member",
+		JenisKelamin:     "L", // Added: Required field for constraint
 		Alamat:           "Test Address",
 		NoTelepon:        "08123456789",
 		TanggalBergabung: time.Now(),
@@ -142,6 +143,7 @@ func TestSimpananService_CatatSetoran_CommitOnSuccess(t *testing.T) {
 		IDKoperasi:       koperasi.ID,
 		NomorAnggota:     "001",
 		NamaLengkap:      "Test Member",
+		JenisKelamin:     "L", // Added: Required field for constraint
 		Alamat:           "Test Address",
 		NoTelepon:        "08123456789",
 		TanggalBergabung: time.Now(),

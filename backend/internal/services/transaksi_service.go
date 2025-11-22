@@ -557,7 +557,7 @@ func (s *TransaksiService) PostingOtomatisSimpanan(idKoperasi, idPengguna, idSim
 		TanggalTransaksi: simpanan.TanggalTransaksi,
 		Deskripsi:        fmt.Sprintf("Setoran %s", simpanan.TipeSimpanan),
 		NomorReferensi:   simpanan.NomorReferensi,
-		TipeTransaksi:    "simpanan",
+		TipeTransaksi:    models.TipeTransaksiSimpanan,
 		BarisTransaksi: []BuatBarisTransaksiRequest{
 			{
 				IDAkun:      akunKas.ID,
@@ -651,7 +651,7 @@ func (s *TransaksiService) PostingOtomatisPenjualan(idKoperasi, idPengguna, idPe
 		TanggalTransaksi: penjualan.TanggalPenjualan,
 		Deskripsi:        fmt.Sprintf("Penjualan %s", penjualan.NomorPenjualan),
 		NomorReferensi:   penjualan.NomorPenjualan,
-		TipeTransaksi:    "penjualan",
+		TipeTransaksi:    models.TipeTransaksiPenjualan,
 		BarisTransaksi:   barisTransaksi,
 	}
 
@@ -731,7 +731,7 @@ func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperas
 		TanggalTransaksi: penjualan.TanggalPenjualan,
 		Deskripsi:        fmt.Sprintf("Penjualan %s", penjualan.NomorPenjualan),
 		NomorReferensi:   penjualan.NomorPenjualan,
-		TipeTransaksi:    "penjualan",
+		TipeTransaksi:    models.TipeTransaksiPenjualan,
 		TotalDebit:       totalDebit,
 		TotalKredit:      totalKredit,
 		StatusBalanced:   true,
@@ -862,7 +862,7 @@ func (s *TransaksiService) PostingOtomatisSimpananWithTx(tx *gorm.DB, idKoperasi
 		TanggalTransaksi: simpanan.TanggalTransaksi,
 		Deskripsi:        fmt.Sprintf("Setoran %s", simpanan.TipeSimpanan),
 		NomorReferensi:   simpanan.NomorReferensi,
-		TipeTransaksi:    "simpanan",
+		TipeTransaksi:    models.TipeTransaksiSimpanan,
 		TotalDebit:       simpanan.JumlahSetoran,
 		TotalKredit:      simpanan.JumlahSetoran,
 		StatusBalanced:   true,
