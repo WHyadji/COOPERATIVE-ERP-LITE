@@ -111,6 +111,45 @@ This directory contains End-to-End (E2E) tests for the Cooperative ERP system us
 - ✅ Treasurer and Admin access all reports
 - ✅ Cashier has limited report access
 
+### 5. `share-capital.spec.ts`
+**Test Coverage:**
+- Share capital deposits (Simpanan Pokok, Wajib, Sukarela)
+- Member balance viewing and calculations
+- Transaction history with filtering
+- Member dashboard integration
+- Summary statistics
+- Role-based access control
+
+**Status:** ✅ Complete
+
+**Test Scenarios:** 27 test cases covering:
+- ✅ Display share capital deposit page correctly
+- ✅ Record principal deposit (Simpanan Pokok) successfully
+- ✅ Record mandatory deposit (Simpanan Wajib) successfully
+- ✅ Record voluntary deposit (Simpanan Sukarela) successfully
+- ✅ Validate required fields and minimum amounts
+- ✅ Auto-generate reference numbers
+- ✅ Display member balance list with all deposit types
+- ✅ Show individual member balance details
+- ✅ Calculate total share capital correctly
+- ✅ Export member balance to Excel
+- ✅ Display and filter transaction history
+- ✅ Filter by deposit type (POKOK, WAJIB, SUKARELA)
+- ✅ Filter by date range
+- ✅ Search by member name/number
+- ✅ View transaction details
+- ✅ Export transaction history to Excel
+- ✅ Member view own balance on dashboard
+- ✅ Member view recent transactions
+- ✅ Member cannot record deposits (read-only)
+- ✅ Display cooperative-wide summary
+- ✅ Show number of active members
+- ✅ Display monthly deposit trend
+- ✅ Treasurer full access
+- ✅ Admin full access
+- ✅ Member read-only access
+- ✅ Cashier no access to share capital
+
 ---
 
 ## Prerequisites
@@ -451,14 +490,18 @@ use: {
 | **Reports - Member Balance** | 4 tests | ✅ Complete |
 | **Reports - Daily Summary** | 2 tests | ✅ Complete |
 | **Reports - Access & Export** | 6 tests | ✅ Complete |
-| **Share Capital** | 0 tests | ⏳ Pending |
+| **Share Capital - Record Deposits** | 7 tests | ✅ Complete |
+| **Share Capital - View Balance** | 4 tests | ✅ Complete |
+| **Share Capital - Transaction History** | 6 tests | ✅ Complete |
+| **Share Capital - Member Dashboard** | 3 tests | ✅ Complete |
+| **Share Capital - Summary** | 3 tests | ✅ Complete |
+| **Share Capital - Access Control** | 4 tests | ✅ Complete |
 
-**Total E2E Tests: 104 test cases** (up from 81)
+**Total E2E Tests: 131 test cases** (up from 104)
 
 ### Next Test Files to Create
 
-1. `share-capital.spec.ts` - Member share capital transactions (~12 tests)
-2. `admin.spec.ts` - Admin panel, user management, settings (~8 tests)
+1. `admin.spec.ts` - Admin panel, user management, settings (~8 tests)
 
 ---
 
