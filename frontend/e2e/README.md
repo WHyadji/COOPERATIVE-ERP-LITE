@@ -150,6 +150,39 @@ This directory contains End-to-End (E2E) tests for the Cooperative ERP system us
 - ✅ Member read-only access
 - ✅ Cashier no access to share capital
 
+### 6. `admin.spec.ts`
+**Test Coverage:**
+- User Management (CRUD operations)
+- Role Assignment (Admin, Bendahara, Kasir, Anggota)
+- System Settings configuration
+- Audit Logs viewing and filtering
+- Role-Based Access Control
+
+**Status:** ✅ Complete
+
+**Test Scenarios:** 21 test cases covering:
+- ✅ Display user management page correctly
+- ✅ Create new user with role assignment
+- ✅ Validate required fields
+- ✅ Update existing user information
+- ✅ Deactivate/activate user accounts
+- ✅ Filter users by role (Admin, Bendahara, Kasir, Anggota)
+- ✅ Search users by name or email
+- ✅ Reset user password
+- ✅ Delete user with confirmation
+- ✅ Display system settings page
+- ✅ Update cooperative information
+- ✅ Configure accounting settings
+- ✅ Display audit log page
+- ✅ Filter audit logs by date range
+- ✅ Filter audit logs by user
+- ✅ Filter audit logs by action type
+- ✅ Export audit logs to Excel
+- ✅ Admin full access to admin panel
+- ✅ Treasurer NO access to admin panel
+- ✅ Cashier NO access to admin panel
+- ✅ Member NO access to admin panel
+
 ---
 
 ## Prerequisites
