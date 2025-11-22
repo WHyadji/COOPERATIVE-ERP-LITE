@@ -95,13 +95,13 @@ func (s *SimpananService) CatatSetoran(idKoperasi, idPengguna uuid.UUID, req *Ca
 	// Jika salah satu operasi gagal, semua perubahan akan di-rollback otomatis oleh GORM.
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		// Step 1: Simpan record simpanan
-		if err := tx.Create(simpanan).Error; err != nil {
+		if createErr := tx.Create(simpanan).Error; createErr != nil {
 			return errors.New("gagal mencatat setoran simpanan")
 		}
 
 		// Step 2: Posting otomatis ke jurnal akuntansi dalam transaction yang sama
-		if err := s.transaksiService.PostingOtomatisSimpananWithTx(tx, idKoperasi, idPengguna, simpanan.ID); err != nil {
-			return fmt.Errorf("gagal posting ke jurnal: %w", err)
+		if postErr := s.transaksiService.PostingOtomatisSimpananWithTx(tx, idKoperasi, idPengguna, simpanan.ID); postErr != nil {
+			return fmt.Errorf("gagal posting ke jurnal: %w", postErr)
 		}
 
 		return nil
@@ -130,7 +130,7 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// Lock and get the last deposit number for this date
 		var lastSimpanan models.Simpanan
-		err := tx.Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggalDate).
+		queryErr := tx.Where("id_koperasi = ? AND DATE(tanggal_transaksi) = ?", idKoperasi, tanggalDate).
 			Order("nomor_referensi DESC").
 			Limit(1).
 			Clauses(clause.Locking{Strength: "UPDATE"}).
@@ -139,7 +139,7 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 		nomorUrut := 1
 
 		// If there's a previous deposit, parse and increment
-		if err == nil && lastSimpanan.NomorReferensi != "" {
+		if queryErr == nil && lastSimpanan.NomorReferensi != "" {
 			// Extract number from SMP-20250116-0001
 			var parsedTanggal string
 			var parsedUrut int
@@ -147,8 +147,8 @@ func (s *SimpananService) GenerateNomorReferensi(idKoperasi uuid.UUID, tanggal t
 			if scanErr == nil && parsedTanggal == tanggalStr {
 				nomorUrut = parsedUrut + 1
 			}
-		} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return err
+		} else if queryErr != nil && !errors.Is(queryErr, gorm.ErrRecordNotFound) {
+			return queryErr
 		}
 
 		nomorReferensi = fmt.Sprintf("SMP-%s-%04d", tanggalStr, nomorUrut)
@@ -317,8 +317,8 @@ func (s *SimpananService) DapatkanLaporanSaldoAnggota(idKoperasi uuid.UUID) ([]m
 	var laporan []models.SaldoSimpananAnggota
 
 	for _, anggota := range anggotaList {
-		saldo, err := s.DapatkanSaldoAnggota(anggota.ID)
-		if err != nil {
+		saldo, saldoErr := s.DapatkanSaldoAnggota(anggota.ID)
+		if saldoErr != nil {
 			continue // Skip jika error
 		}
 		laporan = append(laporan, *saldo)
