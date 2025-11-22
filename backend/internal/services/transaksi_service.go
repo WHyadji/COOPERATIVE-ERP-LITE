@@ -86,9 +86,9 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// Generate nomor jurnal INSIDE transaction with row-level locking
 		// This prevents race conditions when multiple requests come simultaneously
-		nomorJurnal, err := s.generateNomorJurnalInTx(tx, idKoperasi, req.TanggalTransaksi)
-		if err != nil {
-			return err
+		nomorJurnal, genErr := s.generateNomorJurnalInTx(tx, idKoperasi, req.TanggalTransaksi)
+		if genErr != nil {
+			return genErr
 		}
 
 		// Buat header transaksi
@@ -105,7 +105,7 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 			DibuatOleh:       idPengguna,
 		}
 
-		if err := tx.Create(&transaksi).Error; err != nil {
+		if createErr := tx.Create(&transaksi).Error; createErr != nil {
 			return errors.New("gagal membuat transaksi")
 		}
 
@@ -113,7 +113,7 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 		for _, barisReq := range req.BarisTransaksi {
 			// Validasi akun exists
 			var akun models.Akun
-			if err := tx.Where("id = ? AND id_koperasi = ?", barisReq.IDAkun, idKoperasi).First(&akun).Error; err != nil {
+			if findErr := tx.Where("id = ? AND id_koperasi = ?", barisReq.IDAkun, idKoperasi).First(&akun).Error; findErr != nil {
 				return fmt.Errorf("akun %s tidak ditemukan", barisReq.IDAkun)
 			}
 
@@ -125,7 +125,7 @@ func (s *TransaksiService) BuatTransaksi(idKoperasi, idPengguna uuid.UUID, req *
 				Keterangan:   barisReq.Keterangan,
 			}
 
-			if err := tx.Create(&baris).Error; err != nil {
+			if barisErr := tx.Create(&baris).Error; barisErr != nil {
 				return errors.New("gagal membuat baris transaksi")
 			}
 		}
@@ -183,15 +183,15 @@ func (s *TransaksiService) PerbaruiTransaksi(id, idKoperasi, idPengguna uuid.UUI
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// Ambil transaksi yang akan diupdate
-		if err := tx.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&transaksi).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if fetchErr := tx.Where("id = ? AND id_koperasi = ?", id, idKoperasi).First(&transaksi).Error; fetchErr != nil {
+			if errors.Is(fetchErr, gorm.ErrRecordNotFound) {
 				return errors.New("transaksi tidak ditemukan")
 			}
 			return errors.New("gagal mengambil transaksi")
 		}
 
 		// Hapus baris transaksi yang lama
-		if err := tx.Where("id_transaksi = ?", id).Delete(&models.BarisTransaksi{}).Error; err != nil {
+		if deleteErr := tx.Where("id_transaksi = ?", id).Delete(&models.BarisTransaksi{}).Error; deleteErr != nil {
 			return errors.New("gagal menghapus baris transaksi lama")
 		}
 
@@ -205,7 +205,7 @@ func (s *TransaksiService) PerbaruiTransaksi(id, idKoperasi, idPengguna uuid.UUI
 		transaksi.StatusBalanced = true
 		transaksi.DiperbaruiOleh = idPengguna
 
-		if err := tx.Save(&transaksi).Error; err != nil {
+		if saveErr := tx.Save(&transaksi).Error; saveErr != nil {
 			return errors.New("gagal memperbarui transaksi")
 		}
 
@@ -213,7 +213,7 @@ func (s *TransaksiService) PerbaruiTransaksi(id, idKoperasi, idPengguna uuid.UUI
 		for _, barisReq := range req.BarisTransaksi {
 			// Validasi akun exists
 			var akun models.Akun
-			if err := tx.Where("id = ? AND id_koperasi = ?", barisReq.IDAkun, idKoperasi).First(&akun).Error; err != nil {
+			if findErr := tx.Where("id = ? AND id_koperasi = ?", barisReq.IDAkun, idKoperasi).First(&akun).Error; findErr != nil {
 				return fmt.Errorf("akun %s tidak ditemukan", barisReq.IDAkun)
 			}
 
@@ -225,7 +225,7 @@ func (s *TransaksiService) PerbaruiTransaksi(id, idKoperasi, idPengguna uuid.UUI
 				Keterangan:   barisReq.Keterangan,
 			}
 
-			if err := tx.Create(&baris).Error; err != nil {
+			if barisErr := tx.Create(&baris).Error; barisErr != nil {
 				return errors.New("gagal membuat baris transaksi")
 			}
 		}
@@ -545,10 +545,10 @@ func (s *TransaksiService) PostingOtomatisSimpanan(idKoperasi, idPengguna, idSim
 
 	// Dapatkan akun kas dan akun modal
 	var akunKas, akunModal models.Akun
-	if err := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; err != nil {
+	if kasErr := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; kasErr != nil {
 		return errors.New("akun kas tidak ditemukan")
 	}
-	if err := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, kodeAkunModal).First(&akunModal).Error; err != nil {
+	if modalErr := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, kodeAkunModal).First(&akunModal).Error; modalErr != nil {
 		return errors.New("akun modal tidak ditemukan")
 	}
 
@@ -595,16 +595,16 @@ func (s *TransaksiService) PostingOtomatisPenjualan(idKoperasi, idPengguna, idPe
 
 	// Dapatkan akun-akun yang diperlukan
 	var akunKas, akunPenjualan, akunHPP, akunPersediaan models.Akun
-	if err := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; err != nil {
+	if kasErr := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; kasErr != nil {
 		return errors.New("akun kas tidak ditemukan")
 	}
-	if err := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "4101").First(&akunPenjualan).Error; err != nil {
+	if penjualanErr := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "4101").First(&akunPenjualan).Error; penjualanErr != nil {
 		return errors.New("akun penjualan tidak ditemukan")
 	}
-	if err := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "5201").First(&akunHPP).Error; err != nil {
+	if hppErr := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "5201").First(&akunHPP).Error; hppErr != nil {
 		return errors.New("akun HPP tidak ditemukan")
 	}
-	if err := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1301").First(&akunPersediaan).Error; err != nil {
+	if persediaanErr := s.db.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1301").First(&akunPersediaan).Error; persediaanErr != nil {
 		return errors.New("akun persediaan tidak ditemukan")
 	}
 
@@ -695,16 +695,16 @@ func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperas
 
 	// Dapatkan akun-akun yang diperlukan untuk jurnal penjualan
 	var akunKas, akunPenjualan, akunHPP, akunPersediaan models.Akun
-	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; err != nil {
+	if kasErr := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; kasErr != nil {
 		return errors.New("akun kas tidak ditemukan")
 	}
-	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "4101").First(&akunPenjualan).Error; err != nil {
+	if penjualanErr := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "4101").First(&akunPenjualan).Error; penjualanErr != nil {
 		return errors.New("akun penjualan tidak ditemukan")
 	}
-	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "5201").First(&akunHPP).Error; err != nil {
+	if hppErr := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "5201").First(&akunHPP).Error; hppErr != nil {
 		return errors.New("akun HPP tidak ditemukan")
 	}
-	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1301").First(&akunPersediaan).Error; err != nil {
+	if persediaanErr := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1301").First(&akunPersediaan).Error; persediaanErr != nil {
 		return errors.New("akun persediaan tidak ditemukan")
 	}
 
@@ -738,7 +738,7 @@ func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperas
 		DibuatOleh:       idPengguna,
 	}
 
-	if err := tx.Create(&transaksi).Error; err != nil {
+	if createErr := tx.Create(&transaksi).Error; createErr != nil {
 		return errors.New("gagal membuat jurnal penjualan")
 	}
 
@@ -751,7 +751,7 @@ func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperas
 		JumlahKredit: 0,
 		Keterangan:   "Penerimaan kas dari penjualan",
 	}
-	if err := tx.Create(&barisKas).Error; err != nil {
+	if kasBarisErr := tx.Create(&barisKas).Error; kasBarisErr != nil {
 		return errors.New("gagal membuat baris kas")
 	}
 
@@ -763,7 +763,7 @@ func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperas
 		JumlahKredit: penjualan.TotalBelanja,
 		Keterangan:   "Pendapatan penjualan",
 	}
-	if err := tx.Create(&barisPenjualan).Error; err != nil {
+	if penjualanBarisErr := tx.Create(&barisPenjualan).Error; penjualanBarisErr != nil {
 		return errors.New("gagal membuat baris penjualan")
 	}
 
@@ -776,7 +776,7 @@ func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperas
 			JumlahKredit: 0,
 			Keterangan:   "Harga Pokok Penjualan",
 		}
-		if err := tx.Create(&barisHPP).Error; err != nil {
+		if hppBarisErr := tx.Create(&barisHPP).Error; hppBarisErr != nil {
 			return errors.New("gagal membuat baris HPP")
 		}
 
@@ -787,14 +787,14 @@ func (s *TransaksiService) PostingOtomatisPenjualanWithTx(tx *gorm.DB, idKoperas
 			JumlahKredit: totalHPP,
 			Keterangan:   "Pengurangan persediaan",
 		}
-		if err := tx.Create(&barisPersediaan).Error; err != nil {
+		if persediaanBarisErr := tx.Create(&barisPersediaan).Error; persediaanBarisErr != nil {
 			return errors.New("gagal membuat baris persediaan")
 		}
 	}
 
 	// Update penjualan dengan ID transaksi menggunakan tx
 	penjualan.IDTransaksi = &transaksi.ID
-	if err := tx.Save(&penjualan).Error; err != nil {
+	if saveErr := tx.Save(&penjualan).Error; saveErr != nil {
 		return errors.New("gagal update ID transaksi di penjualan")
 	}
 
@@ -842,17 +842,17 @@ func (s *TransaksiService) PostingOtomatisSimpananWithTx(tx *gorm.DB, idKoperasi
 
 	// Dapatkan akun kas dan akun modal menggunakan tx
 	var akunKas, akunModal models.Akun
-	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; err != nil {
+	if kasErr := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, "1101").First(&akunKas).Error; kasErr != nil {
 		return errors.New("akun kas tidak ditemukan")
 	}
-	if err := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, kodeAkunModal).First(&akunModal).Error; err != nil {
+	if modalErr := tx.Where("id_koperasi = ? AND kode_akun = ?", idKoperasi, kodeAkunModal).First(&akunModal).Error; modalErr != nil {
 		return errors.New("akun modal tidak ditemukan")
 	}
 
 	// Generate nomor jurnal dalam transaction yang sama
-	nomorJurnal, err := s.generateNomorJurnalInTx(tx, idKoperasi, simpanan.TanggalTransaksi)
-	if err != nil {
-		return fmt.Errorf("gagal generate nomor jurnal: %w", err)
+	nomorJurnal, genErr := s.generateNomorJurnalInTx(tx, idKoperasi, simpanan.TanggalTransaksi)
+	if genErr != nil {
+		return fmt.Errorf("gagal generate nomor jurnal: %w", genErr)
 	}
 
 	// Buat header transaksi langsung menggunakan tx
@@ -869,7 +869,7 @@ func (s *TransaksiService) PostingOtomatisSimpananWithTx(tx *gorm.DB, idKoperasi
 		DibuatOleh:       idPengguna,
 	}
 
-	if err := tx.Create(&transaksi).Error; err != nil {
+	if createErr := tx.Create(&transaksi).Error; createErr != nil {
 		return errors.New("gagal membuat jurnal simpanan")
 	}
 
@@ -881,7 +881,7 @@ func (s *TransaksiService) PostingOtomatisSimpananWithTx(tx *gorm.DB, idKoperasi
 		JumlahKredit: 0,
 		Keterangan:   fmt.Sprintf("Setoran %s", simpanan.TipeSimpanan),
 	}
-	if err := tx.Create(&barisKas).Error; err != nil {
+	if kasBarisErr := tx.Create(&barisKas).Error; kasBarisErr != nil {
 		return errors.New("gagal membuat baris kas")
 	}
 
@@ -893,13 +893,13 @@ func (s *TransaksiService) PostingOtomatisSimpananWithTx(tx *gorm.DB, idKoperasi
 		JumlahKredit: simpanan.JumlahSetoran,
 		Keterangan:   fmt.Sprintf("Setoran %s", simpanan.TipeSimpanan),
 	}
-	if err := tx.Create(&barisModal).Error; err != nil {
+	if modalBarisErr := tx.Create(&barisModal).Error; modalBarisErr != nil {
 		return errors.New("gagal membuat baris modal")
 	}
 
 	// Update simpanan dengan ID transaksi menggunakan tx
 	simpanan.IDTransaksi = &transaksi.ID
-	if err := tx.Save(&simpanan).Error; err != nil {
+	if saveErr := tx.Save(&simpanan).Error; saveErr != nil {
 		return errors.New("gagal update ID transaksi di simpanan")
 	}
 
